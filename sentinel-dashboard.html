@@ -981,50 +981,41 @@ function App(){
                 {searchResults.length>0&&<button className="clear" onClick={clearSearch}>✕ CLEAR</button>}
               </div>
               <div className="pbd" style={{flex:1,overflow:'auto'}}>
-                {searchResults.length>0?
-                  /* SEARCH RESULTS */
-                  React.createElement(React.Fragment,null,
-                    React.createElement('div',{style:{padding:'6px 0',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}},
-                      React.createElement('span',{style:{font:'600 9px var(--mono)',color:'var(--red)',letterSpacing:'.5px'}},'◆ SEARCH: "',searchQuery,'" — ',searchResults.length,' RESULTS')
-                    ),
-                    searchResults.map((item,idx)=>(
-                      <a key={idx} href={item.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
-                      <div className="fi">
-                        <div className="fit">
-                          <div className="fis" style={{background:SC[item.sv]||'#999'}}/>
-                          <span className="fitg" style={{background:(CC[item.cat]||'#999')+'20',color:CC[item.cat]||'#999',border:'1px solid '+(CC[item.cat]||'#999')+'40'}}>{item.cat}</span>
-                          <span style={{font:'400 9px var(--mono)',color:'var(--t3)'}}>{item.src}</span>
-                          <span className="fitm">{item.tm}</span>
-                        </div>
-                        <div className="fitt" style={{cursor:'pointer'}}>{item.t} <span style={{color:'var(--t3)',fontSize:9}}>↗</span></div>
-                      </div></a>
-                    ))
-                  )
-                :searching?
-                  <div style={{padding:'20px 0',textAlign:'center',font:'400 10px var(--mono)',color:'var(--t3)'}}>Searching web for intel...</div>
-                :mapIntel.length>0?
-                  /* MAP-DRIVEN REGIONAL INTEL */
-                  React.createElement(React.Fragment,null,
-                    React.createElement('div',{style:{padding:'6px 0',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}},
-                      React.createElement('span',{style:{font:'600 9px var(--mono)',color:'#0a84ff',letterSpacing:'.5px'}},'◆ MAP FOCUS: ',mapRegion.toUpperCase(),' — ',mapIntel.length,' ITEMS'),
-                      mapFetching?React.createElement('span',{style:{font:'400 8px var(--mono)',color:'var(--t3)'}},'Updating...'):null
-                    ),
-                    mapIntel.map((item,idx)=>(
-                      <a key={'mi'+idx} href={item.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
-                      <div className="fi">
-                        <div className="fit">
-                          <div className="fis" style={{background:SC[item.sv]||'#999'}}/>
-                          <span className="fitg" style={{background:(CC[item.cat]||'#999')+'20',color:CC[item.cat]||'#999',border:'1px solid '+(CC[item.cat]||'#999')+'40'}}>{item.cat}</span>
-                          <span style={{font:'400 9px var(--mono)',color:'var(--t3)'}}>{item.src}</span>
-                          <span className="fitm">{item.tm}</span>
-                        </div>
-                        <div className="fitt" style={{cursor:'pointer'}}>{item.t} <span style={{color:'var(--t3)',fontSize:9}}>↗</span></div>
-                      </div></a>
-                    ))
-                  )
-                :feedStatus==='live'?
-                  /* LIVE RSS ITEMS */
-                  liveNews.map((item,idx)=>{
+                {/* Render intel items based on mode */}
+                {searching&&<div style={{padding:'20px 0',textAlign:'center',font:'400 10px var(--mono)',color:'var(--t3)'}}>Searching web for intel...</div>}
+                {!searching&&searchResults.length>0&&<div style={{padding:'6px 0',borderBottom:'1px solid var(--bdr)'}}>
+                  <span style={{font:'600 9px var(--mono)',color:'var(--red)',letterSpacing:'.5px'}}>{'◆ SEARCH: "'+searchQuery+'" — '+searchResults.length+' RESULTS'}</span>
+                </div>}
+                {!searching&&searchResults.length>0&&searchResults.map(function(item,idx){
+                  return <a key={'s'+idx} href={item.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
+                    <div className="fi">
+                      <div className="fit">
+                        <div className="fis" style={{background:SC[item.sv]||'#999'}}/>
+                        <span className="fitg" style={{background:(CC[item.cat]||'#999')+'20',color:CC[item.cat]||'#999',border:'1px solid '+(CC[item.cat]||'#999')+'40'}}>{item.cat}</span>
+                        <span style={{font:'400 9px var(--mono)',color:'var(--t3)'}}>{item.src}</span>
+                        <span className="fitm">{item.tm}</span>
+                      </div>
+                      <div className="fitt" style={{cursor:'pointer'}}>{item.t} <span style={{color:'var(--t3)',fontSize:9}}>↗</span></div>
+                    </div></a>;
+                })}
+                {!searching&&searchResults.length===0&&mapIntel.length>0&&<div style={{padding:'6px 0',borderBottom:'1px solid var(--bdr)'}}>
+                  <span style={{font:'600 9px var(--mono)',color:'#0a84ff',letterSpacing:'.5px'}}>{'◆ MAP FOCUS: '+mapRegion.toUpperCase()+' — '+mapIntel.length+' ITEMS'}</span>
+                  {mapFetching&&<span style={{font:'400 8px var(--mono)',color:'var(--t3)',marginLeft:8}}>Updating...</span>}
+                </div>}
+                {!searching&&searchResults.length===0&&mapIntel.length>0&&mapIntel.map(function(item,idx){
+                  return <a key={'mi'+idx} href={item.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
+                    <div className="fi">
+                      <div className="fit">
+                        <div className="fis" style={{background:SC[item.sv]||'#999'}}/>
+                        <span className="fitg" style={{background:(CC[item.cat]||'#999')+'20',color:CC[item.cat]||'#999',border:'1px solid '+(CC[item.cat]||'#999')+'40'}}>{item.cat}</span>
+                        <span style={{font:'400 9px var(--mono)',color:'var(--t3)'}}>{item.src}</span>
+                        <span className="fitm">{item.tm}</span>
+                      </div>
+                      <div className="fitt" style={{cursor:'pointer'}}>{item.t} <span style={{color:'var(--t3)',fontSize:9}}>↗</span></div>
+                    </div></a>;
+                })}
+                {!searching&&searchResults.length===0&&mapIntel.length===0&&feedStatus==='live'&&
+                  liveNews.map(function(item,idx){
                     return <a key={idx} href={item.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
                     <div className="fi">
                       <div className="fit">
@@ -1036,11 +1027,11 @@ function App(){
                       <div className="fitt" style={{cursor:'pointer'}}>{item.t} <span style={{color:'var(--t3)',fontSize:9}}>↗</span></div>
                     </div></a>;
                   })
-                :
-                  /* FALLBACK STATIC ITEMS */
-                  INCIDENTS.map(inc=>{
-                    const q=encodeURIComponent(inc.t.split('—')[0].trim());
-                    const url=`https://news.google.com/search?q=${q}`;
+                }
+                {!searching&&searchResults.length===0&&mapIntel.length===0&&feedStatus!=='live'&&
+                  INCIDENTS.map(function(inc){
+                    var q=encodeURIComponent(inc.t.split('—')[0].trim());
+                    var url='https://news.google.com/search?q='+q;
                     return <a key={inc.id} href={url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
                     <div className="fi">
                       <div className="fit">
