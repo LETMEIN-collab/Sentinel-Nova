@@ -442,6 +442,15 @@ function App(){
   const[advLive,setAdvLive]=useState(false);
   const[ratings,setRatings]=useState([]);
   const[ratingsLive,setRatingsLive]=useState(false);
+  const[notamLive,setNotamLive]=useState(false);
+  const[searchQuery,setSearchQuery]=useState('');
+  const[searchResults,setSearchResults]=useState([]);
+  const[searching,setSearching]=useState(false);
+  const[mapIntel,setMapIntel]=useState([]);
+  const[mapRegion,setMapRegion]=useState('');
+  const[mapFetching,setMapFetching]=useState(false);
+  const[searchError,setSearchError]=useState('');
+  const mapFetchTimer=useRef(null);
 
   // Fetch US State Dept Travel Advisories
   const fetchAdvisories=async()=>{
@@ -524,15 +533,6 @@ function App(){
     // Always use curated fallback as the authoritative base — live feeds return low-quality generic data
     setWxAlerts(WEATHER_FALLBACK);setWxLive(true);
   };
-
-  const[notamLive,setNotamLive]=useState(false);
-  const[searchQuery,setSearchQuery]=useState('');
-  const[searchResults,setSearchResults]=useState([]);
-  const[searching,setSearching]=useState(false);
-  const[mapIntel,setMapIntel]=useState([]);
-  const[mapRegion,setMapRegion]=useState('');
-  const[mapFetching,setMapFetching]=useState(false);
-  const mapFetchTimer=useRef(null);
 
   // Fetch live NOTAMs — FAA TFR RSS (real-time), Aviation Herald, and ICAO news
   const fetchNotams=async()=>{
@@ -682,7 +682,6 @@ function App(){
   };
 
   // Intel search — queries Google News RSS via multiple proxies
-  const[searchError,setSearchError]=useState('');
   const searchIntel=async(query)=>{
     if(!query.trim())return;
     setSearching(true);setSearchResults([]);setSearchError('');
