@@ -316,6 +316,32 @@ function timeAgo(dateStr){
   return Math.floor(hrs/24)+'d ago';
 }
 
+/* ═══ WEATHER ALERTS (fallback data) ═══ */
+const WEATHER_FALLBACK=[
+  {sev:'extreme',type:'Hurricane',title:'Hurricane — Cat 4 — Gulf of Mexico',detail:'Sustained winds 140mph, moving NW at 12mph. Storm surge warning FL panhandle.',time:'1h ago',icon:'🌀'},
+  {sev:'severe',type:'Typhoon',title:'Super Typhoon Approaching Philippines',detail:'Cat 5 equivalent, 180mph gusts. Luzon landfall expected 36h.',time:'3h ago',icon:'🌀'},
+  {sev:'severe',type:'Flooding',title:'Severe Flooding — Yangtze River Basin',detail:'Record rainfall 340mm/24h. 8 provinces on red alert. 2.1M evacuated.',time:'4h ago',icon:'🌊'},
+  {sev:'moderate',type:'Heat Dome',title:'Extreme Heat Dome — Middle East / S. Asia',detail:'52°C recorded in Kuwait. Heat index >60°C. Grid failures in 3 nations.',time:'6h ago',icon:'🔥'},
+  {sev:'severe',type:'Wildfire',title:'Wildfire Complex — Mediterranean Basin',detail:'340K hectares across Greece, Turkey, Italy. 12K firefighters deployed.',time:'8h ago',icon:'🔥'},
+  {sev:'moderate',type:'Cyclone',title:'Tropical Cyclone Forming — Bay of Bengal',detail:'Currently tropical depression. Expected to intensify to Cat 3 within 48h.',time:'12h ago',icon:'🌀'},
+  {sev:'watch',type:'Drought',title:'Extreme Drought — Horn of Africa',detail:'5th consecutive failed rainy season. 23M facing acute food insecurity.',time:'1d ago',icon:'☀️'},
+  {sev:'moderate',type:'Winter Storm',title:'Polar Vortex Disruption — Northern Europe',detail:'Extreme cold -35°C forecast for Scandinavia. Energy demand surge expected.',time:'1d ago',icon:'❄️'},
+];
+
+const NOTAM_FALLBACK=[
+  {id:'A0847/26',zone:'UKBV — Ukraine/Black Sea',status:'PROHIBITED',detail:'All flight levels. Conflict zone. Indefinite.',color:'#ff3b30',time:'Active'},
+  {id:'A1204/26',zone:'OIIX — Iran Western FIR',status:'RESTRICTED',detail:'FL250+. Military activity. Strait of Hormuz approaches.',color:'#ff9500',time:'Active'},
+  {id:'A0923/26',zone:'RCTP — Taiwan Strait',status:'WARNING',detail:'GPS jamming reported. Military exercises. NOTAM renewed daily.',color:'#ff9500',time:'4h ago'},
+  {id:'A0561/26',zone:'HSSS — Sudan FIR',status:'PROHIBITED',detail:'All altitudes Khartoum TMA. Armed conflict.',color:'#ff3b30',time:'Active'},
+  {id:'V0112/26',zone:'BIRK — Iceland/Reykjanes',status:'WARNING',detail:'Volcanic ash advisory. FL050-FL200. Eruption ongoing.',color:'#ffd60a',time:'6h ago'},
+  {id:'A0445/26',zone:'ZMUB — Mongolia Northern',status:'WARNING',detail:'GPS interference. Military source. FL100+.',color:'#ffd60a',time:'12h ago'},
+  {id:'A0789/26',zone:'OEJD — Saudi/Yemen Border',status:'RESTRICTED',detail:'FL0-FL260. Military operations. Houthi drone threat.',color:'#ff9500',time:'Active'},
+  {id:'A0334/26',zone:'DGAA — Sahel Region',status:'WARNING',detail:'Security risk below FL250. Multiple nations.',color:'#ffd60a',time:'1d ago'},
+];
+
+const WX_SEV_COLORS={extreme:'#ff3b30',severe:'#ff9500',moderate:'#ffd60a',watch:'#64d2ff'};
+const NOTAM_STATUS_COLORS={PROHIBITED:'#ff3b30',RESTRICTED:'#ff9500',WARNING:'#ffd60a'};
+
 /* ═══ APP ═══ */
 function App(){
   const[time,setTime]=useState(new Date());
@@ -324,6 +350,9 @@ function App(){
   const[tp,setTp]=useState('6M');
   const[liveNews,setLiveNews]=useState([]);
   const[feedStatus,setFeedStatus]=useState('loading');
+  const[wxAlerts,setWxAlerts]=useState(WEATHER_FALLBACK);
+  const[notams,setNotams]=useState(NOTAM_FALLBACK);
+  const[wxLive,setWxLive]=useState(false);
 
   // Fetch live RSS feeds
   const fetchFeeds=async()=>{
@@ -361,12 +390,37 @@ function App(){
     }catch(e){setFeedStatus('fallback');}
   };
 
+  // Fetch live severe weather alerts
+  const fetchWeather=async()=>{
+    try{
+      const wxUrl=encodeURIComponent('https://news.google.com/rss/search?q=severe+weather+hurricane+typhoon+flooding+wildfire+extreme+heat&hl=en-US&gl=US&ceid=US:en');
+      const res=await fetch(PROXY+wxUrl);
+      const data=await res.json();
+      if(data.items&&data.items.length>0){
+        const wxItems=data.items.slice(0,8).map((item,i)=>{
+          const t=item.title.toLowerCase();
+          const src=item.title.includes(' - ')?item.title.split(' - ').pop().trim():'Weather';
+          const headline=item.title.includes(' - ')?item.title.split(' - ').slice(0,-1).join(' - ').trim():item.title;
+          let sev='moderate',icon='⚠️',type='Weather';
+          if(t.match(/hurricane|typhoon|cat.?[4-5]|super/)){sev='extreme';icon='🌀';type='Cyclone';}
+          else if(t.match(/flood|tsunami|surge/)){sev='severe';icon='🌊';type='Flooding';}
+          else if(t.match(/wildfire|fire|blaze|burn/)){sev='severe';icon='🔥';type='Wildfire';}
+          else if(t.match(/heat|record.?temp|heat.?dome/)){sev='moderate';icon='🔥';type='Heat';}
+          else if(t.match(/storm|tornado|blizzard|snow/)){sev='severe';icon='❄️';type='Storm';}
+          else if(t.match(/drought|dry/)){sev='watch';icon='☀️';type='Drought';}
+          return{sev,type,title:headline,detail:src,time:timeAgo(item.pubDate),icon,url:item.link};
+        });
+        setWxAlerts(wxItems);setWxLive(true);
+      }
+    }catch(e){}
+  };
+
   const mapRef=useRef(null);
   const markersRef=useRef([]);
   const linesRef=useRef([]);
 
   useEffect(()=>{const i=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(i)},[]);
-  useEffect(()=>{fetchFeeds();const i=setInterval(fetchFeeds,5*60*1000);return()=>clearInterval(i)},[]);
+  useEffect(()=>{fetchFeeds();fetchWeather();const i=setInterval(()=>{fetchFeeds();fetchWeather()},5*60*1000);return()=>clearInterval(i)},[]);
 
   // Initialize Leaflet map
   useEffect(()=>{
@@ -556,17 +610,48 @@ function App(){
               </div>
             </div>
 
-            {/* Trend Chart */}
-            <div style={{overflow:'auto'}}>
-              <div className="ph"><div className="pt">◆ Risk Trend Analysis</div></div>
-              <div className="pbd">
-                <div className="ctabs">
-                  {['1M','6M','1Y'].map(p=><button key={p} className={`ct ${tp===p?'a':''}`} onClick={()=>setTp(p)}>{p}</button>)}
+            {/* Weather + NOTAMs Split Panel */}
+            <div style={{overflow:'hidden',display:'flex',flexDirection:'column'}}>
+              {/* SEVERE WEATHER */}
+              <div style={{flex:'1 1 50%',overflow:'auto',borderBottom:'1px solid var(--bdr)'}}>
+                <div className="ph">
+                  <div className="pt">◆ Severe Weather</div>
+                  <span className="pb" style={{background:wxLive?'var(--grnbg)':'var(--amberbg)',color:wxLive?'var(--grn)':'var(--amber)'}}>{wxLive?'● LIVE':'SAMPLE'}</span>
                 </div>
-                <AreaChartSVG data={TREND[tp]} keys={['con','geo','clim','cyb']} colors={['#ff375f','#ff3b30','#ff9500','#bf5af2']}/>
-                <div style={{display:'flex',gap:12,marginTop:6,font:'400 9px var(--mono)'}}>
-                  {[['Conflict','#ff375f'],['Geopolitical','#ff3b30'],['Climate','#ff9500'],['Cyber','#bf5af2']].map(([n,c])=>(
-                    <span key={n} style={{display:'flex',alignItems:'center',gap:3}}><span style={{width:8,height:2,background:c,display:'inline-block'}}/><span style={{color:'var(--t2)'}}>{n}</span></span>
+                <div className="pbd" style={{padding:'6px 12px'}}>
+                  {wxAlerts.map((wx,i)=>{
+                    const inner=<div key={i} style={{padding:'6px 0',borderBottom:i<wxAlerts.length-1?'1px solid var(--bdr)':'none'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
+                        <span style={{fontSize:12}}>{wx.icon}</span>
+                        <span style={{font:'600 9px var(--mono)',color:WX_SEV_COLORS[wx.sev],textTransform:'uppercase',letterSpacing:'.5px',padding:'1px 5px',borderRadius:2,background:WX_SEV_COLORS[wx.sev]+'18',border:'1px solid '+WX_SEV_COLORS[wx.sev]+'35'}}>{wx.sev}</span>
+                        <span style={{font:'500 9px var(--mono)',color:'var(--t3)'}}>{wx.type}</span>
+                        <span style={{font:'400 9px var(--mono)',color:'var(--t3)',marginLeft:'auto'}}>{wx.time}</span>
+                      </div>
+                      <div style={{font:'500 11px/1.3 Inter,sans-serif',color:'var(--t1)'}}>{wx.title}</div>
+                      <div style={{font:'400 10px Inter,sans-serif',color:'var(--t3)',marginTop:2}}>{wx.detail}</div>
+                    </div>;
+                    return wx.url?<a key={i} href={wx.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>{inner}</a>:inner;
+                  })}
+                </div>
+              </div>
+
+              {/* NOTAMs */}
+              <div style={{flex:'1 1 50%',overflow:'auto'}}>
+                <div className="ph">
+                  <div className="pt">◆ Active NOTAMs</div>
+                  <span className="pb" style={{background:'var(--redbg)',color:'var(--red)'}}>{notams.filter(n=>n.status==='PROHIBITED').length} PROHIBITED</span>
+                </div>
+                <div className="pbd" style={{padding:'6px 12px'}}>
+                  {notams.map((n,i)=>(
+                    <div key={i} style={{padding:'6px 0',borderBottom:i<notams.length-1?'1px solid var(--bdr)':'none'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
+                        <span style={{font:'600 9px var(--mono)',color:'var(--t2)'}}>{n.id}</span>
+                        <span style={{font:'600 8px var(--mono)',color:NOTAM_STATUS_COLORS[n.status],textTransform:'uppercase',letterSpacing:'.5px',padding:'1px 5px',borderRadius:2,background:NOTAM_STATUS_COLORS[n.status]+'18',border:'1px solid '+NOTAM_STATUS_COLORS[n.status]+'35'}}>{n.status}</span>
+                        <span style={{font:'400 9px var(--mono)',color:'var(--t3)',marginLeft:'auto'}}>{n.time}</span>
+                      </div>
+                      <div style={{font:'500 10px/1.3 var(--mono)',color:'var(--t1)'}}>{n.zone}</div>
+                      <div style={{font:'400 9px var(--mono)',color:'var(--t3)',marginTop:2}}>{n.detail}</div>
+                    </div>
                   ))}
                 </div>
               </div>
