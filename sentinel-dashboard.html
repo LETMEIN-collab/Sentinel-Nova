@@ -7,6 +7,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -57,6 +59,20 @@ body{font-family:'Inter',sans-serif;background:#000;color:#d4d4d4;overflow-x:hid
 /* MAP */
 .mwrap{position:relative;width:100%;height:100%;min-height:300px;background:var(--bg0)}
 .mwrap svg{width:100%;height:100%}
+#leaflet-map{width:100%;height:100%;background:#000;z-index:0}
+.leaflet-container{background:#000!important}
+.leaflet-control-zoom{border:1px solid var(--bdr)!important;border-radius:3px!important}
+.leaflet-control-zoom a{background:var(--bg2)!important;color:var(--t2)!important;border-color:var(--bdr)!important;width:26px!important;height:26px!important;line-height:26px!important;font-size:13px!important}
+.leaflet-control-zoom a:hover{background:var(--bg3)!important;color:var(--t1)!important}
+.leaflet-control-attribution{display:none!important}
+.pulse-marker{border-radius:50%;animation:pmark 2s infinite}
+@keyframes pmark{0%{box-shadow:0 0 0 0 rgba(255,59,48,.5)}70%{box-shadow:0 0 0 12px rgba(255,59,48,0)}100%{box-shadow:0 0 0 0 rgba(255,59,48,0)}}
+.leaflet-popup-content-wrapper{background:var(--bg2)!important;color:var(--t1)!important;border:1px solid var(--bdrh)!important;border-radius:6px!important;box-shadow:0 4px 20px rgba(0,0,0,.6)!important;font-family:'Inter',sans-serif!important;font-size:11px!important}
+.leaflet-popup-tip{background:var(--bg2)!important;border:1px solid var(--bdrh)!important}
+.leaflet-popup-close-button{color:var(--t3)!important;font-size:16px!important}
+.leaflet-popup-close-button:hover{color:var(--t1)!important}
+.conn-arc{stroke-dasharray:6,4;animation:arcflow 3s linear infinite}
+@keyframes arcflow{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-30}}
 .mfilt{position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap}
 .mfb{font:500 9px var(--mono);padding:3px 8px;border-radius:2px;border:1px solid var(--bdr);background:var(--bg2);color:var(--t3);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.5px}
 .mfb:hover{border-color:var(--bdrh);color:var(--t2)}.mfb.a{background:var(--amberbg);border-color:var(--amberd);color:var(--amber)}
@@ -267,17 +283,155 @@ const REGS=[
   {r:'Western Europe',v:38,n:6,d:'+7%'},{r:'North America',v:32,n:4,d:'+1%'},
 ];
 
+/* ═══ RSS FEED CONFIG ═══ */
+const RSS_FEEDS=[
+  {q:'geopolitical+risk+conflict',cat:'CONFLICT'},
+  {q:'climate+change+disaster',cat:'CLIMATE'},
+  {q:'cybersecurity+attack+threat',cat:'CYBER'},
+  {q:'global+economy+sanctions+trade',cat:'ECONOMIC'},
+  {q:'oil+energy+crisis+OPEC',cat:'ENERGY'},
+];
+const PROXY='https://api.rss2json.com/v1/api.json?rss_url=';
+const catKeywords={
+  CONFLICT:['war','military','nato','conflict','troops','missile','attack','invasion','defense','army','weapon','strike','sanction'],
+  CLIMATE:['climate','flood','wildfire','hurricane','drought','emissions','carbon','warming','sea level','storm','heat','ice'],
+  CYBER:['cyber','ransomware','hack','breach','malware','vulnerability','phishing','data leak','CISA','zero-day'],
+  ECONOMIC:['economy','gdp','trade','tariff','inflation','recession','debt','imf','world bank','fiscal','monetary'],
+  ENERGY:['oil','gas','opec','energy','pipeline','refinery','nuclear','solar','wind','grid','fuel','petroleum'],
+  REGULATORY:['regulation','eu','law','compliance','legislation','tax','ban','policy','mandate','rule'],
+};
+function classifyHeadline(title){
+  const t=title.toLowerCase();
+  let best='CONFLICT',score=0;
+  for(const[cat,kws]of Object.entries(catKeywords)){
+    const s=kws.filter(k=>t.includes(k)).length;
+    if(s>score){score=s;best=cat;}
+  }
+  return best;
+}
+function timeAgo(dateStr){
+  const d=new Date(dateStr);const now=new Date();const mins=Math.floor((now-d)/60000);
+  if(mins<60)return mins+'m ago';
+  const hrs=Math.floor(mins/60);if(hrs<24)return hrs+'h ago';
+  return Math.floor(hrs/24)+'d ago';
+}
+
 /* ═══ APP ═══ */
 function App(){
   const[time,setTime]=useState(new Date());
   const[mf,setMf]=useState('ALL');
   const[tt,setTt]=useState(null);
   const[tp,setTp]=useState('6M');
+  const[liveNews,setLiveNews]=useState([]);
+  const[feedStatus,setFeedStatus]=useState('loading');
+
+  // Fetch live RSS feeds
+  const fetchFeeds=async()=>{
+    try{
+      const results=[];
+      for(const feed of RSS_FEEDS){
+        const rssUrl=encodeURIComponent(`https://news.google.com/rss/search?q=${feed.q}&hl=en-US&gl=US&ceid=US:en`);
+        try{
+          const res=await fetch(PROXY+rssUrl);
+          const data=await res.json();
+          if(data.items){
+            data.items.slice(0,6).forEach(item=>{
+              const cat=classifyHeadline(item.title);
+              const src=item.title.includes(' - ')?item.title.split(' - ').pop().trim():'News';
+              const headline=item.title.includes(' - ')?item.title.split(' - ').slice(0,-1).join(' - ').trim():item.title;
+              results.push({
+                t:headline,
+                cat,
+                sv:['CONFLICT','CYBER'].includes(cat)?'critical':['CLIMATE','ENERGY'].includes(cat)?'high':'medium',
+                src,
+                tm:timeAgo(item.pubDate),
+                url:item.link,
+                pubDate:new Date(item.pubDate),
+              });
+            });
+          }
+        }catch(e){}
+      }
+      // Deduplicate and sort by date
+      const seen=new Set();
+      const unique=results.filter(r=>{const k=r.t.slice(0,50);if(seen.has(k))return false;seen.add(k);return true;});
+      unique.sort((a,b)=>b.pubDate-a.pubDate);
+      if(unique.length>0){setLiveNews(unique.slice(0,25));setFeedStatus('live');}
+      else{setFeedStatus('fallback');}
+    }catch(e){setFeedStatus('fallback');}
+  };
+
+  const mapRef=useRef(null);
+  const markersRef=useRef([]);
+  const linesRef=useRef([]);
 
   useEffect(()=>{const i=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(i)},[]);
+  useEffect(()=>{fetchFeeds();const i=setInterval(fetchFeeds,5*60*1000);return()=>clearInterval(i)},[]);
 
-  const proj=(lat,lon)=>[(lon+180)*(960/360),(90-lat)*(480/180)];
+  // Initialize Leaflet map
+  useEffect(()=>{
+    if(mapRef.current)return;
+    const map=L.map('leaflet-map',{
+      center:[20,15],zoom:2,minZoom:2,maxZoom:8,
+      zoomControl:true,attributionControl:false,
+      worldCopyJump:true
+    });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{
+      subdomains:'abcd',maxZoom:19
+    }).addTo(map);
+    // Add labels as separate layer on top
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{
+      subdomains:'abcd',maxZoom:19,pane:'shadowPane'
+    }).addTo(map);
+    mapRef.current=map;
+
+    // Add connection lines
+    CONNS.forEach(([fromId,toId,label,color])=>{
+      const f=INCIDENTS.find(i=>i.id===fromId);const t=INCIDENTS.find(i=>i.id===toId);
+      if(!f||!t)return;
+      const line=L.polyline([[f.lat,f.lon],[t.lat,t.lon]],{
+        color,weight:1.5,opacity:0.35,dashArray:'6,4',className:'conn-arc'
+      }).addTo(map);
+      linesRef.current.push(line);
+    });
+  },[]);
+
+  // Update markers when filter changes
+  useEffect(()=>{
+    if(!mapRef.current)return;
+    const map=mapRef.current;
+    // Clear old markers
+    markersRef.current.forEach(m=>map.removeLayer(m));
+    markersRef.current=[];
+    // Add filtered markers
+    const filtered=mf==='ALL'?INCIDENTS:INCIDENTS.filter(i=>i.cat===mf);
+    filtered.forEach(inc=>{
+      const col=SC[inc.sv];
+      const size=inc.sv==='critical'?10:8;
+      const pulseClass=inc.sv==='critical'?'pulse-marker':'';
+      const icon=L.divIcon({
+        className:'',
+        html:`<div style="width:${size}px;height:${size}px;background:${col};border-radius:50%;border:2px solid rgba(0,0,0,0.6);box-shadow:0 0 ${inc.sv==='critical'?'12':'6'}px ${col}80;cursor:pointer" class="${pulseClass}"></div>`,
+        iconSize:[size,size],iconAnchor:[size/2,size/2]
+      });
+      const marker=L.marker([inc.lat,inc.lon],{icon}).addTo(map);
+      const popup=`<div style="font-family:Inter,sans-serif">
+        <div style="font:600 10px 'JetBrains Mono';color:${col};text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">${inc.cat} — ${inc.sv.toUpperCase()}</div>
+        <div style="font:500 12px/1.4 Inter;color:#e5e5e5;margin-bottom:4px">${inc.t}</div>
+        <div style="font:400 10px 'JetBrains Mono';color:#999">${inc.reg} · ${inc.tm} ago</div>
+        <div style="font:500 10px 'JetBrains Mono';color:#ff9500;margin-top:4px">${inc.imp}</div>
+      </div>`;
+      marker.bindPopup(popup,{maxWidth:280,closeButton:true});
+      marker.on('mouseover',function(){this.openPopup()});
+      markersRef.current.push(marker);
+    });
+  },[mf]);
+
   const fi=mf==='ALL'?INCIDENTS:INCIDENTS.filter(i=>i.cat===mf);
+
+  // Use live news for feed + wire, fallback to static
+  const feedItems=liveNews.length>0?liveNews:INCIDENTS;
+  const wireItems=liveNews.length>0?liveNews:NEWS;
 
   return(
     <div>
@@ -339,177 +493,18 @@ function App(){
           {/* MAP */}
           <div style={{flex:'1 1 55%',minHeight:0,borderBottom:'1px solid var(--bdr)'}}>
             <div className="mwrap">
-              <svg viewBox="0 0 960 480" preserveAspectRatio="xMidYMid meet">
-                <defs>
-                  {/* Ocean gradient */}
-                  <radialGradient id="ocean" cx="50%" cy="50%" r="60%">
-                    <stop offset="0%" stopColor="#060d18"/>
-                    <stop offset="100%" stopColor="#020508"/>
-                  </radialGradient>
-                  {/* Land gradient */}
-                  <linearGradient id="land" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0f1e14"/>
-                    <stop offset="100%" stopColor="#0a1610"/>
-                  </linearGradient>
-                  {/* Glow filter for markers */}
-                  <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
-                    <feGaussianBlur stdDeviation="3" result="blur"/>
-                    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-                  </filter>
-                  {/* Hotzone glow */}
-                  <filter id="hzglow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="12" result="blur"/>
-                    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-                  </filter>
-                  {/* Marker shadow */}
-                  <filter id="mshadow"><feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000" floodOpacity=".5"/></filter>
-                </defs>
-                {/* Ocean bg */}
-                <rect width="960" height="480" fill="url(#ocean)"/>
-                {/* Graticule grid */}
-                {[...Array(7)].map((_,i)=><line key={'lat'+i} x1="0" y1={60+i*55} x2="960" y2={60+i*55} stroke="#0a1520" strokeWidth=".4" strokeDasharray="2,6"/>)}
-                {[...Array(13)].map((_,i)=><line key={'lon'+i} x1={80+i*65} y1="0" x2={80+i*65} y2="480" stroke="#0a1520" strokeWidth=".4" strokeDasharray="2,6"/>)}
-                {/* Equator */}
-                <line x1="0" y1="240" x2="960" y2="240" stroke="#0f1f2f" strokeWidth=".6" strokeDasharray="4,4"/>
-                {/* Prime meridian */}
-                <line x1="480" y1="0" x2="480" y2="480" stroke="#0f1f2f" strokeWidth=".6" strokeDasharray="4,4"/>
-
-                {/* ══ NORTH AMERICA ══ */}
-                {/* Canada */}
-                <path d="M85,42 L95,38 L115,35 L140,33 L165,30 L185,32 L210,35 L228,40 L240,45 L248,42 L260,45 L268,50 L265,55 L255,58 L245,62 L240,58 L230,55 L220,52 L212,55 L205,60 L195,58 L188,62 L180,58 L170,55 L160,52 L148,55 L138,60 L128,58 L118,55 L105,58 L98,62 L92,58 L88,50Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Alaska */}
-                <path d="M55,50 L65,42 L80,40 L88,45 L85,52 L75,58 L62,56Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* USA */}
-                <path d="M92,62 L105,60 L118,58 L138,62 L160,64 L180,65 L200,66 L220,68 L240,70 L258,72 L268,80 L265,88 L260,96 L252,104 L248,112 L242,118 L235,122 L228,118 L220,115 L210,118 L202,122 L195,118 L188,112 L178,108 L168,112 L158,115 L148,118 L140,122 L132,126 L125,130 L118,128 L108,124 L100,120 L95,115 L90,108 L88,100 L86,92 L85,82 L88,72Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Mexico */}
-                <path d="M100,130 L118,132 L132,130 L140,128 L148,132 L155,140 L158,148 L155,158 L148,165 L142,172 L135,178 L128,175 L122,168 L118,160 L112,155 L108,148 L102,142 L98,136Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Central America */}
-                <path d="M135,178 L142,180 L150,185 L158,192 L165,198 L168,205 L165,212 L158,218 L152,215 L148,210 L142,205 L138,198 L135,192 L132,185Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Caribbean */}
-                <path d="M175,165 L188,160 L198,162 L205,168 L202,175 L192,178 L182,175 L175,170Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-                <path d="M208,170 L218,168 L225,172 L222,178 L215,180 L208,176Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-
-                {/* ══ SOUTH AMERICA ══ */}
-                {/* Colombia/Venezuela */}
-                <path d="M168,218 L178,215 L190,212 L202,210 L215,212 L225,218 L232,225 L228,232 L220,235 L210,238 L200,240 L190,238 L182,235 L175,230 L170,225Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Brazil */}
-                <path d="M195,240 L210,238 L225,240 L240,248 L252,258 L260,270 L265,285 L262,300 L258,315 L250,328 L242,338 L232,345 L222,348 L212,345 L202,338 L195,328 L190,315 L188,300 L186,285 L185,270 L188,255 L192,245Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Peru/Bolivia */}
-                <path d="M165,240 L175,238 L185,240 L188,255 L186,270 L185,285 L180,298 L172,305 L165,298 L160,288 L155,275 L152,262 L155,250Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Argentina/Chile */}
-                <path d="M172,310 L185,305 L195,315 L205,328 L212,342 L215,358 L212,375 L206,390 L198,402 L190,410 L185,405 L180,395 L175,382 L170,368 L168,352 L166,338 L168,325Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-
-                {/* ══ EUROPE ══ */}
-                {/* Scandinavia */}
-                <path d="M445,22 L452,18 L460,20 L465,28 L468,38 L470,48 L468,58 L462,65 L455,60 L450,52 L448,42 L445,32Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* UK/Ireland */}
-                <path d="M418,52 L425,48 L432,50 L435,56 L432,62 L428,66 L422,64 L418,58Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-                <path d="M412,56 L416,54 L418,58 L415,62 L412,60Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-                {/* Western Europe */}
-                <path d="M432,68 L440,65 L448,62 L458,60 L468,62 L478,65 L482,72 L478,80 L472,85 L465,88 L458,85 L450,82 L442,80 L435,76Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Iberia */}
-                <path d="M420,82 L432,78 L442,82 L445,90 L442,98 L435,102 L425,100 L418,96 L416,90Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Italy */}
-                <path d="M458,88 L462,85 L468,88 L472,95 L475,102 L472,110 L468,115 L462,112 L458,105 L456,98Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Eastern Europe */}
-                <path d="M478,52 L490,48 L502,50 L512,55 L518,62 L520,72 L518,82 L512,88 L505,92 L498,88 L490,85 L485,80 L480,72 L478,62Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Greece/Turkey */}
-                <path d="M478,95 L490,92 L502,95 L510,100 L518,105 L525,102 L532,105 L538,110 L535,118 L528,120 L520,118 L512,115 L505,112 L498,108 L490,105 L485,100Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-
-                {/* ══ AFRICA ══ */}
-                {/* North Africa */}
-                <path d="M410,115 L425,112 L442,110 L458,112 L475,115 L490,118 L502,120 L510,125 L515,132 L512,140 L508,148 L502,152 L495,148 L488,145 L480,142 L472,140 L462,138 L452,140 L442,142 L432,140 L422,138 L415,132 L412,125Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* West Africa */}
-                <path d="M400,155 L415,148 L430,145 L445,148 L455,155 L458,165 L455,175 L448,182 L440,185 L430,188 L420,185 L412,180 L405,172 L400,165Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Central/East Africa */}
-                <path d="M458,155 L472,148 L488,150 L502,155 L515,162 L522,172 L525,185 L522,198 L518,212 L512,225 L505,235 L498,245 L490,252 L482,248 L475,240 L468,232 L462,222 L458,210 L455,198 L452,185 L455,172Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Southern Africa */}
-                <path d="M462,255 L475,248 L488,252 L498,260 L505,272 L508,285 L505,298 L498,310 L488,318 L478,322 L468,318 L458,312 L452,302 L448,290 L450,278 L455,265Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Madagascar */}
-                <path d="M518,278 L524,272 L528,280 L526,292 L522,300 L516,296 L514,288Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-
-                {/* ══ ASIA ══ */}
-                {/* Russia */}
-                <path d="M520,28 L545,22 L575,20 L608,18 L640,20 L672,22 L700,25 L728,28 L752,32 L770,38 L780,45 L775,52 L768,58 L758,55 L748,50 L735,48 L720,45 L702,42 L682,40 L660,42 L638,45 L618,48 L598,52 L578,55 L558,52 L540,48 L528,45 L522,38Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Middle East */}
-                <path d="M510,118 L525,115 L538,118 L548,125 L555,135 L558,145 L555,155 L548,162 L540,168 L530,165 L522,158 L515,150 L510,140 L508,130Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Arabian Peninsula */}
-                <path d="M520,145 L535,140 L548,145 L558,155 L562,168 L558,178 L550,185 L540,182 L530,178 L522,172 L518,162 L518,152Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Central Asia */}
-                <path d="M545,62 L570,58 L595,60 L618,65 L632,72 L628,82 L620,88 L608,85 L595,82 L580,80 L568,78 L555,75 L548,70Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Iran/Afghanistan */}
-                <path d="M538,90 L555,85 L572,88 L585,95 L592,105 L588,115 L580,122 L568,125 L555,122 L545,115 L538,108 L535,98Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* India */}
-                <path d="M585,125 L598,120 L612,122 L625,128 L632,138 L635,150 L632,165 L625,178 L618,188 L608,195 L598,192 L590,185 L585,175 L580,162 L578,148 L580,135Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Sri Lanka */}
-                <path d="M610,200 L616,196 L620,202 L618,210 L612,212 L608,206Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".4"/>
-                {/* China */}
-                <path d="M632,60 L655,55 L678,58 L700,62 L720,68 L738,75 L748,85 L745,98 L738,108 L728,115 L718,120 L705,122 L692,118 L678,115 L665,112 L652,108 L642,102 L635,95 L630,85 L628,72Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Korea */}
-                <path d="M738,82 L745,78 L750,82 L752,90 L748,98 L742,102 L738,96 L736,88Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-                {/* Japan */}
-                <path d="M758,72 L765,68 L772,72 L775,80 L772,90 L768,98 L762,105 L758,100 L755,92 L754,82Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* SE Asia mainland */}
-                <path d="M648,148 L662,142 L678,145 L692,150 L702,158 L698,170 L690,180 L678,185 L668,188 L658,192 L648,188 L642,178 L640,168 L642,158Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Philippines */}
-                <path d="M722,155 L728,150 L734,155 L732,165 L728,172 L722,168Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-                {/* Indonesia */}
-                <path d="M660,210 L678,205 L698,208 L718,212 L738,215 L752,220 L748,228 L738,232 L718,235 L698,232 L678,228 L662,225 L655,218Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* Borneo */}
-                <path d="M702,195 L712,190 L720,195 L718,205 L710,210 L702,205Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-                {/* Papua */}
-                <path d="M758,220 L772,215 L785,220 L790,228 L785,235 L775,238 L765,235 L758,228Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-
-                {/* ══ OCEANIA ══ */}
-                {/* Australia */}
-                <path d="M712,290 L732,282 L755,278 L778,280 L798,285 L815,295 L825,308 L828,322 L822,338 L812,350 L798,358 L782,362 L765,360 L748,355 L735,345 L725,332 L718,318 L714,305Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".6"/>
-                {/* New Zealand */}
-                <path d="M842,345 L848,340 L852,348 L850,358 L846,365 L840,360 L838,352Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-                <path d="M845,368 L850,365 L852,372 L848,378 L844,375Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-
-                {/* ══ GREENLAND / ICELAND ══ */}
-                <path d="M320,18 L342,12 L365,15 L378,22 L375,35 L365,42 L350,45 L335,42 L322,35 L318,28Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".5"/>
-                <path d="M395,35 L402,32 L408,35 L406,42 L400,44 L395,40Z" fill="url(#land)" stroke="#1a3520" strokeWidth=".4"/>
-
-                {/* ══ HOTZONE OVERLAYS ══ */}
-                <ellipse cx="530" cy="150" rx="65" ry="35" fill="rgba(255,59,48,.04)" stroke="none" filter="url(#hzglow)"/>
-                <ellipse cx="530" cy="150" rx="65" ry="35" fill="none" stroke="rgba(255,59,48,.12)" strokeWidth=".8" strokeDasharray="4,3"/>
-                <ellipse cx="480" cy="100" rx="55" ry="30" fill="rgba(255,59,48,.03)" stroke="none" filter="url(#hzglow)"/>
-                <ellipse cx="480" cy="100" rx="55" ry="30" fill="none" stroke="rgba(255,59,48,.1)" strokeWidth=".8" strokeDasharray="4,3"/>
-                <ellipse cx="720" cy="95" rx="50" ry="28" fill="rgba(255,149,0,.03)" stroke="none" filter="url(#hzglow)"/>
-                <ellipse cx="720" cy="95" rx="50" ry="28" fill="none" stroke="rgba(255,149,0,.1)" strokeWidth=".8" strokeDasharray="4,3"/>
-
-                {/* ══ CONNECTION LINES ══ */}
-                {CONNS.map(([fromId,toId,label,color],ci)=>{
-                  const f=INCIDENTS.find(i=>i.id===fromId);const t=INCIDENTS.find(i=>i.id===toId);
-                  if(!f||!t)return null;
-                  const[x1,y1]=proj(f.lat,f.lon);const[x2,y2]=proj(t.lat,t.lon);
-                  const mx=(x1+x2)/2,my=(y1+y2)/2-15;
-                  return <g key={'c'+ci} opacity=".5">
-                    <path d={`M${x1},${y1} Q${mx},${my} ${x2},${y2}`} fill="none" stroke={color} strokeWidth=".8" className="conn-line" opacity=".4"/>
-                  </g>;
-                })}
-
-                {/* ══ INCIDENT MARKERS ══ */}
-                {fi.map(inc=>{const[x,y]=proj(inc.lat,inc.lon);const col=SC[inc.sv];
-                  return <g key={inc.id} style={{cursor:'pointer'}} filter="url(#mshadow)" onMouseEnter={e=>setTt({x:e.clientX+14,y:e.clientY-10,i:inc})} onMouseLeave={()=>setTt(null)}>
-                    {inc.sv==='critical'&&<circle className="mpulse" cx={x} cy={y} r="5" fill="none" stroke={col} strokeWidth="1.5" opacity=".6"/>}
-                    <circle cx={x} cy={y} r={inc.sv==='critical'?5:4} fill={col} opacity=".9" stroke="rgba(0,0,0,.6)" strokeWidth="1.5"/>
-                    <circle cx={x} cy={y} r="1.5" fill="#fff" opacity=".95"/>
-                  </g>;
-                })}
-              </svg>
-              <div className="mfilt">
+              <div id="leaflet-map"></div>
+              <div className="mfilt" style={{zIndex:1000}}>
                 {['ALL','CONFLICT','CLIMATE','CYBER','ENERGY','ECONOMIC'].map(f=>(
                   <button key={f} className={`mfb ${mf===f?'a':''}`} onClick={()=>setMf(f)}>{f}</button>
                 ))}
               </div>
-              <div className="mstat">
+              <div className="mstat" style={{zIndex:1000}}>
                 <div className="ms"><span className="msv" style={{color:'var(--red)'}}>{INCIDENTS.filter(i=>i.sv==='critical').length}</span><span className="msl">Critical</span></div>
                 <div className="ms"><span className="msv" style={{color:'var(--amber)'}}>{INCIDENTS.filter(i=>i.sv==='high').length}</span><span className="msl">High</span></div>
                 <div className="ms"><span className="msv" style={{color:'var(--t1)'}}>{INCIDENTS.length}</span><span className="msl">Total</span></div>
               </div>
-              <div className="mleg">
+              <div className="mleg" style={{zIndex:1000}}>
                 {Object.entries(CC).slice(0,6).map(([k,v])=><span key={k} className="ml"><span className="mld" style={{background:v}}></span>{k}</span>)}
               </div>
             </div>
@@ -517,24 +512,47 @@ function App(){
 
           {/* BOTTOM: Intel + Trends */}
           <div style={{flex:'1 1 45%',display:'grid',gridTemplateColumns:'1fr 1fr',overflow:'hidden'}}>
-            {/* Intel Feed */}
+            {/* Intel Feed — live or fallback */}
             <div style={{overflow:'auto',borderRight:'1px solid var(--bdr)'}}>
-              <div className="ph"><div className="pt">◆ Intelligence Feed</div><span className="pb" style={{background:'var(--redbg)',color:'var(--red)'}}>{INCIDENTS.length} ACTIVE</span></div>
+              <div className="ph">
+                <div className="pt">◆ Intelligence Feed</div>
+                <span className="pb" style={{background:feedStatus==='live'?'var(--grnbg)':'var(--redbg)',color:feedStatus==='live'?'var(--grn)':'var(--red)'}}>
+                  {feedStatus==='live'?'● LIVE RSS':feedStatus==='loading'?'LOADING...':feedItems.length+' ACTIVE'}
+                </span>
+              </div>
               <div className="pbd">
-                {INCIDENTS.map(inc=>{
-                  const q=encodeURIComponent(inc.t.split('—')[0].trim());
-                  const url=`https://news.google.com/search?q=${q}`;
-                  return <a key={inc.id} href={url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
-                  <div className="fi">
-                  <div className="fit">
-                    <div className="fis" style={{background:SC[inc.sv]}}/>
-                    <span className="fitg" style={{background:CC[inc.cat]+'20',color:CC[inc.cat],border:'1px solid '+CC[inc.cat]+'40'}}>{inc.cat}</span>
-                    <span style={{font:'400 9px var(--mono)',color:'var(--t3)'}}>{inc.reg}</span>
-                    <span className="fitm">{inc.tm}</span>
-                  </div>
-                  <div className="fitt" style={{cursor:'pointer'}}>{inc.t} <span style={{color:'var(--amber)',fontSize:9}}>↗</span></div>
-                  <div className="fisu">{inc.imp}</div>
-                </div></a>;})}
+                {feedStatus==='live'?
+                  /* LIVE RSS ITEMS */
+                  liveNews.map((item,idx)=>{
+                    return <a key={idx} href={item.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
+                    <div className="fi">
+                      <div className="fit">
+                        <div className="fis" style={{background:SC[item.sv]}}/>
+                        <span className="fitg" style={{background:(CC[item.cat]||'#999')+'20',color:CC[item.cat]||'#999',border:'1px solid '+(CC[item.cat]||'#999')+'40'}}>{item.cat}</span>
+                        <span style={{font:'400 9px var(--mono)',color:'var(--t3)'}}>{item.src}</span>
+                        <span className="fitm">{item.tm}</span>
+                      </div>
+                      <div className="fitt" style={{cursor:'pointer'}}>{item.t} <span style={{color:'var(--amber)',fontSize:9}}>↗</span></div>
+                    </div></a>;
+                  })
+                :
+                  /* FALLBACK STATIC ITEMS */
+                  INCIDENTS.map(inc=>{
+                    const q=encodeURIComponent(inc.t.split('—')[0].trim());
+                    const url=`https://news.google.com/search?q=${q}`;
+                    return <a key={inc.id} href={url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
+                    <div className="fi">
+                      <div className="fit">
+                        <div className="fis" style={{background:SC[inc.sv]}}/>
+                        <span className="fitg" style={{background:CC[inc.cat]+'20',color:CC[inc.cat],border:'1px solid '+CC[inc.cat]+'40'}}>{inc.cat}</span>
+                        <span style={{font:'400 9px var(--mono)',color:'var(--t3)'}}>{inc.reg}</span>
+                        <span className="fitm">{inc.tm}</span>
+                      </div>
+                      <div className="fitt" style={{cursor:'pointer'}}>{inc.t} <span style={{color:'var(--amber)',fontSize:9}}>↗</span></div>
+                      <div className="fisu">{inc.imp}</div>
+                    </div></a>;
+                  })
+                }
               </div>
             </div>
 
@@ -592,15 +610,23 @@ function App(){
         </div>
       </div>
 
-      {/* News Ticker */}
+      {/* News Ticker — live or fallback */}
       <div className="newstick">
         <span className="label">◆ WIRE</span>
         <div className="nscroll">
-          {[...NEWS,...NEWS].map((n,i)=><span key={i} className="nitem">
-            <span className="ndot" style={{background:n.c}}></span>
-            {n.t}
-            <span className="nsrc">{n.s}</span>
-          </span>)}
+          {liveNews.length>0?
+            [...liveNews,...liveNews].map((n,i)=><span key={i} className="nitem">
+              <span className="ndot" style={{background:CC[n.cat]||'#999'}}></span>
+              {n.t}
+              <span className="nsrc">{n.src}</span>
+            </span>)
+          :
+            [...NEWS,...NEWS].map((n,i)=><span key={i} className="nitem">
+              <span className="ndot" style={{background:n.c}}></span>
+              {n.t}
+              <span className="nsrc">{n.s}</span>
+            </span>)
+          }
         </div>
       </div>
 
