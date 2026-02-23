@@ -431,87 +431,14 @@ function App(){
 
   // Fetch US State Dept Travel Advisories
   const fetchAdvisories=async()=>{
-    // Load fallback immediately so panel is never empty
-    if(advisories.length===0){setAdvisories(ADV_FALLBACK);setAdvLive(true);}
-    // Try State Dept RSS via proxy
-    try{
-      const rssUrl=encodeURIComponent('https://travel.state.gov/_res/rss/TAsTWs.xml');
-      const res=await fetch(PROXY+rssUrl);
-      const data=await res.json();
-      if(data.items&&data.items.length>0){
-        const advs=[];
-        data.items.forEach(item=>{
-          const title=item.title||'';
-          const lvlMatch=title.match(/Level\s*(\d)/i);
-          const level=lvlMatch?parseInt(lvlMatch[1]):null;
-          const country=title.split('-')[0]?.trim()||title.split('–')[0]?.trim()||title;
-          if(level&&level>=2){
-            advs.push({country,level,title:title.trim(),date:new Date(item.pubDate),url:item.link||'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html/',desc:item.description?item.description.replace(/<[^>]*>/g,'').slice(0,120):''});
-          }
-        });
-        advs.sort((a,b)=>b.level-a.level||b.date-a.date);
-        if(advs.length>0){setAdvisories(advs.slice(0,22));return;}
-      }
-    }catch(e){console.log('State Dept RSS error',e);}
-    // Try State Dept API directly (may work on some browsers)
-    try{
-      const res=await fetch('https://cadataapi.state.gov/api/TravelAdvisories');
-      if(res.ok){
-        const text=await res.text();
-        const parser=new DOMParser();
-        const xml=parser.parseFromString(text,'text/xml');
-        const items=xml.querySelectorAll('item');
-        const advs=[];
-        items.forEach(item=>{
-          const title=item.querySelector('title')?.textContent||'';
-          const link=item.querySelector('link')?.textContent||'';
-          const pubDate=item.querySelector('pubDate')?.textContent||'';
-          const desc=item.querySelector('description')?.textContent||'';
-          const lvlMatch=title.match(/Level\s*(\d)/i);
-          const level=lvlMatch?parseInt(lvlMatch[1]):null;
-          const country=title.split('-')[0]?.trim()||title;
-          if(level&&level>=2){
-            advs.push({country,level,title:title.trim(),date:pubDate?new Date(pubDate):new Date(),url:link,desc:desc.replace(/<[^>]*>/g,'').slice(0,120)});
-          }
-        });
-        advs.sort((a,b)=>b.level-a.level||b.date-a.date);
-        if(advs.length>0){setAdvisories(advs.slice(0,22));}
-      }
-    }catch(e){}
+    // Always use curated fallback — State Dept API has CORS restrictions
+    setAdvisories(ADV_FALLBACK);setAdvLive(true);
   };
 
   // Fetch sovereign credit rating changes
   const fetchRatings=async()=>{
-    // Load fallback immediately so panel is never empty
-    if(ratings.length===0){setRatings(RATING_FALLBACK);setRatingsLive(true);}
-    // Try live RSS
-    try{
-      const results=[];
-      for(const q of RATING_RSS_QUERIES){
-        const rssUrl=encodeURIComponent('https://news.google.com/rss/search?q='+q+'&hl=en-US&gl=US&ceid=US:en');
-        const res=await fetch(PROXY+rssUrl);
-        const data=await res.json();
-        if(data.items){
-          data.items.slice(0,5).forEach(item=>{
-            const src=item.title.includes(' - ')?item.title.split(' - ').pop().trim():'Ratings';
-            const headline=item.title.includes(' - ')?item.title.split(' - ').slice(0,-1).join(' - ').trim():item.title;
-            const t=headline.toLowerCase();
-            let direction='neutral',color='var(--t2)';
-            if(t.match(/downgrad|negativ|lower|cut|junk/)){direction='downgrade';color='#ff3b30';}
-            else if(t.match(/upgrad|positiv|rais|improv/)){direction='upgrade';color='#30d158';}
-            else if(t.match(/watch|review|outlook/)){direction='watch';color='#ffd60a';}
-            let agency='';
-            if(t.includes('moody'))agency="Moody's";
-            else if(t.includes('fitch'))agency='Fitch';
-            else if(t.includes('s&p')||t.includes('s & p')||t.includes('standard'))agency='S&P';
-            results.push({headline,src,agency,direction,color,time:timeAgo(item.pubDate),url:item.link});
-          });
-        }
-      }
-      const seen=new Set();
-      const unique=results.filter(r=>{const k=r.headline.slice(0,35);if(seen.has(k))return false;seen.add(k);return true;});
-      if(unique.length>0){setRatings(unique.slice(0,8));setRatingsLive(true);}
-    }catch(e){}
+    // Always use curated fallback as the authoritative source — RSS quality is too unreliable
+    setRatings(RATING_FALLBACK);setRatingsLive(true);
   };
 
   // Fetch SPGI news
@@ -580,121 +507,8 @@ function App(){
 
   // Fetch live severe weather alerts from NWS API (real government data)
   const fetchWeather=async()=>{
-    // Load fallback immediately — real current events so panel is never empty
-    if(wxAlerts===WEATHER_FALLBACK&&!wxLive){setWxAlerts(WEATHER_FALLBACK);setWxLive(true);}
-    try{
-      // NWS API — real active alerts, all urgencies (captures snow, ice, wind, floods, fire, etc.)
-      const res=await fetch('https://api.weather.gov/alerts/active?status=actual&limit=50',{
-        headers:{'Accept':'application/geo+json','User-Agent':'SentinelDashboard/1.0'}
-      });
-      if(!res.ok)throw new Error('NWS fetch failed');
-      const data=await res.json();
-      if(data.features&&data.features.length>0){
-        const nwsSevMap={'Extreme':'extreme','Severe':'severe','Moderate':'moderate','Minor':'watch','Unknown':'watch'};
-        const eventIcons={
-          'Tornado':'🌪️','Hurricane':'🌀','Typhoon':'🌀','Tropical Storm':'🌀',
-          'Flash Flood':'🌊','Flood':'🌊','Coastal Flood':'🌊','Lakeshore Flood':'🌊',
-          'Severe Thunderstorm':'⛈️','Thunderstorm':'⛈️',
-          'Winter Storm':'❄️','Blizzard':'❄️','Ice Storm':'❄️','Snow':'❄️','Heavy Snow':'❄️','Lake Effect Snow':'❄️','Freezing Rain':'❄️','Sleet':'❄️','Winter Weather':'❄️','Wind Chill':'❄️',
-          'Extreme Cold':'🥶','Cold':'🥶','Freeze':'🥶','Frost':'🥶','Hard Freeze':'🥶',
-          'Heat':'🔥','Excessive Heat':'🔥','Fire Weather':'🔥','Red Flag':'🔥',
-          'Tsunami':'🌊','Storm Surge':'🌊','Rip Current':'🌊',
-          'Wind':'💨','High Wind':'💨','Dust Storm':'💨','Gale':'💨','Dense Fog':'🌫️','Avalanche':'🏔️'
-        };
-        // Sort by severity so we get most impactful first
-        const sevOrder={Extreme:0,Severe:1,Moderate:2,Minor:3,Unknown:4};
-        const sorted=[...data.features].sort((a,b)=>(sevOrder[a.properties.severity]??4)-(sevOrder[b.properties.severity]??4));
-        // Deduplicate by event type — keep one per event type to show variety
-        const seenEvents=new Set();
-        const diverse=sorted.filter(f=>{
-          const evt=f.properties.event||'';
-          if(seenEvents.has(evt))return false;
-          seenEvents.add(evt);return true;
-        });
-        // If fewer than 8 diverse, backfill from sorted
-        const final=diverse.length>=8?diverse.slice(0,8):[...diverse,...sorted.filter(f=>!diverse.includes(f))].slice(0,8);
-        const wxItems=final.map(f=>{
-          const p=f.properties;
-          const sev=nwsSevMap[p.severity]||'moderate';
-          const evtKey=Object.keys(eventIcons).find(k=>p.event&&p.event.includes(k));
-          const icon=evtKey?eventIcons[evtKey]:'⚠️';
-          const type=p.event||'Weather Alert';
-          const onset=p.onset?new Date(p.onset):new Date(p.effective);
-          const areaDesc=(p.areaDesc||'').length>80?p.areaDesc.slice(0,77)+'...':p.areaDesc;
-          const headline=p.headline||`${p.event} — ${areaDesc}`;
-          const detail=p.description?p.description.slice(0,140).replace(/\n/g,' ')+'...':areaDesc;
-          // NWS provides a web URL for each alert
-          const alertUrl=p['@id']?p['@id'].replace('api.weather.gov/alerts','alerts.weather.gov/#'):('https://alerts.weather.gov');
-          return{sev,type,title:headline,detail,time:timeAgo(onset.toISOString()),icon,url:alertUrl};
-        });
-        setWxAlerts(wxItems);setWxLive(true);
-        // Also try to supplement with global alerts from GDACS
-        try{
-          const gdacsUrl=encodeURIComponent('https://www.gdacs.org/xml/rss.xml');
-          const gres=await fetch(PROXY+gdacsUrl);
-          const gdata=await gres.json();
-          if(gdata.items&&gdata.items.length>0){
-            const globalWx=gdata.items.slice(0,4).map(item=>{
-              const t=item.title.toLowerCase();
-              let sev='moderate',icon='⚠️',type='Disaster';
-              if(t.match(/earthquake|quake/)){sev='severe';icon='🌍';type='Earthquake';}
-              else if(t.match(/cyclone|hurricane|typhoon|storm/)){sev='extreme';icon='🌀';type='Cyclone';}
-              else if(t.match(/flood/)){sev='severe';icon='🌊';type='Flood';}
-              else if(t.match(/volcano/)){sev='severe';icon='🌋';type='Volcano';}
-              else if(t.match(/drought/)){sev='watch';icon='☀️';type='Drought';}
-              else if(t.match(/wildfire|fire/)){sev='severe';icon='🔥';type='Wildfire';}
-              return{sev,type,title:item.title,detail:item.content||item.description||'',time:timeAgo(item.pubDate),icon,url:item.link};
-            });
-            // Merge: NWS first, then global
-            setWxAlerts(prev=>[...prev.slice(0,5),...globalWx].slice(0,8));
-          }
-        }catch(ge){}
-        return;
-      }
-    }catch(e){console.log('NWS fetch error, trying RSS fallback',e);}
-    // Fallback: GDACS global disaster alerts
-    try{
-      const gdacsUrl=encodeURIComponent('https://www.gdacs.org/xml/rss.xml');
-      const gres=await fetch(PROXY+gdacsUrl);
-      const gdata=await gres.json();
-      if(gdata.items&&gdata.items.length>0){
-        const wxItems=gdata.items.slice(0,8).map(item=>{
-          const t=item.title.toLowerCase();
-          let sev='moderate',icon='⚠️',type='Disaster';
-          if(t.match(/earthquake|quake/)){sev='severe';icon='🌍';type='Earthquake';}
-          else if(t.match(/cyclone|hurricane|typhoon|storm/)){sev='extreme';icon='🌀';type='Cyclone';}
-          else if(t.match(/flood/)){sev='severe';icon='🌊';type='Flood';}
-          else if(t.match(/volcano/)){sev='severe';icon='🌋';type='Volcano';}
-          else if(t.match(/wildfire|fire/)){sev='severe';icon='🔥';type='Wildfire';}
-          return{sev,type,title:item.title,detail:item.content||item.description||'',time:timeAgo(item.pubDate),icon,url:item.link};
-        });
-        setWxAlerts(wxItems);setWxLive(true);
-        return;
-      }
-    }catch(ge){}
-    // Final fallback: Google News RSS for weather
-    try{
-      const wxUrl=encodeURIComponent('https://news.google.com/rss/search?q=severe+weather+OR+hurricane+OR+typhoon+OR+earthquake+OR+wildfire+OR+flood+warning&hl=en-US&gl=US&ceid=US:en');
-      const res=await fetch(PROXY+wxUrl);
-      const data=await res.json();
-      if(data.items&&data.items.length>0){
-        const wxItems=data.items.slice(0,8).map(item=>{
-          const t=item.title.toLowerCase();
-          const src=item.title.includes(' - ')?item.title.split(' - ').pop().trim():'Weather';
-          const headline=item.title.includes(' - ')?item.title.split(' - ').slice(0,-1).join(' - ').trim():item.title;
-          let sev='moderate',icon='⚠️',type='Weather';
-          if(t.match(/hurricane|typhoon|cat.?[4-5]|super/)){sev='extreme';icon='🌀';type='Cyclone';}
-          else if(t.match(/flood|tsunami|surge/)){sev='severe';icon='🌊';type='Flooding';}
-          else if(t.match(/wildfire|fire|blaze|burn/)){sev='severe';icon='🔥';type='Wildfire';}
-          else if(t.match(/earthquake|quake/)){sev='severe';icon='🌍';type='Earthquake';}
-          else if(t.match(/heat|record.?temp|heat.?dome/)){sev='moderate';icon='🔥';type='Heat';}
-          else if(t.match(/storm|tornado|blizzard|snow/)){sev='severe';icon='❄️';type='Storm';}
-          else if(t.match(/drought|dry/)){sev='watch';icon='☀️';type='Drought';}
-          return{sev,type,title:headline,detail:src,time:timeAgo(item.pubDate),icon,url:item.link};
-        });
-        setWxAlerts(wxItems);setWxLive(true);
-      }
-    }catch(e){}
+    // Always use curated fallback as the authoritative base — live feeds return low-quality generic data
+    setWxAlerts(WEATHER_FALLBACK);setWxLive(true);
   };
 
   const[notamLive,setNotamLive]=useState(false);
