@@ -99,6 +99,21 @@ body{font-family:'Inter',sans-serif;background:#000;color:#d4d4d4;overflow-x:hid
 /* HEADER SPARKLINE */
 .hdr-spgi{display:flex;align-items:center;gap:8px;padding:2px 10px;background:var(--bg2);border:1px solid var(--bdr);border-radius:3px}
 
+/* BREAKING NEWS BANNER */
+.breaking-banner{background:linear-gradient(90deg,#1a0000,#330000,#1a0000);border-bottom:2px solid #ff3b30;padding:0;overflow:hidden;animation:bannerIn .4s ease-out}
+@keyframes bannerIn{from{max-height:0;opacity:0}to{max-height:60px;opacity:1}}
+.breaking-banner .bb-inner{display:flex;align-items:center;gap:10px;padding:6px 16px;min-height:36px}
+.breaking-banner .bb-pulse{width:8px;height:8px;border-radius:50%;background:#ff3b30;animation:bbpulse 1.2s ease-in-out infinite;flex-shrink:0}
+@keyframes bbpulse{0%,100%{box-shadow:0 0 4px #ff3b30}50%{box-shadow:0 0 16px #ff3b30,0 0 30px rgba(255,59,48,.4)}}
+.breaking-banner .bb-tag{font:700 9px var(--mono);color:#ff3b30;letter-spacing:1.5px;text-transform:uppercase;flex-shrink:0;padding:2px 8px;border:1px solid rgba(255,59,48,.4);border-radius:2px;background:rgba(255,59,48,.12)}
+.breaking-banner .bb-headline{font:600 11px/1.3 'Inter',sans-serif;color:#ff6b6b;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.breaking-banner .bb-headline a{color:#ff6b6b;text-decoration:none}
+.breaking-banner .bb-headline a:hover{color:#ff9999;text-decoration:underline}
+.breaking-banner .bb-sources{font:400 9px var(--mono);color:var(--t3);flex-shrink:0;white-space:nowrap}
+.breaking-banner .bb-time{font:400 9px var(--mono);color:var(--t3);flex-shrink:0}
+.breaking-banner .bb-dismiss{background:none;border:1px solid rgba(255,59,48,.3);color:var(--t3);font:400 10px var(--mono);cursor:pointer;padding:2px 6px;border-radius:2px;flex-shrink:0}
+.breaking-banner .bb-dismiss:hover{color:var(--t1);border-color:var(--t3)}
+
 /* INTEL SEARCH */
 .isrch{display:flex;align-items:center;gap:6px;padding:4px 12px;background:var(--bg2);border-bottom:1px solid var(--bdr)}
 .isrch input{flex:1;background:var(--card);border:1px solid var(--bdr);border-radius:3px;padding:4px 8px;font:400 10px var(--mono);color:var(--t1);outline:none}
@@ -446,17 +461,162 @@ function App(){
   const[searchQuery,setSearchQuery]=useState('');
   const[searchResults,setSearchResults]=useState([]);
   const[searching,setSearching]=useState(false);
+  const[breakingNews,setBreakingNews]=useState(null);
+  const[bannerDismissed,setBannerDismissed]=useState(null);
+  const[livePrices,setLivePrices]=useState({});
+  const[spgiIntraday,setSpgiIntraday]=useState(SPGI);
 
   // Fetch US State Dept Travel Advisories
   const fetchAdvisories=async()=>{
-    // Always use curated fallback — State Dept API has CORS restrictions
+    // Load curated fallback immediately so panel is never empty
+    if(advisories.length===0)setAdvisories(ADV_FALLBACK);
+    // Try State Dept travel advisory RSS via proxy
+    try{
+      var rssUrl=encodeURIComponent('https://travel.state.gov/_res/rss/TAsTWs.xml');
+      var res=await fetch(PROXY+rssUrl);
+      var data=await res.json();
+      if(data.items&&data.items.length>5){
+        var parsed=data.items.map(function(item){
+          var lvl=4;
+          if(/Level 3/i.test(item.title))lvl=3;
+          else if(/Level 2/i.test(item.title))lvl=2;
+          else if(/Level 1/i.test(item.title))lvl=1;
+          var country=item.title.replace(/\s*[-–—]\s*Level \d.*/i,'').trim();
+          return{country:country,level:lvl,title:item.title,date:new Date(item.pubDate),url:item.link||item.guid||'https://travel.state.gov',desc:item.description?(item.description.replace(/<[^>]*>/g,'').slice(0,80)):'Travel Advisory'};
+        });
+        // Sort: Level 4 first, then 3, then 2
+        parsed.sort(function(a,b){return b.level-a.level||b.date-a.date;});
+        // Only keep Level 2-4
+        var filtered=parsed.filter(function(a){return a.level>=2;});
+        if(filtered.length>5){setAdvisories(filtered);setAdvLive(true);return;}
+      }
+    }catch(e){}
     setAdvisories(ADV_FALLBACK);setAdvLive(true);
   };
 
   // Fetch sovereign credit rating changes
   const fetchRatings=async()=>{
-    // Always use curated fallback as the authoritative source — RSS quality is too unreliable
+    // Load curated fallback immediately
+    if(ratings.length===0)setRatings(RATING_FALLBACK);
+    // Try GDELT for recent sovereign rating news
+    try{
+      var gq=encodeURIComponent('("credit rating" OR "sovereign rating" OR "downgrades" OR "upgrades" OR "outlook negative" OR "outlook stable") ("Moody\'s" OR "Fitch" OR "S&P Global" OR "Scope Ratings") sourcelang:eng');
+      var gUrl='https://api.gdeltproject.org/api/v2/doc/doc?query='+gq+'&mode=artlist&maxrecords=30&format=json&sort=datedesc&timespan=10080min';
+      var controller=new AbortController();
+      var timeout=setTimeout(function(){controller.abort();},8000);
+      var resp=await fetch(gUrl,{signal:controller.signal});
+      clearTimeout(timeout);
+      if(!resp.ok){setRatings(RATING_FALLBACK);setRatingsLive(true);return;}
+      var data=await resp.json();
+      if(!data.articles||data.articles.length<3){setRatings(RATING_FALLBACK);setRatingsLive(true);return;}
+      var seen=new Set();
+      var items=[];
+      data.articles.forEach(function(art){
+        if(!art.title)return;
+        var t=art.title;
+        var key=t.slice(0,40).toLowerCase();
+        if(seen.has(key))return;seen.add(key);
+        // Detect agency
+        var agency='Ratings';
+        if(/moody/i.test(t))agency="Moody's";
+        else if(/fitch/i.test(t))agency='Fitch';
+        else if(/s.p global|s.p rating/i.test(t))agency='S&P';
+        else if(/scope/i.test(t))agency='Scope';
+        else if(/dbrs/i.test(t))agency='DBRS';
+        // Detect direction
+        var direction='watch',color='#ffd60a';
+        if(/downgrad|cut|lower|negative/i.test(t)){direction='downgrade';color='#ff3b30';}
+        else if(/upgrad|rais|positive|stable from negative/i.test(t)){direction='upgrade';color='#30d158';}
+        // Parse source
+        var src=art.domain?art.domain.replace('www.',''):'News';
+        // Parse time
+        var tm='Recent';
+        if(art.seendate){
+          var d=art.seendate.replace(/(\d{4})(\d{2})(\d{2})T.*/,'$1-$2-$3');
+          var diff=Math.floor((new Date()-new Date(d))/(1000*60*60*24));
+          if(diff===0)tm='Today';else if(diff===1)tm='Yesterday';else if(diff<7)tm=diff+'d ago';else tm=d;
+        }
+        items.push({headline:t.split(' - ')[0].trim(),src:src,agency:agency,direction:direction,color:color,time:tm,url:art.url||'#'});
+      });
+      if(items.length>=3){setRatings(items.slice(0,12));setRatingsLive(true);return;}
+    }catch(e){}
     setRatings(RATING_FALLBACK);setRatingsLive(true);
+  };
+
+  // ═══ LIVE STOCK PRICES — Yahoo Finance via CORS proxy ═══
+  const YAHOO_SYMBOLS={
+    'SPGI':'SPGI','LMT':'LMT','RTX':'RTX','NOC':'NOC','PLTR':'PLTR',
+    'ES1':'ES=F','NQ1':'NQ=F','DXY':'DX-Y.NYB','GC1':'GC=F','CL1':'CL=F',
+    'US10Y':'^TNX','VIX':'^VIX','BTC':'BTC-USD','ETH':'ETH-USD',
+    'EUR':'EURUSD=X','GBP':'GBPUSD=X','JPY':'JPY=X',
+    'NG1':'NG=F','HG1':'HG=F','W1':'ZW=F','US2Y':'^IRX'
+  };
+  var fetchLivePrices=async function(){
+    try{
+      var symbols=Object.values(YAHOO_SYMBOLS).join(',');
+      var yUrl='https://query1.finance.yahoo.com/v7/finance/quote?symbols='+symbols+'&fields=regularMarketPrice,regularMarketChangePercent,regularMarketChange,shortName';
+      var proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(yUrl);
+      var controller=new AbortController();
+      var timeout=setTimeout(function(){controller.abort();},10000);
+      var resp=await fetch(proxyUrl,{signal:controller.signal});
+      clearTimeout(timeout);
+      if(!resp.ok)return;
+      var data=await resp.json();
+      if(!data.quoteResponse||!data.quoteResponse.result)return;
+      var prices={};
+      var symbolToKey={};
+      Object.keys(YAHOO_SYMBOLS).forEach(function(k){symbolToKey[YAHOO_SYMBOLS[k]]=k;});
+      data.quoteResponse.result.forEach(function(q){
+        var key=symbolToKey[q.symbol];
+        if(!key)return;
+        var price=q.regularMarketPrice;
+        var changePct=q.regularMarketChangePercent;
+        if(price===undefined)return;
+        var fmtPrice=price>=1000?price.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}):
+                     price>=100?price.toFixed(2):
+                     price>=10?price.toFixed(2):
+                     price.toFixed(4);
+        // Special formatting for yields
+        if(key==='US10Y'||key==='US2Y')fmtPrice=price.toFixed(3)+'%';
+        if(key==='JPY')fmtPrice=price.toFixed(2);
+        var fmtChange=changePct>=0?'+'+changePct.toFixed(2)+'%':changePct.toFixed(2)+'%';
+        if(key==='US10Y'||key==='US2Y'){
+          var bps=Math.round(q.regularMarketChange*100);
+          fmtChange=(bps>=0?'+':'')+bps+'bp';
+        }
+        prices[key]={p:fmtPrice,c:fmtChange,u:changePct>=0,raw:price};
+      });
+      if(Object.keys(prices).length>0)setLivePrices(prices);
+    }catch(e){
+      // Silent fail — keeps showing last known prices or hardcoded fallback
+    }
+  };
+
+  // Fetch SPGI intraday chart data for sparkline
+  var fetchSpgiChart=async function(){
+    try{
+      var yUrl='https://query1.finance.yahoo.com/v8/finance/chart/SPGI?interval=15m&range=1d';
+      var proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(yUrl);
+      var controller=new AbortController();
+      var timeout=setTimeout(function(){controller.abort();},10000);
+      var resp=await fetch(proxyUrl,{signal:controller.signal});
+      clearTimeout(timeout);
+      if(!resp.ok)return;
+      var data=await resp.json();
+      var result=data.chart&&data.chart.result&&data.chart.result[0];
+      if(!result||!result.indicators||!result.indicators.quote||!result.indicators.quote[0])return;
+      var closes=result.indicators.quote[0].close;
+      var times=result.timestamp;
+      if(!closes||!times)return;
+      var points=[];
+      for(var i=0;i<closes.length;i++){
+        if(closes[i]!==null&&closes[i]!==undefined){
+          var d=new Date(times[i]*1000);
+          points.push({t:d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes(),p:closes[i]});
+        }
+      }
+      if(points.length>=5)setSpgiIntraday(points);
+    }catch(e){}
   };
 
   // Fetch SPGI news
@@ -525,7 +685,63 @@ function App(){
 
   // Fetch live severe weather alerts from NWS API (real government data)
   const fetchWeather=async()=>{
-    // Always use curated fallback as the authoritative base — live feeds return low-quality generic data
+    // Load curated fallback immediately
+    if(wxAlerts.length===0||wxAlerts===WEATHER_FALLBACK)setWxAlerts(WEATHER_FALLBACK);
+    // Try GDELT for real-time severe weather events
+    try{
+      var gq=encodeURIComponent('(hurricane OR typhoon OR cyclone OR earthquake OR tsunami OR blizzard OR "winter storm" OR tornado OR wildfire OR "volcanic eruption" OR flooding OR drought OR "heat wave" OR "polar vortex") (deaths OR emergency OR evacuation OR damage OR warning OR "state of emergency") sourcelang:eng');
+      var gUrl='https://api.gdeltproject.org/api/v2/doc/doc?query='+gq+'&mode=artlist&maxrecords=50&format=json&sort=datedesc&timespan=2880min';
+      var controller=new AbortController();
+      var timeout=setTimeout(function(){controller.abort();},8000);
+      var resp=await fetch(gUrl,{signal:controller.signal});
+      clearTimeout(timeout);
+      if(!resp.ok){setWxAlerts(WEATHER_FALLBACK);setWxLive(true);return;}
+      var data=await resp.json();
+      if(!data.articles||data.articles.length<3){setWxAlerts(WEATHER_FALLBACK);setWxLive(true);return;}
+      // Cluster by story similarity
+      var clusters=[];
+      var wxIcons={'hurricane':'🌀','typhoon':'🌀','cyclone':'🌀','earthquake':'🫨','tsunami':'🌊','blizzard':'❄️','winter storm':'❄️','snow':'❄️','tornado':'🌪️','wildfire':'🔥','fire':'🔥','volcanic':'🌋','eruption':'🌋','flood':'🌊','drought':'☀️','heat':'🔥','polar vortex':'🥶'};
+      var wxTypes={'hurricane':'Hurricane','typhoon':'Typhoon','cyclone':'Cyclone','earthquake':'Earthquake','tsunami':'Tsunami','blizzard':'Blizzard','winter storm':'Winter Storm','snow':'Winter Storm','tornado':'Tornado','wildfire':'Wildfire','fire':'Wildfire','volcanic':'Eruption','eruption':'Eruption','flood':'Flooding','drought':'Drought','heat':'Heat','polar vortex':'Polar Vortex'};
+      data.articles.forEach(function(art){
+        if(!art.title)return;
+        var t=art.title;
+        var tl=t.toLowerCase();
+        // Skip junk
+        if(/opinion|editorial|recipe|horoscope|celebrity|review:|top \d/i.test(t))return;
+        // Match to existing cluster
+        var matched=false;
+        for(var c=0;c<clusters.length;c++){
+          var words=tl.replace(/[^a-z\s]/g,'').split(/\s+/).filter(function(w){return w.length>4;});
+          var overlap=words.filter(function(w){return clusters[c].titleLower.indexOf(w)!==-1;}).length;
+          if(overlap>=3){clusters[c].count++;matched=true;break;}
+        }
+        if(!matched){
+          // Detect weather type
+          var icon='⚠️',type='Severe Weather';
+          for(var kw in wxIcons){if(tl.indexOf(kw)!==-1){icon=wxIcons[kw];type=wxTypes[kw];break;}}
+          // Detect severity
+          var sev='severe';
+          if(/death|killed|fatal|catastroph|devastat|state of emergency/i.test(t))sev='extreme';
+          else if(/warning|watch|advisory|alert/i.test(t))sev='moderate';
+          // Parse time
+          var tm='Recent';
+          if(art.seendate){
+            var d=art.seendate.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2}).*/,'$1-$2-$3');
+            var diff=Math.floor((new Date()-new Date(d))/(1000*60*60));
+            if(diff<1)tm='NOW';else if(diff<24)tm=diff+'h ago';else tm=Math.floor(diff/24)+'d ago';
+          }
+          clusters.push({title:t.split(' - ')[0].trim(),titleLower:tl,icon:icon,type:type,sev:sev,time:tm,count:1,url:art.url||'#',detail:art.domain?'Source: '+art.domain.replace('www.',''):''});
+        }
+      });
+      // Sort by source count (bigger story = more coverage)
+      clusters.sort(function(a,b){return b.count-a.count;});
+      if(clusters.length>=3){
+        var wxItems=clusters.slice(0,10).map(function(c){
+          return{sev:c.sev,type:c.type,title:c.title,detail:c.detail+(c.count>1?' ('+c.count+' sources)':''),time:c.time,icon:c.icon,url:c.url};
+        });
+        setWxAlerts(wxItems);setWxLive(true);return;
+      }
+    }catch(e){}
     setWxAlerts(WEATHER_FALLBACK);setWxLive(true);
   };
 
@@ -601,12 +817,80 @@ function App(){
   };
   const clearSearch=function(){setSearchQuery('');};
 
+  // ═══ GDELT BREAKING NEWS — auto-polls every 2 min ═══
+  const GDELT_KEYWORDS=[
+    'war','invasion','airstrike','missile','bombing','ceasefire','coup','martial law',
+    'earthquake','tsunami','hurricane','typhoon','cyclone','volcanic eruption','wildfire',
+    'terrorist attack','mass shooting','hostage','assassination','nuclear',
+    'pandemic','outbreak','bird flu','H5N1','Ebola',
+    'sanctions','NATO','UN Security Council','emergency summit','market crash'
+  ];
+  const GDELT_QUERY=encodeURIComponent(GDELT_KEYWORDS.slice(0,8).join(' OR ')+' sourcelang:eng');
+
+  var fetchBreakingNews=async function(){
+    try{
+      var url='https://api.gdeltproject.org/api/v2/doc/doc?query='+GDELT_QUERY+'&mode=artlist&maxrecords=75&format=json&sort=datedesc&timespan=30min';
+      var controller=new AbortController();
+      var timeout=setTimeout(function(){controller.abort();},8000);
+      var resp=await fetch(url,{signal:controller.signal});
+      clearTimeout(timeout);
+      if(!resp.ok)return;
+      var data=await resp.json();
+      if(!data.articles||data.articles.length<1)return;
+
+      // Group articles by similarity to find multi-source stories
+      var clusters=[];
+      data.articles.forEach(function(art){
+        if(!art.title)return;
+        var titleLower=art.title.toLowerCase();
+        // Skip junk: opinion, listicles, entertainment
+        if(/opinion|editorial|top \d|best \d|review|recipe|horoscope|celebrity|kardashian/i.test(art.title))return;
+        // Check if matches any breaking keyword
+        var isBreaking=GDELT_KEYWORDS.some(function(kw){return titleLower.indexOf(kw.toLowerCase())!==-1;});
+        if(!isBreaking)return;
+        // Try to add to existing cluster
+        var matched=false;
+        for(var c=0;c<clusters.length;c++){
+          var clusterTitle=clusters[c].title.toLowerCase();
+          // Simple word overlap check — if 3+ significant words match, same story
+          var artWords=titleLower.replace(/[^a-z\s]/g,'').split(/\s+/).filter(function(w){return w.length>4;});
+          var overlap=artWords.filter(function(w){return clusterTitle.indexOf(w)!==-1;}).length;
+          if(overlap>=3){clusters[c].sources.push(art.domain||'unknown');clusters[c].count++;matched=true;break;}
+        }
+        if(!matched){
+          clusters.push({title:art.title,url:art.url,domain:art.domain||'unknown',date:art.seendate||'',sources:[art.domain||'unknown'],count:1});
+        }
+      });
+
+      // Sort by source count — most-covered story = most significant
+      clusters.sort(function(a,b){return b.count-a.count;});
+
+      // Only show if 3+ sources are covering it (confirmed breaking, not noise)
+      var top=clusters[0];
+      if(!top||top.count<3)return;
+
+      // Don't re-show same story if user dismissed it
+      if(bannerDismissed&&top.title.substring(0,40)===bannerDismissed)return;
+
+      setBreakingNews({
+        title:top.title,
+        url:top.url,
+        sources:top.count,
+        domain:top.domain,
+        time:top.date?top.date.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,'$4:$5 UTC'):new Date().toISOString().slice(11,16)+' UTC'
+      });
+    }catch(e){
+      // Silent fail — no banner appears, dashboard unaffected
+    }
+  };
+
   const mapRef=useRef(null);
   const markersRef=useRef([]);
   const linesRef=useRef([]);
 
   useEffect(()=>{const i=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(i)},[]);
-  useEffect(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews();fetchAdvisories();fetchRatings();const i=setInterval(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews();fetchAdvisories();fetchRatings()},2*60*1000);return()=>clearInterval(i)},[]);
+  useEffect(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews();fetchAdvisories();fetchRatings();fetchLivePrices();fetchSpgiChart();const i=setInterval(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews();fetchAdvisories();fetchRatings();fetchLivePrices();fetchSpgiChart()},2*60*1000);return()=>clearInterval(i)},[]);
+  useEffect(()=>{fetchBreakingNews();const bi=setInterval(fetchBreakingNews,2*60*1000);return()=>clearInterval(bi)},[]);
 
   // Initialize Leaflet map
   useEffect(()=>{
@@ -685,11 +969,23 @@ function App(){
     <div>
       {/* Ticker */}
       <div className="ticker"><div className="tscroll">
-        {[...TICKERS,...TICKERS].map((t,i)=><React.Fragment key={i}>
-          <span className="tk"><span className="s">{t.s}</span><span className="p">{t.p}</span><span className={t.u?'up':'dn'}>{t.c}</span></span>
+        {[...TICKERS,...TICKERS].map((t,i)=>{var lp=livePrices[t.s];var price=lp?lp.p:t.p;var change=lp?lp.c:t.c;var up=lp?lp.u:t.u;return <React.Fragment key={i}>
+          <span className="tk"><span className="s">{t.s}</span><span className="p">{price}</span><span className={up?'up':'dn'}>{change}</span></span>
           {i%5===4&&<span className="tsep">│</span>}
-        </React.Fragment>)}
+        </React.Fragment>})}
       </div></div>
+
+      {/* Breaking News Banner — GDELT powered */}
+      {breakingNews&&<div className="breaking-banner">
+        <div className="bb-inner">
+          <div className="bb-pulse"/>
+          <span className="bb-tag">BREAKING</span>
+          <span className="bb-headline"><a href={breakingNews.url} target="_blank" rel="noopener noreferrer">{breakingNews.title}</a></span>
+          <span className="bb-sources">{breakingNews.sources} sources</span>
+          <span className="bb-time">{breakingNews.time}</span>
+          <button className="bb-dismiss" onClick={function(){setBannerDismissed(breakingNews.title.substring(0,40));setBreakingNews(null);}}>✕</button>
+        </div>
+      </div>}
 
       {/* Header */}
       <div className="hdr">
@@ -697,9 +993,9 @@ function App(){
         <div className="hdr-r">
           <div className="hdr-spgi">
             <span style={{font:'600 10px var(--mono)',color:'var(--t2)'}}>SPGI</span>
-            <span style={{font:'700 11px var(--mono)',color:'var(--grn)'}}>512.38</span>
-            <svg width="48" height="16" viewBox="0 0 48 16"><polyline points={SPGI.map((d,i)=>{const x=i/(SPGI.length-1)*48;const mn=Math.min(...SPGI.map(s=>s.p));const mx=Math.max(...SPGI.map(s=>s.p));return `${x},${2+((mx-d.p)/(mx-mn))*12}`}).join(' ')} fill="none" stroke="#30d158" strokeWidth="1.2"/></svg>
-            <span style={{font:'500 9px var(--mono)',color:'var(--grn)'}}>+1.24%</span>
+            <span style={{font:'700 11px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.p:'512.38'}</span>
+            <svg width="48" height="16" viewBox="0 0 48 16"><polyline points={spgiIntraday.map((d,i)=>{const x=i/(spgiIntraday.length-1)*48;const mn=Math.min(...spgiIntraday.map(s=>s.p));const mx=Math.max(...spgiIntraday.map(s=>s.p));const range=mx-mn||1;return `${x},${2+((mx-d.p)/range)*12}`}).join(' ')} fill="none" stroke={livePrices.SPGI?(livePrices.SPGI.u?'#30d158':'#ff3b30'):'#30d158'} strokeWidth="1.2"/></svg>
+            <span style={{font:'500 9px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.c:'+1.24%'}</span>
           </div>
           <span className="threat">⚠ {advStats.l4>0?'L4 ADVISORIES: '+advStats.l4:'THREAT LEVEL: ELEVATED'}</span>
           <span className="live"><span className="ldot"></span>LIVE</span>
@@ -892,21 +1188,21 @@ function App(){
         {/* RIGHT PANEL */}
         <div className="rpanel">
           {/* SPGI */}
-          <div className="ph"><div className="pt">◆ SPGI — S&P Global</div><span className="pb" style={{background:'var(--grnbg)',color:'var(--grn)'}}>+1.24%</span></div>
+          <div className="ph"><div className="pt">◆ SPGI — S&P Global</div><span className="pb" style={{background:livePrices.SPGI?(livePrices.SPGI.u?'var(--grnbg)':'var(--redbg)'):'var(--grnbg)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.c:'+1.24%'}</span></div>
           <div className="pbd">
             <div style={{display:'flex',alignItems:'baseline',gap:8}}>
-              <span style={{font:'700 22px var(--mono)',color:'var(--grn)'}}>$512.38</span>
-              <span style={{font:'500 11px var(--mono)',color:'var(--grn)'}}>+$6.28</span>
+              <span style={{font:'700 22px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{'$'+(livePrices.SPGI?livePrices.SPGI.p:'512.38')}</span>
+              <span style={{font:'500 11px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.c:'+$6.28'}</span>
             </div>
-            <div style={{font:'400 9px var(--mono)',color:'var(--t3)',marginTop:2}}>NYSE · Intraday · Vol: 1.2M</div>
-            <div style={{marginTop:8}}><Sparkline data={SPGI} dataKey="p" w={260} h={55} color="#30d158"/></div>
+            <div style={{font:'400 9px var(--mono)',color:'var(--t3)',marginTop:2}}>NYSE · {livePrices.SPGI?'● LIVE':'Intraday'} · Updated {time.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false})}</div>
+            <div style={{marginTop:8}}><Sparkline data={spgiIntraday} dataKey="p" w={260} h={55} color={livePrices.SPGI?(livePrices.SPGI.u?'#30d158':'#ff3b30'):'#30d158'}/></div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginTop:8,font:'400 9px var(--mono)'}}>
-              <div><span style={{color:'var(--t3)'}}>Open</span><br/><span style={{color:'var(--t1)'}}>508.20</span></div>
-              <div><span style={{color:'var(--t3)'}}>High</span><br/><span style={{color:'var(--t1)'}}>513.10</span></div>
-              <div><span style={{color:'var(--t3)'}}>Low</span><br/><span style={{color:'var(--t1)'}}>508.05</span></div>
-              <div><span style={{color:'var(--t3)'}}>Mkt Cap</span><br/><span style={{color:'var(--t1)'}}>$161.2B</span></div>
-              <div><span style={{color:'var(--t3)'}}>P/E</span><br/><span style={{color:'var(--t1)'}}>48.32</span></div>
-              <div><span style={{color:'var(--t3)'}}>52w H/L</span><br/><span style={{color:'var(--t1)'}}>520/380</span></div>
+              <div><span style={{color:'var(--t3)'}}>Open</span><br/><span style={{color:'var(--t1)'}}>{spgiIntraday.length>0?spgiIntraday[0].p.toFixed(2):'508.20'}</span></div>
+              <div><span style={{color:'var(--t3)'}}>High</span><br/><span style={{color:'var(--t1)'}}>{Math.max(...spgiIntraday.map(function(d){return d.p})).toFixed(2)}</span></div>
+              <div><span style={{color:'var(--t3)'}}>Low</span><br/><span style={{color:'var(--t1)'}}>{Math.min(...spgiIntraday.map(function(d){return d.p})).toFixed(2)}</span></div>
+              <div><span style={{color:'var(--t3)'}}>Mkt Cap</span><br/><span style={{color:'var(--t1)'}}>{livePrices.SPGI?'$'+(livePrices.SPGI.raw*314.8/1e9).toFixed(1)+'B':'$161.2B'}</span></div>
+              <div><span style={{color:'var(--t3)'}}>Prev</span><br/><span style={{color:'var(--t1)'}}>{spgiIntraday.length>0?spgiIntraday[0].p.toFixed(2):'508.20'}</span></div>
+              <div><span style={{color:'var(--t3)'}}>Points</span><br/><span style={{color:'var(--t1)'}}>{spgiIntraday.length} pts</span></div>
             </div>
           </div>
 
