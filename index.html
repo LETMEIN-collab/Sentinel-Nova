@@ -612,45 +612,61 @@ function App(){
     return{cat,sv};
   };
 
+  // Fetch with timeout helper (compatible with all browsers)
+  const fetchWithTimeout=async(url,ms=6000)=>{
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),ms);
+    try{const r=await fetch(url,{signal:ctrl.signal});clearTimeout(timer);return r;}
+    catch(e){clearTimeout(timer);throw e;}
+  };
+
+  // Parse XML RSS into items array
+  const parseXMLItems=(text)=>{
+    try{
+      const parser=new DOMParser();
+      const xml=parser.parseFromString(text,'text/xml');
+      const items=xml.querySelectorAll('item');
+      if(items.length>0){
+        return Array.from(items).map(item=>({
+          title:item.querySelector('title')?.textContent||'',
+          link:item.querySelector('link')?.textContent||'',
+          pubDate:item.querySelector('pubDate')?.textContent||''
+        }));
+      }
+    }catch(e){}
+    return[];
+  };
+
   // Multi-proxy RSS fetch — tries rss2json, then allorigins, then corsproxy
   const fetchRSS=async(googleQuery)=>{
-    const gnUrl=`https://news.google.com/rss/search?q=${encodeURIComponent(googleQuery)}&hl=en-US&gl=US&ceid=US:en`;
+    const gnUrl='https://news.google.com/rss/search?q='+encodeURIComponent(googleQuery)+'&hl=en-US&gl=US&ceid=US:en';
     // Proxy 1: rss2json
     try{
-      const res=await fetch(PROXY+encodeURIComponent(gnUrl),{signal:AbortSignal.timeout(5000)});
+      const res=await fetchWithTimeout(PROXY+encodeURIComponent(gnUrl));
       const data=await res.json();
       if(data.items&&data.items.length>0)return data.items;
-    }catch(e){}
-    // Proxy 2: allorigins (returns raw XML, need to parse)
+    }catch(e){console.log('rss2json failed',e);}
+    // Proxy 2: allorigins
     try{
-      const res=await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(gnUrl)}`,{signal:AbortSignal.timeout(5000)});
+      const res=await fetchWithTimeout('https://api.allorigins.win/raw?url='+encodeURIComponent(gnUrl));
       const text=await res.text();
-      const parser=new DOMParser();
-      const xml=parser.parseFromString(text,'text/xml');
-      const items=xml.querySelectorAll('item');
-      if(items.length>0){
-        return Array.from(items).map(item=>({
-          title:item.querySelector('title')?.textContent||'',
-          link:item.querySelector('link')?.textContent||'',
-          pubDate:item.querySelector('pubDate')?.textContent||''
-        }));
-      }
-    }catch(e){}
+      const items=parseXMLItems(text);
+      if(items.length>0)return items;
+    }catch(e){console.log('allorigins failed',e);}
     // Proxy 3: corsproxy.io
     try{
-      const res=await fetch(`https://corsproxy.io/?${encodeURIComponent(gnUrl)}`,{signal:AbortSignal.timeout(5000)});
+      const res=await fetchWithTimeout('https://corsproxy.io/?url='+encodeURIComponent(gnUrl));
       const text=await res.text();
-      const parser=new DOMParser();
-      const xml=parser.parseFromString(text,'text/xml');
-      const items=xml.querySelectorAll('item');
-      if(items.length>0){
-        return Array.from(items).map(item=>({
-          title:item.querySelector('title')?.textContent||'',
-          link:item.querySelector('link')?.textContent||'',
-          pubDate:item.querySelector('pubDate')?.textContent||''
-        }));
-      }
-    }catch(e){}
+      const items=parseXMLItems(text);
+      if(items.length>0)return items;
+    }catch(e){console.log('corsproxy failed',e);}
+    // Proxy 4: thingproxy
+    try{
+      const res=await fetchWithTimeout('https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(gnUrl));
+      const text=await res.text();
+      const items=parseXMLItems(text);
+      if(items.length>0)return items;
+    }catch(e){console.log('codetabs failed',e);}
     return[];
   };
 
@@ -666,15 +682,29 @@ function App(){
   };
 
   // Intel search — queries Google News RSS via multiple proxies
+  const[searchError,setSearchError]=useState('');
   const searchIntel=async(query)=>{
     if(!query.trim())return;
-    setSearching(true);setSearchResults([]);
-    const items=await fetchRSS(query);
-    if(items.length>0){
-      setSearchResults(parseRSSItems(items,15));
-    } else {
-      // If all proxies fail, provide a "search on Google News" link
-      setSearchResults([{t:`Open Google News search for "${query}" ↗`,src:'Google News',cat:'INTEL',sv:'medium',tm:'now',url:`https://news.google.com/search?q=${encodeURIComponent(query)}&hl=en-US`}]);
+    setSearching(true);setSearchResults([]);setSearchError('');
+    try{
+      const items=await fetchRSS(query);
+      if(items.length>0){
+        setSearchResults(parseRSSItems(items,15));
+      } else {
+        // If all proxies fail, provide direct Google News links
+        setSearchError('Proxies unavailable');
+        setSearchResults([
+          {t:'Open Google News search for "'+query+'"',src:'Google News',cat:'INTEL',sv:'medium',tm:'now',url:'https://news.google.com/search?q='+encodeURIComponent(query)+'&hl=en-US'},
+          {t:'Open Reuters search for "'+query+'"',src:'Reuters',cat:'INTEL',sv:'medium',tm:'now',url:'https://www.reuters.com/search/news?query='+encodeURIComponent(query)},
+          {t:'Open AP News search for "'+query+'"',src:'AP News',cat:'INTEL',sv:'medium',tm:'now',url:'https://apnews.com/search?q='+encodeURIComponent(query)}
+        ]);
+      }
+    }catch(err){
+      console.log('Search failed entirely',err);
+      setSearchError('Search error');
+      setSearchResults([
+        {t:'Open Google News search for "'+query+'"',src:'Google News',cat:'INTEL',sv:'medium',tm:'now',url:'https://news.google.com/search?q='+encodeURIComponent(query)+'&hl=en-US'}
+      ]);
     }
     setSearching(false);
   };
@@ -947,17 +977,17 @@ function App(){
                   onChange={e=>setSearchQuery(e.target.value)}
                   onKeyDown={e=>{if(e.key==='Enter')searchIntel(searchQuery);}}
                 />
-                <button onClick={()=>searchIntel(searchQuery)}>{searching?'...':'SEARCH'}</button>
+                <button onClick={()=>searchIntel(searchQuery)}>{searching?'SEARCHING...':'SEARCH'}</button>
                 {searchResults.length>0&&<button className="clear" onClick={clearSearch}>✕ CLEAR</button>}
               </div>
               <div className="pbd" style={{flex:1,overflow:'auto'}}>
                 {searchResults.length>0?
                   /* SEARCH RESULTS */
-                  <>
-                    <div style={{padding:'6px 0',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                      <span style={{font:'600 9px var(--mono)',color:'var(--red)',letterSpacing:'.5px'}}>◆ SEARCH: "{searchQuery}" — {searchResults.length} RESULTS</span>
-                    </div>
-                    {searchResults.map((item,idx)=>(
+                  React.createElement(React.Fragment,null,
+                    React.createElement('div',{style:{padding:'6px 0',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}},
+                      React.createElement('span',{style:{font:'600 9px var(--mono)',color:'var(--red)',letterSpacing:'.5px'}},'◆ SEARCH: "',searchQuery,'" — ',searchResults.length,' RESULTS')
+                    ),
+                    searchResults.map((item,idx)=>(
                       <a key={idx} href={item.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
                       <div className="fi">
                         <div className="fit">
@@ -968,18 +998,18 @@ function App(){
                         </div>
                         <div className="fitt" style={{cursor:'pointer'}}>{item.t} <span style={{color:'var(--t3)',fontSize:9}}>↗</span></div>
                       </div></a>
-                    ))}
-                  </>
+                    ))
+                  )
                 :searching?
                   <div style={{padding:'20px 0',textAlign:'center',font:'400 10px var(--mono)',color:'var(--t3)'}}>Searching web for intel...</div>
-                :mapIntel.length>0&&searchResults.length===0?
+                :mapIntel.length>0?
                   /* MAP-DRIVEN REGIONAL INTEL */
-                  <>
-                    <div style={{padding:'6px 0',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                      <span style={{font:'600 9px var(--mono)',color:'#0a84ff',letterSpacing:'.5px'}}>◆ MAP FOCUS: {mapRegion.toUpperCase()} — {mapIntel.length} ITEMS</span>
-                      {mapFetching&&<span style={{font:'400 8px var(--mono)',color:'var(--t3)'}}>Updating...</span>}
-                    </div>
-                    {mapIntel.map((item,idx)=>(
+                  React.createElement(React.Fragment,null,
+                    React.createElement('div',{style:{padding:'6px 0',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}},
+                      React.createElement('span',{style:{font:'600 9px var(--mono)',color:'#0a84ff',letterSpacing:'.5px'}},'◆ MAP FOCUS: ',mapRegion.toUpperCase(),' — ',mapIntel.length,' ITEMS'),
+                      mapFetching?React.createElement('span',{style:{font:'400 8px var(--mono)',color:'var(--t3)'}},'Updating...'):null
+                    ),
+                    mapIntel.map((item,idx)=>(
                       <a key={'mi'+idx} href={item.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
                       <div className="fi">
                         <div className="fit">
@@ -990,8 +1020,8 @@ function App(){
                         </div>
                         <div className="fitt" style={{cursor:'pointer'}}>{item.t} <span style={{color:'var(--t3)',fontSize:9}}>↗</span></div>
                       </div></a>
-                    ))}
-                  </>
+                    ))
+                  )
                 :feedStatus==='live'?
                   /* LIVE RSS ITEMS */
                   liveNews.map((item,idx)=>{
