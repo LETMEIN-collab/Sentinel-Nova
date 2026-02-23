@@ -216,11 +216,11 @@ const AreaChartSVG=({data,keys,colors,w=400,h=180,labels})=>{
 
 /* ═══ DATA ═══ */
 const TICKERS=[
-  {s:'SPGI',p:'512.38',c:'+1.24%',u:true},{s:'ES1',p:'5,842',c:'+0.32%',u:true},{s:'NQ1',p:'20,815',c:'+0.48%',u:true},
-  {s:'DXY',p:'104.12',c:'-0.18%',u:false},{s:'GC1',p:'2,938',c:'+0.85%',u:true},{s:'CL1',p:'78.62',c:'-1.23%',u:false},
-  {s:'US10Y',p:'4.284',c:'+2bp',u:false},{s:'VIX',p:'16.82',c:'-3.41%',u:false},{s:'BTC',p:'97,245',c:'+2.14%',u:true},
-  {s:'EUR',p:'1.0842',c:'+0.11%',u:true},{s:'GBP',p:'1.2668',c:'-0.07%',u:false},{s:'JPY',p:'152.34',c:'+0.23%',u:true},
-  {s:'NG1',p:'3.42',c:'+4.12%',u:true},{s:'HG1',p:'4.28',c:'-0.56%',u:false},{s:'W1',p:'582.50',c:'+1.87%',u:true},
+  {s:'SPGI',p:'424.77',c:'+1.29%',u:true},{s:'ES1',p:'5,954',c:'-0.07%',u:false},{s:'NQ1',p:'21,220',c:'-0.14%',u:false},
+  {s:'DXY',p:'97.69',c:'-0.22%',u:false},{s:'GC1',p:'5,228',c:'+2.90%',u:true},{s:'CL1',p:'65.97',c:'-0.80%',u:false},
+  {s:'US10Y',p:'4.010',c:'-6bp',u:false},{s:'VIX',p:'21.11',c:'+10.58%',u:true},{s:'BTC',p:'64,762',c:'-3.92%',u:false},
+  {s:'EUR',p:'1.1820',c:'+0.31%',u:true},{s:'GBP',p:'1.3519',c:'+0.26%',u:true},{s:'JPY',p:'148.50',c:'-0.45%',u:false},
+  {s:'NG1',p:'3.088',c:'-2.03%',u:false},{s:'HG1',p:'5.90',c:'-1.65%',u:false},{s:'W1',p:'572.00',c:'+2.27%',u:true},
 ];
 
 /* Advisory level colors & labels */
@@ -328,10 +328,10 @@ const NEWS=[
 ];
 
 const MKTS={
-  'COMMODITIES':[{s:'GC1',n:'Gold',p:'2,938',c:'+0.85%',u:1},{s:'CL1',n:'WTI Crude',p:'78.62',c:'-1.23%',u:0},{s:'NG1',n:'Nat Gas',p:'3.42',c:'+4.12%',u:1},{s:'HG1',n:'Copper',p:'4.28',c:'-0.56%',u:0},{s:'W1',n:'Wheat',p:'582.50',c:'+1.87%',u:1}],
-  'FX & RATES':[{s:'DXY',n:'Dollar Idx',p:'104.12',c:'-0.18%',u:0},{s:'EUR',n:'EUR/USD',p:'1.0842',c:'+0.11%',u:1},{s:'US10Y',n:'10Y Yield',p:'4.284%',c:'+2bp',u:0},{s:'US2Y',n:'2Y Yield',p:'4.612%',c:'+1bp',u:0}],
-  'CRYPTO':[{s:'BTC',n:'Bitcoin',p:'97,245',c:'+2.14%',u:1},{s:'ETH',n:'Ethereum',p:'3,284',c:'+1.56%',u:1}],
-  'DEFENSE & INTEL':[{s:'SPGI',n:'S&P Global',p:'512.38',c:'+1.24%',u:1},{s:'LMT',n:'Lockheed',p:'458.92',c:'+2.34%',u:1},{s:'RTX',n:'RTX Corp',p:'98.45',c:'+1.82%',u:1},{s:'NOC',n:'Northrop',p:'512.10',c:'+1.45%',u:1},{s:'PLTR',n:'Palantir',p:'78.22',c:'+3.21%',u:1}],
+  'COMMODITIES':[{s:'GC1',n:'Gold',p:'5,228',c:'+2.90%',u:1},{s:'CL1',n:'WTI Crude',p:'65.97',c:'-0.80%',u:0},{s:'NG1',n:'Nat Gas',p:'3.088',c:'-2.03%',u:0},{s:'HG1',n:'Copper',p:'5.90',c:'-1.65%',u:0},{s:'W1',n:'Wheat',p:'572.00',c:'+2.27%',u:1}],
+  'FX & RATES':[{s:'DXY',n:'Dollar Idx',p:'97.69',c:'-0.22%',u:0},{s:'EUR',n:'EUR/USD',p:'1.1820',c:'+0.31%',u:1},{s:'US10Y',n:'10Y Yield',p:'4.010%',c:'-6bp',u:0},{s:'US2Y',n:'2Y Yield',p:'3.570%',c:'-7bp',u:0}],
+  'CRYPTO':[{s:'BTC',n:'Bitcoin',p:'64,762',c:'-3.92%',u:0},{s:'ETH',n:'Ethereum',p:'2,680',c:'-4.10%',u:0}],
+  'DEFENSE & INTEL':[{s:'SPGI',n:'S&P Global',p:'424.77',c:'+1.29%',u:1},{s:'LMT',n:'Lockheed',p:'661.49',c:'+0.42%',u:1},{s:'RTX',n:'RTX Corp',p:'204.81',c:'+0.64%',u:1},{s:'NOC',n:'Northrop',p:'724.83',c:'+3.38%',u:1},{s:'PLTR',n:'Palantir',p:'135.38',c:'+1.77%',u:1}],
 };
 
 /* SPGI RSS feed queries */
@@ -358,7 +358,7 @@ const TREND={
   '1Y':[{d:'Mar',geo:60,clim:48,cyb:50,con:55},{d:'May',geo:62,clim:52,cyb:52,con:58},{d:'Jul',geo:65,clim:55,cyb:54,con:62},{d:'Sep',geo:68,clim:58,cyb:55,con:65},{d:'Nov',geo:72,clim:64,cyb:60,con:73},{d:'Feb',geo:78,clim:72,cyb:65,con:83}],
 };
 
-const SPGI=[{t:'09:30',p:508.2},{t:'10:00',p:509.5},{t:'10:30',p:510.1},{t:'11:00',p:509.8},{t:'11:30',p:511.2},{t:'12:00',p:510.6},{t:'12:30',p:511.8},{t:'13:00',p:512.5},{t:'13:30',p:511.9},{t:'14:00',p:512.8},{t:'14:30',p:513.1},{t:'15:00',p:512.4},{t:'15:30',p:512.0},{t:'16:00',p:512.38}];
+const SPGI=[{t:'09:30',p:419.5},{t:'10:00',p:420.8},{t:'10:30',p:421.2},{t:'11:00',p:420.6},{t:'11:30',p:422.1},{t:'12:00',p:423.4},{t:'12:30',p:422.8},{t:'13:00',p:423.9},{t:'13:30',p:424.2},{t:'14:00',p:423.6},{t:'14:30',p:424.5},{t:'15:00',p:425.1},{t:'15:30',p:424.3},{t:'16:00',p:424.77}];
 
 /* (Regional risk now computed from live advisories) */
 
@@ -543,7 +543,27 @@ function App(){
     setRatings(RATING_FALLBACK);setRatingsLive(true);
   };
 
-  // ═══ LIVE STOCK PRICES — Yahoo Finance via CORS proxy ═══
+  // ═══ LIVE STOCK PRICES — Multi-proxy Yahoo Finance + Finnhub fallback ═══
+  var CORS_PROXIES=[
+    function(u){return 'https://corsproxy.io/?'+encodeURIComponent(u);},
+    function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u);},
+    function(u){return 'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u);},
+    function(u){return 'https://thingproxy.freeboard.io/fetch/'+u;}
+  ];
+  var proxyFetch=async function(url,timeoutMs){
+    for(var i=0;i<CORS_PROXIES.length;i++){
+      try{
+        var pUrl=CORS_PROXIES[i](url);
+        var controller=new AbortController();
+        var tm=setTimeout(function(){controller.abort();},timeoutMs||8000);
+        var resp=await fetch(pUrl,{signal:controller.signal});
+        clearTimeout(tm);
+        if(resp.ok){var txt=await resp.text();try{return JSON.parse(txt);}catch(e){continue;}}
+      }catch(e){}
+    }
+    return null;
+  };
+
   const YAHOO_SYMBOLS={
     'SPGI':'SPGI','LMT':'LMT','RTX':'RTX','NOC':'NOC','PLTR':'PLTR',
     'ES1':'ES=F','NQ1':'NQ=F','DXY':'DX-Y.NYB','GC1':'GC=F','CL1':'CL=F',
@@ -551,71 +571,110 @@ function App(){
     'EUR':'EURUSD=X','GBP':'GBPUSD=X','JPY':'JPY=X',
     'NG1':'NG=F','HG1':'HG=F','W1':'ZW=F','US2Y':'^IRX'
   };
-  var fetchLivePrices=async function(){
-    try{
-      var symbols=Object.values(YAHOO_SYMBOLS).join(',');
-      var yUrl='https://query1.finance.yahoo.com/v7/finance/quote?symbols='+symbols+'&fields=regularMarketPrice,regularMarketChangePercent,regularMarketChange,shortName';
-      var proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(yUrl);
-      var controller=new AbortController();
-      var timeout=setTimeout(function(){controller.abort();},10000);
-      var resp=await fetch(proxyUrl,{signal:controller.signal});
-      clearTimeout(timeout);
-      if(!resp.ok)return;
-      var data=await resp.json();
-      if(!data.quoteResponse||!data.quoteResponse.result)return;
-      var prices={};
-      var symbolToKey={};
-      Object.keys(YAHOO_SYMBOLS).forEach(function(k){symbolToKey[YAHOO_SYMBOLS[k]]=k;});
-      data.quoteResponse.result.forEach(function(q){
-        var key=symbolToKey[q.symbol];
-        if(!key)return;
-        var price=q.regularMarketPrice;
-        var changePct=q.regularMarketChangePercent;
-        if(price===undefined)return;
-        var fmtPrice=price>=1000?price.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}):
-                     price>=100?price.toFixed(2):
-                     price>=10?price.toFixed(2):
-                     price.toFixed(4);
-        // Special formatting for yields
-        if(key==='US10Y'||key==='US2Y')fmtPrice=price.toFixed(3)+'%';
-        if(key==='JPY')fmtPrice=price.toFixed(2);
-        var fmtChange=changePct>=0?'+'+changePct.toFixed(2)+'%':changePct.toFixed(2)+'%';
-        if(key==='US10Y'||key==='US2Y'){
-          var bps=Math.round(q.regularMarketChange*100);
-          fmtChange=(bps>=0?'+':'')+bps+'bp';
-        }
-        prices[key]={p:fmtPrice,c:fmtChange,u:changePct>=0,raw:price};
-      });
-      if(Object.keys(prices).length>0)setLivePrices(prices);
-    }catch(e){
-      // Silent fail — keeps showing last known prices or hardcoded fallback
-    }
+
+  var parseYahooQuotes=function(data){
+    if(!data||!data.quoteResponse||!data.quoteResponse.result)return null;
+    var prices={};
+    var symbolToKey={};
+    Object.keys(YAHOO_SYMBOLS).forEach(function(k){symbolToKey[YAHOO_SYMBOLS[k]]=k;});
+    data.quoteResponse.result.forEach(function(q){
+      var key=symbolToKey[q.symbol];
+      if(!key)return;
+      var price=q.regularMarketPrice;
+      var changePct=q.regularMarketChangePercent;
+      if(price===undefined)return;
+      var fmtPrice=price>=1000?price.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}):
+                   price>=100?price.toFixed(2):
+                   price>=10?price.toFixed(2):
+                   price.toFixed(4);
+      if(key==='US10Y'||key==='US2Y')fmtPrice=price.toFixed(3)+'%';
+      if(key==='JPY')fmtPrice=price.toFixed(2);
+      var fmtChange=changePct>=0?'+'+changePct.toFixed(2)+'%':changePct.toFixed(2)+'%';
+      if(key==='US10Y'||key==='US2Y'){
+        var bps=Math.round(q.regularMarketChange*100);
+        fmtChange=(bps>=0?'+':'')+bps+'bp';
+      }
+      prices[key]={p:fmtPrice,c:fmtChange,u:changePct>=0,raw:price};
+    });
+    return Object.keys(prices).length>0?prices:null;
   };
 
-  // Fetch SPGI intraday chart data for sparkline
+  var fetchLivePrices=async function(){
+    try{
+      // Try Yahoo Finance v7 quote via multiple CORS proxies
+      var symbols=Object.values(YAHOO_SYMBOLS).join(',');
+      var yUrl='https://query1.finance.yahoo.com/v7/finance/quote?symbols='+symbols+'&fields=regularMarketPrice,regularMarketChangePercent,regularMarketChange';
+      var data=await proxyFetch(yUrl,10000);
+      var prices=parseYahooQuotes(data);
+      if(prices){setLivePrices(prices);return;}
+
+      // Fallback: try v8 chart endpoint for key symbols (more reliable)
+      var keySymbols=['SPGI','BTC-USD','GC=F','CL=F','ES=F','^VIX','EURUSD=X','^TNX'];
+      var chartPrices={};
+      for(var s=0;s<keySymbols.length;s++){
+        try{
+          var cUrl='https://query1.finance.yahoo.com/v8/finance/chart/'+keySymbols[s]+'?interval=1d&range=5d';
+          var cData=await proxyFetch(cUrl,6000);
+          if(cData&&cData.chart&&cData.chart.result&&cData.chart.result[0]){
+            var meta=cData.chart.result[0].meta;
+            if(meta&&meta.regularMarketPrice){
+              var sym=keySymbols[s];
+              var key=Object.keys(YAHOO_SYMBOLS).find(function(k){return YAHOO_SYMBOLS[k]===sym;});
+              if(key){
+                var pr=meta.regularMarketPrice;
+                var prev=meta.chartPreviousClose||meta.previousClose||pr;
+                var chg=((pr-prev)/prev)*100;
+                var fmtP=pr>=1000?pr.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}):pr>=10?pr.toFixed(2):pr.toFixed(4);
+                if(key==='US10Y')fmtP=pr.toFixed(3)+'%';
+                if(key==='JPY')fmtP=pr.toFixed(2);
+                var fmtC=chg>=0?'+'+chg.toFixed(2)+'%':chg.toFixed(2)+'%';
+                chartPrices[key]={p:fmtP,c:fmtC,u:chg>=0,raw:pr};
+              }
+            }
+          }
+        }catch(e){}
+      }
+      if(Object.keys(chartPrices).length>0)setLivePrices(function(prev){return Object.assign({},prev,chartPrices);});
+    }catch(e){}
+  };
+
+  // Fetch SPGI intraday chart data for sparkline + extract current price
   var fetchSpgiChart=async function(){
     try{
       var yUrl='https://query1.finance.yahoo.com/v8/finance/chart/SPGI?interval=15m&range=1d';
-      var proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(yUrl);
-      var controller=new AbortController();
-      var timeout=setTimeout(function(){controller.abort();},10000);
-      var resp=await fetch(proxyUrl,{signal:controller.signal});
-      clearTimeout(timeout);
-      if(!resp.ok)return;
-      var data=await resp.json();
+      var data=await proxyFetch(yUrl,10000);
+      if(!data)return;
       var result=data.chart&&data.chart.result&&data.chart.result[0];
-      if(!result||!result.indicators||!result.indicators.quote||!result.indicators.quote[0])return;
-      var closes=result.indicators.quote[0].close;
-      var times=result.timestamp;
-      if(!closes||!times)return;
-      var points=[];
-      for(var i=0;i<closes.length;i++){
-        if(closes[i]!==null&&closes[i]!==undefined){
-          var d=new Date(times[i]*1000);
-          points.push({t:d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes(),p:closes[i]});
+      if(!result)return;
+
+      // Extract intraday points for sparkline
+      if(result.indicators&&result.indicators.quote&&result.indicators.quote[0]){
+        var closes=result.indicators.quote[0].close;
+        var times=result.timestamp;
+        if(closes&&times){
+          var points=[];
+          for(var i=0;i<closes.length;i++){
+            if(closes[i]!==null&&closes[i]!==undefined){
+              var d=new Date(times[i]*1000);
+              points.push({t:d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes(),p:closes[i]});
+            }
+          }
+          if(points.length>=5)setSpgiIntraday(points);
         }
       }
-      if(points.length>=5)setSpgiIntraday(points);
+
+      // Also extract current SPGI price from chart meta (backup for quote endpoint)
+      if(result.meta&&result.meta.regularMarketPrice){
+        var pr=result.meta.regularMarketPrice;
+        var prev=result.meta.chartPreviousClose||result.meta.previousClose||pr;
+        var chg=((pr-prev)/prev)*100;
+        var fmtP=pr.toFixed(2);
+        var fmtC=chg>=0?'+'+chg.toFixed(2)+'%':chg.toFixed(2)+'%';
+        setLivePrices(function(old){
+          if(old.SPGI)return old;
+          return Object.assign({},old,{SPGI:{p:fmtP,c:fmtC,u:chg>=0,raw:pr}});
+        });
+      }
     }catch(e){}
   };
 
