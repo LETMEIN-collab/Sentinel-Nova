@@ -216,7 +216,7 @@ const AreaChartSVG=({data,keys,colors,w=400,h=180,labels})=>{
 
 /* ═══ DATA ═══ */
 const TICKERS=[
-  {s:'SPGI',p:'424.77',c:'+1.29%',u:true},{s:'ES1',p:'5,954',c:'-0.07%',u:false},{s:'NQ1',p:'21,220',c:'-0.14%',u:false},
+  {s:'SPGI',p:'404.78',c:'-3.04%',u:false},{s:'ES1',p:'5,954',c:'-0.07%',u:false},{s:'NQ1',p:'21,220',c:'-0.14%',u:false},
   {s:'DXY',p:'97.69',c:'-0.22%',u:false},{s:'GC1',p:'5,228',c:'+2.90%',u:true},{s:'CL1',p:'65.97',c:'-0.80%',u:false},
   {s:'US10Y',p:'4.010',c:'-6bp',u:false},{s:'VIX',p:'21.11',c:'+10.58%',u:true},{s:'BTC',p:'64,762',c:'-3.92%',u:false},
   {s:'EUR',p:'1.1820',c:'+0.31%',u:true},{s:'GBP',p:'1.3519',c:'+0.26%',u:true},{s:'JPY',p:'148.50',c:'-0.45%',u:false},
@@ -258,6 +258,31 @@ const ADV_FALLBACK=[
   {country:'Belarus',level:4,title:'Belarus — Level 4: Do Not Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/belarus-travel-advisory.html',desc:'Wrongful detention, Russia-Ukraine spillover'},
   {country:'Lebanon',level:4,title:'Lebanon — Level 4: Do Not Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/lebanon-travel-advisory.html',desc:'Crime, terrorism, Hezbollah activity'},
   {country:'Gaza Strip',level:4,title:'Gaza — Level 4: Do Not Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/israel-the-west-bank-and-gaza-travel-advisory.html',desc:'Armed conflict, terrorism'},
+  // Level 3 — Reconsider Travel
+  {country:'Pakistan',level:3,title:'Pakistan — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Terrorism, sectarian violence'},
+  {country:'Nigeria',level:3,title:'Nigeria — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime, terrorism, kidnapping'},
+  {country:'Honduras',level:3,title:'Honduras — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime, kidnapping'},
+  {country:'El Salvador',level:3,title:'El Salvador — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime'},
+  {country:'Ethiopia',level:3,title:'Ethiopia — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Civil unrest, armed conflict'},
+  {country:'Democratic Republic of the Congo',level:3,title:'DRC — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime, armed conflict'},
+  {country:'Cameroon',level:3,title:'Cameroon — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime, terrorism, kidnapping'},
+  {country:'Chad',level:3,title:'Chad — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime, terrorism, minefields'},
+  {country:'Mauritania',level:3,title:'Mauritania — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime, terrorism'},
+  {country:'Guinea',level:3,title:'Guinea — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Civil unrest, crime'},
+  {country:'Colombia',level:3,title:'Colombia — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime, terrorism, kidnapping'},
+  {country:'Kenya',level:3,title:'Kenya — Level 3: Reconsider Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime, terrorism'},
+  // Level 2 — Exercise Increased Caution
+  {country:'Mexico',level:2,title:'Mexico — Level 2: Exercise Increased Caution',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime, kidnapping'},
+  {country:'Brazil',level:2,title:'Brazil — Level 2: Exercise Increased Caution',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime'},
+  {country:'Egypt',level:2,title:'Egypt — Level 2: Exercise Increased Caution',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Terrorism'},
+  {country:'Turkey',level:2,title:'Turkey — Level 2: Exercise Increased Caution',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Terrorism, arbitrary detention'},
+  {country:'India',level:2,title:'India — Level 2: Exercise Increased Caution',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime, terrorism'},
+  {country:'Israel',level:2,title:'Israel — Level 2: Exercise Increased Caution',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Terrorism, civil unrest'},
+  {country:'Philippines',level:2,title:'Philippines — Level 2: Exercise Increased Caution',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime, terrorism'},
+  {country:'South Africa',level:2,title:'South Africa — Level 2: Exercise Increased Caution',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime'},
+  {country:'Jamaica',level:2,title:'Jamaica — Level 2: Exercise Increased Caution',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Crime'},
+  {country:'China',level:2,title:'China — Level 2: Exercise Increased Caution',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Wrongful detention, arbitrary enforcement'},
+  {country:'Russia',level:4,title:'Russia — Level 4: Do Not Travel',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Wrongful detention'},
 ];
 
 /* Current fallback sovereign rating changes */
@@ -331,7 +356,7 @@ const MKTS={
   'COMMODITIES':[{s:'GC1',n:'Gold',p:'5,228',c:'+2.90%',u:1},{s:'CL1',n:'WTI Crude',p:'65.97',c:'-0.80%',u:0},{s:'NG1',n:'Nat Gas',p:'3.088',c:'-2.03%',u:0},{s:'HG1',n:'Copper',p:'5.90',c:'-1.65%',u:0},{s:'W1',n:'Wheat',p:'572.00',c:'+2.27%',u:1}],
   'FX & RATES':[{s:'DXY',n:'Dollar Idx',p:'97.69',c:'-0.22%',u:0},{s:'EUR',n:'EUR/USD',p:'1.1820',c:'+0.31%',u:1},{s:'US10Y',n:'10Y Yield',p:'4.010%',c:'-6bp',u:0},{s:'US2Y',n:'2Y Yield',p:'3.570%',c:'-7bp',u:0}],
   'CRYPTO':[{s:'BTC',n:'Bitcoin',p:'64,762',c:'-3.92%',u:0},{s:'ETH',n:'Ethereum',p:'2,680',c:'-4.10%',u:0}],
-  'DEFENSE & INTEL':[{s:'SPGI',n:'S&P Global',p:'424.77',c:'+1.29%',u:1},{s:'LMT',n:'Lockheed',p:'661.49',c:'+0.42%',u:1},{s:'RTX',n:'RTX Corp',p:'204.81',c:'+0.64%',u:1},{s:'NOC',n:'Northrop',p:'724.83',c:'+3.38%',u:1},{s:'PLTR',n:'Palantir',p:'135.38',c:'+1.77%',u:1}],
+  'DEFENSE & INTEL':[{s:'SPGI',n:'S&P Global',p:'404.78',c:'-3.04%',u:0},{s:'LMT',n:'Lockheed',p:'661.49',c:'+0.42%',u:1},{s:'RTX',n:'RTX Corp',p:'204.81',c:'+0.64%',u:1},{s:'NOC',n:'Northrop',p:'724.83',c:'+3.38%',u:1},{s:'PLTR',n:'Palantir',p:'135.38',c:'+1.77%',u:1}],
 };
 
 /* SPGI RSS feed queries */
@@ -358,7 +383,7 @@ const TREND={
   '1Y':[{d:'Mar',geo:60,clim:48,cyb:50,con:55},{d:'May',geo:62,clim:52,cyb:52,con:58},{d:'Jul',geo:65,clim:55,cyb:54,con:62},{d:'Sep',geo:68,clim:58,cyb:55,con:65},{d:'Nov',geo:72,clim:64,cyb:60,con:73},{d:'Feb',geo:78,clim:72,cyb:65,con:83}],
 };
 
-const SPGI=[{t:'09:30',p:419.5},{t:'10:00',p:420.8},{t:'10:30',p:421.2},{t:'11:00',p:420.6},{t:'11:30',p:422.1},{t:'12:00',p:423.4},{t:'12:30',p:422.8},{t:'13:00',p:423.9},{t:'13:30',p:424.2},{t:'14:00',p:423.6},{t:'14:30',p:424.5},{t:'15:00',p:425.1},{t:'15:30',p:424.3},{t:'16:00',p:424.77}];
+const SPGI=[{t:'09:30',p:417.5},{t:'10:00',p:414.2},{t:'10:30',p:411.8},{t:'11:00',p:409.6},{t:'11:30',p:407.3},{t:'12:00',p:406.1},{t:'12:30',p:405.4},{t:'13:00',p:404.2},{t:'13:30',p:403.8},{t:'14:00',p:402.9},{t:'14:30',p:403.5},{t:'15:00',p:404.1},{t:'15:30',p:404.5},{t:'16:00',p:404.78}];
 
 /* (Regional risk now computed from live advisories) */
 
@@ -465,6 +490,8 @@ function App(){
   const[bannerDismissed,setBannerDismissed]=useState(null);
   const[livePrices,setLivePrices]=useState({});
   const[spgiIntraday,setSpgiIntraday]=useState(SPGI);
+  const[geoData,setGeoData]=useState(null);
+  const geoLayerRef=useRef(null);
 
   // Fetch US State Dept Travel Advisories
   const fetchAdvisories=async()=>{
@@ -498,17 +525,11 @@ function App(){
   const fetchRatings=async()=>{
     // Load curated fallback immediately
     if(ratings.length===0)setRatings(RATING_FALLBACK);
-    // Try GDELT for recent sovereign rating news
+    // Try GDELT for recent sovereign rating news (via corsproxy — GDELT has no CORS)
     try{
-      var gq=encodeURIComponent('("credit rating" OR "sovereign rating" OR "downgrades" OR "upgrades" OR "outlook negative" OR "outlook stable") ("Moody\'s" OR "Fitch" OR "S&P Global" OR "Scope Ratings") sourcelang:eng');
-      var gUrl='https://api.gdeltproject.org/api/v2/doc/doc?query='+gq+'&mode=artlist&maxrecords=30&format=json&sort=datedesc&timespan=10080min';
-      var controller=new AbortController();
-      var timeout=setTimeout(function(){controller.abort();},8000);
-      var resp=await fetch(gUrl,{signal:controller.signal});
-      clearTimeout(timeout);
-      if(!resp.ok){setRatings(RATING_FALLBACK);setRatingsLive(true);return;}
-      var data=await resp.json();
-      if(!data.articles||data.articles.length<3){setRatings(RATING_FALLBACK);setRatingsLive(true);return;}
+      var gq='(credit rating OR sovereign rating OR downgrades OR upgrades OR outlook negative) (Moodys OR Fitch OR S&P Global OR Scope Ratings) sourcelang:eng';
+      var data=await gdeltFetch(gq,30,'10080min');
+      if(!data||!data.articles||data.articles.length<3){setRatings(RATING_FALLBACK);setRatingsLive(true);return;}
       var seen=new Set();
       var items=[];
       data.articles.forEach(function(art){
@@ -601,38 +622,37 @@ function App(){
 
   var fetchLivePrices=async function(){
     try{
-      // Try Yahoo Finance v7 quote via multiple CORS proxies
-      var symbols=Object.values(YAHOO_SYMBOLS).join(',');
-      var yUrl='https://query1.finance.yahoo.com/v7/finance/quote?symbols='+symbols+'&fields=regularMarketPrice,regularMarketChangePercent,regularMarketChange';
-      var data=await proxyFetch(yUrl,10000);
-      var prices=parseYahooQuotes(data);
-      if(prices){setLivePrices(prices);return;}
-
-      // Fallback: try v8 chart endpoint for key symbols (more reliable)
-      var keySymbols=['SPGI','BTC-USD','GC=F','CL=F','ES=F','^VIX','EURUSD=X','^TNX'];
+      // Primary: Yahoo Finance v8 chart endpoint (v7 quote is dead — returns 401)
+      var allSymbols=Object.values(YAHOO_SYMBOLS);
       var chartPrices={};
-      for(var s=0;s<keySymbols.length;s++){
-        try{
-          var cUrl='https://query1.finance.yahoo.com/v8/finance/chart/'+keySymbols[s]+'?interval=1d&range=5d';
-          var cData=await proxyFetch(cUrl,6000);
-          if(cData&&cData.chart&&cData.chart.result&&cData.chart.result[0]){
-            var meta=cData.chart.result[0].meta;
-            if(meta&&meta.regularMarketPrice){
-              var sym=keySymbols[s];
-              var key=Object.keys(YAHOO_SYMBOLS).find(function(k){return YAHOO_SYMBOLS[k]===sym;});
-              if(key){
-                var pr=meta.regularMarketPrice;
-                var prev=meta.chartPreviousClose||meta.previousClose||pr;
-                var chg=((pr-prev)/prev)*100;
-                var fmtP=pr>=1000?pr.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}):pr>=10?pr.toFixed(2):pr.toFixed(4);
-                if(key==='US10Y')fmtP=pr.toFixed(3)+'%';
-                if(key==='JPY')fmtP=pr.toFixed(2);
-                var fmtC=chg>=0?'+'+chg.toFixed(2)+'%':chg.toFixed(2)+'%';
-                chartPrices[key]={p:fmtP,c:fmtC,u:chg>=0,raw:pr};
+      var symbolToKey={};
+      Object.keys(YAHOO_SYMBOLS).forEach(function(k){symbolToKey[YAHOO_SYMBOLS[k]]=k;});
+      // Fetch in parallel batches of 4
+      for(var i=0;i<allSymbols.length;i+=4){
+        var batch=allSymbols.slice(i,i+4);
+        var fetches=batch.map(function(sym){
+          var cUrl='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=5d';
+          return proxyFetch(cUrl,8000).then(function(cData){
+            if(cData&&cData.chart&&cData.chart.result&&cData.chart.result[0]){
+              var meta=cData.chart.result[0].meta;
+              if(meta&&meta.regularMarketPrice){
+                var key=symbolToKey[sym];
+                if(key){
+                  var pr=meta.regularMarketPrice;
+                  var prev=meta.chartPreviousClose||meta.previousClose||pr;
+                  var chg=prev?((pr-prev)/prev)*100:0;
+                  var fmtP=pr>=1000?pr.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}):pr>=10?pr.toFixed(2):pr.toFixed(4);
+                  if(key==='US10Y'||key==='US2Y')fmtP=pr.toFixed(3)+'%';
+                  if(key==='JPY')fmtP=pr.toFixed(2);
+                  var fmtC=chg>=0?'+'+chg.toFixed(2)+'%':chg.toFixed(2)+'%';
+                  if(key==='US10Y'||key==='US2Y'){var bps=Math.round((pr-prev)*100);fmtC=(bps>=0?'+':'')+bps+'bp';}
+                  chartPrices[key]={p:fmtP,c:fmtC,u:chg>=0,raw:pr};
+                }
               }
             }
-          }
-        }catch(e){}
+          }).catch(function(){});
+        });
+        await Promise.all(fetches);
       }
       if(Object.keys(chartPrices).length>0)setLivePrices(function(prev){return Object.assign({},prev,chartPrices);});
     }catch(e){}
@@ -746,17 +766,11 @@ function App(){
   const fetchWeather=async()=>{
     // Load curated fallback immediately
     if(wxAlerts.length===0||wxAlerts===WEATHER_FALLBACK)setWxAlerts(WEATHER_FALLBACK);
-    // Try GDELT for real-time severe weather events
+    // Try GDELT for real-time severe weather events (via corsproxy — GDELT has no CORS)
     try{
-      var gq=encodeURIComponent('(hurricane OR typhoon OR cyclone OR earthquake OR tsunami OR blizzard OR "winter storm" OR tornado OR wildfire OR "volcanic eruption" OR flooding OR drought OR "heat wave" OR "polar vortex") (deaths OR emergency OR evacuation OR damage OR warning OR "state of emergency") sourcelang:eng');
-      var gUrl='https://api.gdeltproject.org/api/v2/doc/doc?query='+gq+'&mode=artlist&maxrecords=50&format=json&sort=datedesc&timespan=2880min';
-      var controller=new AbortController();
-      var timeout=setTimeout(function(){controller.abort();},8000);
-      var resp=await fetch(gUrl,{signal:controller.signal});
-      clearTimeout(timeout);
-      if(!resp.ok){setWxAlerts(WEATHER_FALLBACK);setWxLive(true);return;}
-      var data=await resp.json();
-      if(!data.articles||data.articles.length<3){setWxAlerts(WEATHER_FALLBACK);setWxLive(true);return;}
+      var gq='(hurricane OR typhoon OR cyclone OR earthquake OR tsunami OR blizzard OR tornado OR wildfire OR flooding OR drought) (deaths OR emergency OR evacuation OR damage OR warning) sourcelang:eng';
+      var data=await gdeltFetch(gq,50,'2880min');
+      if(!data||!data.articles||data.articles.length<3){setWxAlerts(WEATHER_FALLBACK);setWxLive(true);return;}
       // Cluster by story similarity
       var clusters=[];
       var wxIcons={'hurricane':'🌀','typhoon':'🌀','cyclone':'🌀','earthquake':'🫨','tsunami':'🌊','blizzard':'❄️','winter storm':'❄️','snow':'❄️','tornado':'🌪️','wildfire':'🔥','fire':'🔥','volcanic':'🌋','eruption':'🌋','flood':'🌊','drought':'☀️','heat':'🔥','polar vortex':'🥶'};
@@ -807,22 +821,21 @@ function App(){
   // Fetch live NOTAMs — FAA TFR RSS (real-time), Aviation Herald, and ICAO news
   const fetchNotams=async()=>{
     const allNotams=[];
-    // Source 1: FAA TFR (Temporary Flight Restrictions) — official real-time RSS
+    // Source 1: GDELT for TFR/NOTAM/airspace restriction news (FAA RSS feed is broken)
     try{
-      const tfrUrl=encodeURIComponent('https://tfr.faa.gov/tfr2/feed.jsp');
-      const res=await fetch(PROXY+tfrUrl);
-      const data=await res.json();
-      if(data.items&&data.items.length>0){
-        data.items.slice(0,6).forEach(item=>{
-          const t=item.title||'';
-          let status='RESTRICTED',color='#ff9500';
-          if(t.toLowerCase().match(/prohibit|p-40|dc sfra/)){status='PROHIBITED';color='#ff3b30';}
-          else if(t.toLowerCase().match(/hazard|security|national defense/)){status='PROHIBITED';color='#ff3b30';}
-          const notamId=t.match(/(\d\/\d+)/)?t.match(/(\d\/\d+)/)[1]:'TFR';
-          allNotams.push({id:notamId,zone:t.slice(0,55),status,detail:item.description?item.description.replace(/<[^>]*>/g,'').slice(0,100):'FAA TFR — Active restriction',color,time:timeAgo(item.pubDate),url:item.link||'https://tfr.faa.gov/tfr2/list.jsp',src:'FAA'});
+      var tfrData=await gdeltFetch('(NOTAM OR TFR OR airspace closure OR flight restriction OR no-fly zone) (FAA OR ICAO OR aviation) sourcelang:eng',20,'4320min');
+      if(tfrData&&tfrData.articles&&tfrData.articles.length>0){
+        tfrData.articles.slice(0,6).forEach(function(art){
+          var t=art.title||'';
+          var tl=t.toLowerCase();
+          var status='WARNING',color='#ffd60a';
+          if(tl.match(/prohibit|no.fly|closed|shutdown|ban/)){status='PROHIBITED';color='#ff3b30';}
+          else if(tl.match(/restrict|tfr|limit|military|intercept/)){status='RESTRICTED';color='#ff9500';}
+          var src=art.domain||'GDELT';
+          allNotams.push({id:'TFR',zone:t.slice(0,55),status,detail:src+' — '+t.slice(0,100),color,time:timeAgo(art.seendate),url:art.url||'https://tfr.faa.gov/tfr2/list.jsp',src:src});
         });
       }
-    }catch(e){console.log('FAA TFR fetch error',e);}
+    }catch(e){console.log('NOTAM GDELT fetch error',e);}
 
     // Source 2: Aviation Herald (incidents/safety) via RSS
     try{
@@ -882,19 +895,25 @@ function App(){
     'earthquake','tsunami','hurricane','typhoon','cyclone','volcanic eruption','wildfire',
     'terrorist attack','mass shooting','hostage','assassination','nuclear',
     'pandemic','outbreak','bird flu','H5N1','Ebola',
-    'sanctions','NATO','UN Security Council','emergency summit','market crash'
+    'sanctions','NATO','UN Security Council','emergency summit','market crash','tariff'
   ];
-  const GDELT_QUERY=encodeURIComponent(GDELT_KEYWORDS.slice(0,8).join(' OR ')+' sourcelang:eng');
+  // GDELT helper — route through corsproxy.io (GDELT has no CORS headers)
+  var gdeltFetch=async function(query,maxrecs,timespan){
+    var gdeltUrl='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent(query)+'&mode=artlist&maxrecords='+maxrecs+'&format=json&sort=datedesc&timespan='+timespan;
+    var proxyUrl='https://corsproxy.io/?'+encodeURIComponent(gdeltUrl);
+    var controller=new AbortController();
+    var tm=setTimeout(function(){controller.abort();},12000);
+    var resp=await fetch(proxyUrl,{signal:controller.signal});
+    clearTimeout(tm);
+    if(!resp.ok)return null;
+    return await resp.json();
+  };
 
   var fetchBreakingNews=async function(){
     try{
-      var url='https://api.gdeltproject.org/api/v2/doc/doc?query='+GDELT_QUERY+'&mode=artlist&maxrecords=75&format=json&sort=datedesc&timespan=30min';
-      var controller=new AbortController();
-      var timeout=setTimeout(function(){controller.abort();},8000);
-      var resp=await fetch(url,{signal:controller.signal});
-      clearTimeout(timeout);
-      if(!resp.ok)return;
-      var data=await resp.json();
+      var q='('+GDELT_KEYWORDS.slice(0,12).join(' OR ')+') sourcelang:eng';
+      var data=await gdeltFetch(q,75,'180min');
+      if(!data)return;
       if(!data.articles||data.articles.length<1)return;
 
       // Group articles by similarity to find multi-source stories
@@ -948,8 +967,15 @@ function App(){
   const linesRef=useRef([]);
 
   useEffect(()=>{const i=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(i)},[]);
-  useEffect(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews();fetchAdvisories();fetchRatings();fetchLivePrices();fetchSpgiChart();const i=setInterval(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews();fetchAdvisories();fetchRatings();fetchLivePrices();fetchSpgiChart()},2*60*1000);return()=>clearInterval(i)},[]);
-  useEffect(()=>{fetchBreakingNews();const bi=setInterval(fetchBreakingNews,2*60*1000);return()=>clearInterval(bi)},[]);
+  // ═══ TIERED REFRESH RATES ═══
+  // Breaking news: 30s (near-immediate)
+  useEffect(()=>{fetchBreakingNews();const i=setInterval(fetchBreakingNews,30*1000);return()=>clearInterval(i)},[]);
+  // Prices + sparkline: 60s
+  useEffect(()=>{fetchLivePrices();fetchSpgiChart();const i=setInterval(()=>{fetchLivePrices();fetchSpgiChart()},60*1000);return()=>clearInterval(i)},[]);
+  // Intel feed, weather, NOTAMs, SPGI news: 2 min
+  useEffect(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews();const i=setInterval(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews()},2*60*1000);return()=>clearInterval(i)},[]);
+  // Advisories + ratings: 10 min (rarely change)
+  useEffect(()=>{fetchAdvisories();fetchRatings();const i=setInterval(()=>{fetchAdvisories();fetchRatings()},10*60*1000);return()=>clearInterval(i)},[]);
 
   // Initialize Leaflet map
   useEffect(()=>{
@@ -962,11 +988,17 @@ function App(){
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{
       subdomains:'abcd',maxZoom:19
     }).addTo(map);
-    // Add labels as separate layer on top
+    // Labels layer — CartoDB dark labels (English for major features)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{
       subdomains:'abcd',maxZoom:19,pane:'shadowPane'
     }).addTo(map);
     mapRef.current=map;
+
+    // Fetch world GeoJSON for country advisory shading
+    fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
+      .then(function(r){return r.json();})
+      .then(function(geo){setGeoData(geo);})
+      .catch(function(){});
 
     // Add connection lines
     CONNS.forEach(([fromId,toId,label,color])=>{
@@ -1009,6 +1041,62 @@ function App(){
       markersRef.current.push(marker);
     });
   },[mf]);
+
+  // ═══ ADVISORY COUNTRY SHADING — color-code map by State Dept levels ═══
+  const COUNTRY_ALIASES={'Myanmar (Burma)':'Myanmar','Democratic Republic of the Congo':'Dem. Rep. Congo','Central African Republic':'Central African Rep.','South Sudan':'S. Sudan','Burkina Faso':'Burkina Faso','Gaza Strip':'Palestine','North Korea':"Dem. People's Rep. Korea",'Ivory Coast':"Côte d'Ivoire",'United States':'United States of America','Russia':'Russia'};
+  useEffect(()=>{
+    if(!mapRef.current||!geoData||advisories.length===0)return;
+    var map=mapRef.current;
+    // Remove old layer
+    if(geoLayerRef.current){map.removeLayer(geoLayerRef.current);}
+    // Build lookup: country name -> highest advisory level
+    var advMap={};
+    advisories.forEach(function(a){
+      var names=[a.country];
+      if(COUNTRY_ALIASES[a.country])names.push(COUNTRY_ALIASES[a.country]);
+      names.forEach(function(n){
+        var nl=n.toLowerCase();
+        if(!advMap[nl]||a.level>advMap[nl].level){advMap[nl]={level:a.level,desc:a.desc,title:a.title,url:a.url};}
+      });
+    });
+    var advColors={4:'rgba(255,59,48,0.35)',3:'rgba(255,149,0,0.25)',2:'rgba(255,214,10,0.15)'};
+    var advBorders={4:'rgba(255,59,48,0.6)',3:'rgba(255,149,0,0.4)',2:'rgba(255,214,10,0.25)'};
+    var layer=L.geoJSON(geoData,{
+      style:function(feature){
+        var name=feature.properties.ADMIN||feature.properties.name||'';
+        var nl=name.toLowerCase();
+        // Try direct match, then partial match
+        var adv=advMap[nl];
+        if(!adv){
+          for(var key in advMap){
+            if(nl.indexOf(key)!==-1||key.indexOf(nl)!==-1){adv=advMap[key];break;}
+          }
+        }
+        if(adv&&adv.level>=2){
+          return{fillColor:advColors[adv.level],fillOpacity:1,weight:1,color:advBorders[adv.level],opacity:0.8};
+        }
+        return{fillColor:'transparent',fillOpacity:0,weight:0.3,color:'rgba(255,255,255,0.05)',opacity:0.5};
+      },
+      onEachFeature:function(feature,layer){
+        var name=feature.properties.ADMIN||feature.properties.name||'';
+        var nl=name.toLowerCase();
+        var adv=advMap[nl];
+        if(!adv){
+          for(var key in advMap){
+            if(nl.indexOf(key)!==-1||key.indexOf(nl)!==-1){adv=advMap[key];break;}
+          }
+        }
+        if(adv&&adv.level>=2){
+          var lvlLabel={4:'DO NOT TRAVEL',3:'RECONSIDER TRAVEL',2:'EXERCISE INCREASED CAUTION'};
+          var lvlColor={4:'#ff3b30',3:'#ff9500',2:'#ffd60a'};
+          layer.bindPopup('<div style="font-family:Inter,sans-serif"><div style="font:700 10px JetBrains Mono;color:'+lvlColor[adv.level]+';letter-spacing:1px;margin-bottom:4px">LEVEL '+adv.level+' — '+lvlLabel[adv.level]+'</div><div style="font:600 12px Inter;color:#e5e5e5;margin-bottom:4px">'+name+'</div><div style="font:400 10px JetBrains Mono;color:#999">'+adv.desc+'</div></div>',{maxWidth:260});
+        }
+      }
+    });
+    layer.addTo(map);
+    layer.bringToBack();
+    geoLayerRef.current=layer;
+  },[geoData,advisories]);
 
   const fi=mf==='ALL'?INCIDENTS:INCIDENTS.filter(i=>i.cat===mf);
 
