@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"/>
+<title>SENTINEL NOVA — Circle Test</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+body{margin:0;background:#000;color:#e5e5e5;font-family:monospace}
+#map{width:100vw;height:90vh}
+#status{padding:8px 16px;background:#111;border-top:1px solid #333;font-size:13px}
+.pass{color:#30d158}.fail{color:#ff3b30}
+</style>
+</head><body>
+<div id="map"></div>
+<div id="status">Loading...</div>
+<script>
+var status=document.getElementById('status');
+try{
+  var map=L.map('map',{center:[20,15],zoom:2,attributionControl:false});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{subdomains:'abcd'}).addTo(map);
+
+  map.createPane('advisoryPane');
+  map.getPane('advisoryPane').style.zIndex=350;
+
+  var circles=[
+    {n:'Afghanistan',lat:33.9,lon:67.7,r:220000,lv:4},{n:'Ukraine',lat:48.4,lon:31.2,r:280000,lv:4},
+    {n:'Russia',lat:61.5,lon:90,r:1200000,lv:4},{n:'Syria',lat:35,lon:38.5,r:160000,lv:4},
+    {n:'Iran',lat:32.4,lon:53.7,r:350000,lv:4},{n:'Iraq',lat:33.2,lon:43.7,r:200000,lv:4},
+    {n:'Yemen',lat:15.6,lon:48.5,r:180000,lv:4},{n:'Somalia',lat:5.2,lon:46.2,r:200000,lv:4},
+    {n:'Sudan',lat:15.5,lon:30,r:350000,lv:4},{n:'South Sudan',lat:6.9,lon:31.3,r:200000,lv:4},
+    {n:'Libya',lat:26.3,lon:17.2,r:350000,lv:4},{n:'Mali',lat:17.6,lon:-4,r:300000,lv:4},
+    {n:'Haiti',lat:19,lon:-72.1,r:80000,lv:4},{n:'North Korea',lat:40,lon:127,r:130000,lv:4},
+    {n:'Venezuela',lat:6.4,lon:-66.6,r:250000,lv:4},{n:'Myanmar',lat:19.8,lon:96.9,r:220000,lv:4},
+    {n:'Burkina Faso',lat:12.4,lon:-1.6,r:130000,lv:4},{n:'Niger',lat:17.6,lon:8.1,r:300000,lv:4},
+    {n:'CAR',lat:6.6,lon:20.9,r:200000,lv:4},{n:'Belarus',lat:53.7,lon:28,r:150000,lv:4},
+    {n:'Lebanon',lat:33.9,lon:35.9,r:60000,lv:4},{n:'Palestine',lat:31.9,lon:35.2,r:40000,lv:4},
+    {n:'Pakistan',lat:30.4,lon:69.3,r:280000,lv:3},{n:'Nigeria',lat:9.1,lon:8.7,r:260000,lv:3},
+    {n:'Honduras',lat:15.2,lon:-86.2,r:100000,lv:3},{n:'El Salvador',lat:13.8,lon:-88.9,r:60000,lv:3},
+    {n:'Ethiopia',lat:9.1,lon:40.5,r:280000,lv:3},{n:'DR Congo',lat:-4.0,lon:21.8,r:350000,lv:3},
+    {n:'Cameroon',lat:7.4,lon:12.4,r:170000,lv:3},{n:'Chad',lat:15.5,lon:19,r:300000,lv:3},
+    {n:'Mauritania',lat:21.0,lon:-10.9,r:250000,lv:3},{n:'Guinea',lat:9.9,lon:-11.4,r:120000,lv:3},
+    {n:'Colombia',lat:4.6,lon:-74.3,r:250000,lv:3},{n:'Kenya',lat:-0.2,lon:37.9,r:180000,lv:3},
+    {n:'Mexico',lat:23.6,lon:-102.5,r:350000,lv:2},{n:'Brazil',lat:-14.2,lon:-51.9,r:600000,lv:2},
+    {n:'Egypt',lat:26.8,lon:30.8,r:250000,lv:2},{n:'Turkey',lat:39,lon:35.2,r:250000,lv:2},
+    {n:'India',lat:20.6,lon:79,r:500000,lv:2},{n:'Israel',lat:31.1,lon:34.8,r:70000,lv:2},
+    {n:'Philippines',lat:12.9,lon:121.8,r:200000,lv:2},{n:'South Africa',lat:-30.6,lon:22.9,r:300000,lv:2},
+    {n:'Jamaica',lat:18.1,lon:-77.3,r:50000,lv:2},{n:'China',lat:35.9,lon:104.2,r:700000,lv:2}
+  ];
+  var fills={4:'#ff3b30',3:'#ff9500',2:'#ffd60a'};
+  var opac={4:0.35,3:0.25,2:0.18};
+  var count=0;
+  circles.forEach(function(c){
+    L.circle([c.lat,c.lon],{
+      radius:c.r,fillColor:fills[c.lv],fillOpacity:opac[c.lv],
+      weight:2,color:fills[c.lv],opacity:0.6,
+      pane:'advisoryPane'
+    }).addTo(map);
+    count++;
+  });
+  status.innerHTML='<span class="pass">✓ SUCCESS: '+count+' advisory circles painted on map. If you can see colored overlays on countries (red/orange/yellow), Leaflet circles work.</span>';
+}catch(e){
+  status.innerHTML='<span class="fail">✗ ERROR: '+e.message+'</span>';
+}
+</script>
+</body></html>

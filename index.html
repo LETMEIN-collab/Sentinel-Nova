@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <title>SENTINEL NOVA — Global Security Terminal</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -998,9 +1001,12 @@ function App(){
     mapRef.current=map;
 
     // ═══ ADVISORY COUNTRY SHADING — zero external dependencies ═══
-    // Paint colored circles at country centers — no GeoJSON/TopoJSON fetch needed
+    // Create a dedicated pane ABOVE tiles but below markers
+    map.createPane('advisoryPane');
+    map.getPane('advisoryPane').style.zIndex=350;
+    map.getPane('advisoryPane').style.pointerEvents='auto';
+
     var ADV_CIRCLES=[
-      // Level 4 — Do Not Travel (red)
       {n:'Afghanistan',lat:33.9,lon:67.7,r:220000,lv:4},{n:'Ukraine',lat:48.4,lon:31.2,r:280000,lv:4},
       {n:'Russia',lat:61.5,lon:90,r:1200000,lv:4},{n:'Syria',lat:35,lon:38.5,r:160000,lv:4},
       {n:'Iran',lat:32.4,lon:53.7,r:350000,lv:4},{n:'Iraq',lat:33.2,lon:43.7,r:200000,lv:4},
@@ -1012,30 +1018,34 @@ function App(){
       {n:'Burkina Faso',lat:12.4,lon:-1.6,r:130000,lv:4},{n:'Niger',lat:17.6,lon:8.1,r:300000,lv:4},
       {n:'CAR',lat:6.6,lon:20.9,r:200000,lv:4},{n:'Belarus',lat:53.7,lon:28,r:150000,lv:4},
       {n:'Lebanon',lat:33.9,lon:35.9,r:60000,lv:4},{n:'Palestine',lat:31.9,lon:35.2,r:40000,lv:4},
-      // Level 3 — Reconsider Travel (orange)
       {n:'Pakistan',lat:30.4,lon:69.3,r:280000,lv:3},{n:'Nigeria',lat:9.1,lon:8.7,r:260000,lv:3},
       {n:'Honduras',lat:15.2,lon:-86.2,r:100000,lv:3},{n:'El Salvador',lat:13.8,lon:-88.9,r:60000,lv:3},
       {n:'Ethiopia',lat:9.1,lon:40.5,r:280000,lv:3},{n:'DR Congo',lat:-4.0,lon:21.8,r:350000,lv:3},
       {n:'Cameroon',lat:7.4,lon:12.4,r:170000,lv:3},{n:'Chad',lat:15.5,lon:19,r:300000,lv:3},
       {n:'Mauritania',lat:21.0,lon:-10.9,r:250000,lv:3},{n:'Guinea',lat:9.9,lon:-11.4,r:120000,lv:3},
       {n:'Colombia',lat:4.6,lon:-74.3,r:250000,lv:3},{n:'Kenya',lat:-0.2,lon:37.9,r:180000,lv:3},
-      // Level 2 — Exercise Increased Caution (yellow)
       {n:'Mexico',lat:23.6,lon:-102.5,r:350000,lv:2},{n:'Brazil',lat:-14.2,lon:-51.9,r:600000,lv:2},
       {n:'Egypt',lat:26.8,lon:30.8,r:250000,lv:2},{n:'Turkey',lat:39,lon:35.2,r:250000,lv:2},
       {n:'India',lat:20.6,lon:79,r:500000,lv:2},{n:'Israel',lat:31.1,lon:34.8,r:70000,lv:2},
       {n:'Philippines',lat:12.9,lon:121.8,r:200000,lv:2},{n:'South Africa',lat:-30.6,lon:22.9,r:300000,lv:2},
       {n:'Jamaica',lat:18.1,lon:-77.3,r:50000,lv:2},{n:'China',lat:35.9,lon:104.2,r:700000,lv:2}
     ];
-    var advFills={4:'rgba(255,59,48,0.30)',3:'rgba(255,149,0,0.22)',2:'rgba(255,214,10,0.15)'};
+    var advFills={4:'#ff3b30',3:'#ff9500',2:'#ffd60a'};
+    var advOpacity={4:0.35,3:0.25,2:0.18};
     var advStrokes={4:'#ff3b30',3:'#ff9500',2:'#ffd60a'};
     var lvlLabels={4:'LEVEL 4 — DO NOT TRAVEL',3:'LEVEL 3 — RECONSIDER TRAVEL',2:'LEVEL 2 — EXERCISE INCREASED CAUTION'};
-    ADV_CIRCLES.forEach(function(c){
-      var circle=L.circle([c.lat,c.lon],{
-        radius:c.r,fillColor:advFills[c.lv],fillOpacity:1,
-        weight:1.5,color:advStrokes[c.lv],opacity:0.4
-      }).addTo(map);
-      circle.bindPopup('<div style="font-family:Inter,sans-serif"><div style="font:700 10px JetBrains Mono;color:'+advStrokes[c.lv]+';letter-spacing:1px;margin-bottom:4px">'+lvlLabels[c.lv]+'</div><div style="font:600 12px Inter;color:#e5e5e5">'+c.n+'</div></div>',{maxWidth:260});
-    });
+    var circleCount=0;
+    try{
+      ADV_CIRCLES.forEach(function(c){
+        L.circle([c.lat,c.lon],{
+          radius:c.r,fillColor:advFills[c.lv],fillOpacity:advOpacity[c.lv],
+          weight:2,color:advStrokes[c.lv],opacity:0.6,
+          pane:'advisoryPane'
+        }).addTo(map).bindPopup('<div style="font-family:Inter,sans-serif"><div style="font:700 10px JetBrains Mono;color:'+advStrokes[c.lv]+';letter-spacing:1px;margin-bottom:4px">'+lvlLabels[c.lv]+'</div><div style="font:600 12px Inter;color:#e5e5e5">'+c.n+'</div></div>',{maxWidth:260});
+        circleCount++;
+      });
+      console.log('SENTINEL NOVA v6: '+circleCount+' advisory circles painted');
+    }catch(err){console.error('SENTINEL NOVA v6 CIRCLE ERROR:',err);}
 
     // Add connection lines
     CONNS.forEach(([fromId,toId,label,color])=>{
@@ -1119,7 +1129,7 @@ function App(){
 
       {/* Header */}
       <div className="hdr">
-        <div className="hdr-l"><div className="logo">SENTINEL NOVA<span>GLOBAL SECURITY TERMINAL</span></div><span style={{font:'600 8px var(--mono)',color:'#30d158',padding:'2px 8px',borderRadius:2,border:'1px solid rgba(48,209,88,.4)',background:'rgba(48,209,88,.1)',letterSpacing:'1.5px',marginLeft:12}}>GSSC-READY</span></div>
+        <div className="hdr-l"><div className="logo">SENTINEL NOVA<span>GLOBAL SECURITY TERMINAL</span></div><span style={{font:'600 8px var(--mono)',color:'#30d158',padding:'2px 8px',borderRadius:2,border:'1px solid rgba(48,209,88,.4)',background:'rgba(48,209,88,.1)',letterSpacing:'1.5px',marginLeft:12}}>GSSC-READY</span><span style={{font:'500 8px var(--mono)',color:'var(--t3)',marginLeft:8,letterSpacing:'1px'}}>BUILD 2026-02-24-v6</span></div>
         <div className="hdr-r">
           <div className="hdr-spgi">
             <span style={{font:'600 10px var(--mono)',color:'var(--t2)'}}>SPGI</span>
