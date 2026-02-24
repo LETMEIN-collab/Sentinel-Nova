@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -997,11 +998,30 @@ function App(){
     }).addTo(map);
     mapRef.current=map;
 
-    // Fetch world GeoJSON for country advisory shading (~250KB lightweight source)
-    fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
-      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-      .then(function(geo){console.log('GeoJSON loaded:',geo.features?geo.features.length:'no features');setGeoData(geo);})
-      .catch(function(e){console.error('GeoJSON fetch failed:',e);});
+    // Fetch world country boundaries — TopoJSON from CDN (~30KB, ultra-reliable)
+    // Try multiple sources for resilience
+    var topoSources=[
+      'https://unpkg.com/world-atlas@2/countries-110m.json',
+      'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',
+      'https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/world-110m.json'
+    ];
+    (function tryTopoFetch(idx){
+      if(idx>=topoSources.length){console.error('All TopoJSON sources failed');return;}
+      console.log('Trying TopoJSON source',idx+1+'/'+topoSources.length,':',topoSources[idx]);
+      fetch(topoSources[idx])
+        .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+        .then(function(topo){
+          // Convert TopoJSON to GeoJSON
+          var objKey=topo.objects.countries?'countries':Object.keys(topo.objects)[0];
+          var geo=topojson.feature(topo,topo.objects[objKey]);
+          console.log('TopoJSON converted to GeoJSON:',geo.features.length,'countries, source:',topoSources[idx]);
+          setGeoData(geo);
+        })
+        .catch(function(e){
+          console.warn('TopoJSON source',idx+1,'failed:',e.message,', trying next...');
+          tryTopoFetch(idx+1);
+        });
+    })(0);
 
     // Add connection lines
     CONNS.forEach(([fromId,toId,label,color])=>{
@@ -1046,8 +1066,16 @@ function App(){
   },[mf]);
 
   // ═══ ADVISORY COUNTRY SHADING — color-code map by State Dept levels ═══
-  // ISO3 code -> advisory level (bulletproof matching via feature.id)
-  var ADV_ISO3={
+  // Supports both ISO numeric (world-atlas TopoJSON) and ISO alpha-3 (GeoJSON) IDs
+  var ADV_NUMERIC={
+    '004':4,'804':4,'643':4,'760':4,'364':4,'368':4,'887':4,'706':4,'729':4,
+    '728':4,'434':4,'466':4,'332':4,'408':4,'862':4,'104':4,'854':4,'562':4,
+    '140':4,'112':4,'422':4,'275':4,
+    '586':3,'566':3,'340':3,'222':3,'231':3,'180':3,'120':3,'148':3,'478':3,
+    '324':3,'170':3,'404':3,
+    '484':2,'076':2,'818':2,'792':2,'356':2,'376':2,'608':2,'710':2,'388':2,'156':2
+  };
+  var ADV_ALPHA3={
     'AFG':4,'UKR':4,'RUS':4,'SYR':4,'IRN':4,'IRQ':4,'YEM':4,'SOM':4,'SDN':4,
     'SSD':4,'LBY':4,'MLI':4,'HTI':4,'PRK':4,'VEN':4,'MMR':4,'BFA':4,'NER':4,
     'CAF':4,'BLR':4,'LBN':4,'PSE':4,
@@ -1055,82 +1083,53 @@ function App(){
     'GIN':3,'COL':3,'KEN':3,
     'MEX':2,'BRA':2,'EGY':2,'TUR':2,'IND':2,'ISR':2,'PHL':2,'ZAF':2,'JAM':2,'CHN':2
   };
-  // Advisory country name -> ISO3 (for building desc/title lookup)
-  var COUNTRY_ISO3={
-    'afghanistan':'AFG','ukraine':'UKR','russia':'RUS','syria':'SYR','iran':'IRN','iraq':'IRQ',
-    'yemen':'YEM','somalia':'SOM','sudan':'SDN','south sudan':'SSD','libya':'LBY','mali':'MLI',
-    'haiti':'HTI','north korea':'PRK','venezuela':'VEN','myanmar (burma)':'MMR','burkina faso':'BFA',
-    'niger':'NER','central african republic':'CAF','belarus':'BLR','lebanon':'LBN','gaza strip':'PSE',
-    'pakistan':'PAK','nigeria':'NGA','honduras':'HND','el salvador':'SLV','ethiopia':'ETH',
-    'democratic republic of the congo':'COD','cameroon':'CMR','chad':'TCD','mauritania':'MRT',
-    'guinea':'GIN','colombia':'COL','kenya':'KEN',
-    'mexico':'MEX','brazil':'BRA','egypt':'EGY','turkey':'TUR','india':'IND','israel':'ISR',
-    'philippines':'PHL','south africa':'ZAF','jamaica':'JAM','china':'CHN'
+  // Country names for popups: numeric ID -> display name
+  var ID_NAMES={
+    '004':'Afghanistan','804':'Ukraine','643':'Russia','760':'Syria','364':'Iran','368':'Iraq',
+    '887':'Yemen','706':'Somalia','729':'Sudan','728':'South Sudan','434':'Libya','466':'Mali',
+    '332':'Haiti','408':'North Korea','862':'Venezuela','104':'Myanmar','854':'Burkina Faso',
+    '562':'Niger','140':'Central African Republic','112':'Belarus','422':'Lebanon','275':'Palestine',
+    '586':'Pakistan','566':'Nigeria','340':'Honduras','222':'El Salvador','231':'Ethiopia',
+    '180':'DR Congo','120':'Cameroon','148':'Chad','478':'Mauritania','324':'Guinea',
+    '170':'Colombia','404':'Kenya','484':'Mexico','076':'Brazil','818':'Egypt','792':'Turkey',
+    '356':'India','376':'Israel','608':'Philippines','710':'South Africa','388':'Jamaica','156':'China',
+    'AFG':'Afghanistan','UKR':'Ukraine','RUS':'Russia','SYR':'Syria','IRN':'Iran','IRQ':'Iraq',
+    'YEM':'Yemen','SOM':'Somalia','SDN':'Sudan','SSD':'South Sudan','LBY':'Libya','MLI':'Mali',
+    'HTI':'Haiti','PRK':'North Korea','VEN':'Venezuela','MMR':'Myanmar','BFA':'Burkina Faso',
+    'NER':'Niger','CAF':'Central African Republic','BLR':'Belarus','LBN':'Lebanon','PSE':'Palestine',
+    'PAK':'Pakistan','NGA':'Nigeria','HND':'Honduras','SLV':'El Salvador','ETH':'Ethiopia',
+    'COD':'DR Congo','CMR':'Cameroon','TCD':'Chad','MRT':'Mauritania','GIN':'Guinea',
+    'COL':'Colombia','KEN':'Kenya','MEX':'Mexico','BRA':'Brazil','EGY':'Egypt','TUR':'Turkey',
+    'IND':'India','ISR':'Israel','PHL':'Philippines','ZAF':'South Africa','JAM':'Jamaica','CHN':'China'
+  };
+  var getAdvLevel=function(featureId){
+    var id=String(featureId||'');
+    return ADV_NUMERIC[id]||ADV_ALPHA3[id]||0;
   };
   useEffect(()=>{
     if(!mapRef.current||!geoData||advisories.length===0){console.log('Advisory shading skipped — map:',!!mapRef.current,'geo:',!!geoData,'adv:',advisories.length);return;}
-    console.log('Advisory shading: painting',advisories.length,'advisories onto',geoData.features?geoData.features.length:0,'countries');
+    console.log('Advisory shading: painting onto',geoData.features?geoData.features.length:0,'countries');
     var map=mapRef.current;
     if(geoLayerRef.current){map.removeLayer(geoLayerRef.current);}
-    // Build ISO3 -> {level, desc, title, url} from live advisories
-    var isoMap={};
-    advisories.forEach(function(a){
-      var iso=COUNTRY_ISO3[a.country.toLowerCase()];
-      if(iso){
-        if(!isoMap[iso]||a.level>isoMap[iso].level){
-          isoMap[iso]={level:a.level,desc:a.desc||'Travel Advisory',title:a.title,url:a.url};
-        }
-      }
-    });
-    // Also fill from static ADV_ISO3 for any missing
-    for(var code in ADV_ISO3){
-      if(!isoMap[code]){
-        var lvl=ADV_ISO3[code];
-        var lvlLabel={4:'Do Not Travel',3:'Reconsider Travel',2:'Exercise Increased Caution'};
-        isoMap[code]={level:lvl,desc:lvlLabel[lvl],title:'Level '+lvl,url:'https://travel.state.gov'};
-      }
-    }
     var matchCount=0;
     var advColors={4:'rgba(255,59,48,0.45)',3:'rgba(255,149,0,0.35)',2:'rgba(255,214,10,0.2)'};
     var advBorders={4:'rgba(255,59,48,0.8)',3:'rgba(255,149,0,0.6)',2:'rgba(255,214,10,0.35)'};
     var layer=L.geoJSON(geoData,{
       style:function(feature){
-        // Match by ISO3 code (feature.id) — guaranteed match
-        var iso=feature.id||'';
-        var adv=isoMap[iso];
-        // Fallback: match by name
-        if(!adv){
-          var nm=(feature.properties.name||'').toLowerCase();
-          for(var cname in COUNTRY_ISO3){
-            if(nm===cname||nm.indexOf(cname)!==-1||cname.indexOf(nm)!==-1){
-              adv=isoMap[COUNTRY_ISO3[cname]];
-              if(adv)break;
-            }
-          }
-        }
-        if(adv&&adv.level>=2){
+        var lvl=getAdvLevel(feature.id);
+        if(lvl>=2){
           matchCount++;
-          return{fillColor:advColors[adv.level],fillOpacity:1,weight:1,color:advBorders[adv.level],opacity:0.8};
+          return{fillColor:advColors[lvl],fillOpacity:1,weight:1,color:advBorders[lvl],opacity:0.8};
         }
         return{fillColor:'transparent',fillOpacity:0,weight:0.3,color:'rgba(255,255,255,0.05)',opacity:0.5};
       },
       onEachFeature:function(feature,layer){
-        var iso=feature.id||'';
-        var adv=isoMap[iso];
-        if(!adv){
-          var nm=(feature.properties.name||'').toLowerCase();
-          for(var cname in COUNTRY_ISO3){
-            if(nm===cname||nm.indexOf(cname)!==-1||cname.indexOf(nm)!==-1){
-              adv=isoMap[COUNTRY_ISO3[cname]];
-              if(adv)break;
-            }
-          }
-        }
-        if(adv&&adv.level>=2){
-          var dispName=feature.properties.name||feature.id||'';
+        var lvl=getAdvLevel(feature.id);
+        if(lvl>=2){
+          var dispName=ID_NAMES[String(feature.id)]||feature.properties.name||String(feature.id);
           var lvlLabel={4:'DO NOT TRAVEL',3:'RECONSIDER TRAVEL',2:'EXERCISE INCREASED CAUTION'};
           var lvlColor={4:'#ff3b30',3:'#ff9500',2:'#ffd60a'};
-          layer.bindPopup('<div style="font-family:Inter,sans-serif"><div style="font:700 10px JetBrains Mono;color:'+lvlColor[adv.level]+';letter-spacing:1px;margin-bottom:4px">LEVEL '+adv.level+' — '+lvlLabel[adv.level]+'</div><div style="font:600 12px Inter;color:#e5e5e5;margin-bottom:4px">'+dispName+'</div><div style="font:400 10px JetBrains Mono;color:#999">'+adv.desc+'</div></div>',{maxWidth:260});
+          layer.bindPopup('<div style="font-family:Inter,sans-serif"><div style="font:700 10px JetBrains Mono;color:'+lvlColor[lvl]+';letter-spacing:1px;margin-bottom:4px">LEVEL '+lvl+' — '+lvlLabel[lvl]+'</div><div style="font:600 12px Inter;color:#e5e5e5;margin-bottom:4px">'+dispName+'</div></div>',{maxWidth:260});
         }
       }
     });
