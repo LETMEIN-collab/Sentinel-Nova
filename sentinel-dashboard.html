@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -998,28 +998,47 @@ function App(){
     }).addTo(map);
     mapRef.current=map;
 
-    // Fetch world country boundaries — TopoJSON from CDN (~30KB, ultra-reliable)
-    // Try multiple sources for resilience
-    var topoSources=[
-      'https://unpkg.com/world-atlas@2/countries-110m.json',
-      'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',
-      'https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/world-110m.json'
+    // Fetch world country boundaries — try multiple sources with visible debug
+    var geoSources=[
+      {url:'https://unpkg.com/world-atlas@2/countries-110m.json',type:'topo'},
+      {url:'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',type:'topo'},
+      {url:'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json',type:'geo'}
     ];
-    (function tryTopoFetch(idx){
-      if(idx>=topoSources.length){console.error('All TopoJSON sources failed');return;}
-      console.log('Trying TopoJSON source',idx+1+'/'+topoSources.length,':',topoSources[idx]);
-      fetch(topoSources[idx])
+    var geoDebug=document.createElement('div');
+    geoDebug.id='geo-debug';
+    geoDebug.style.cssText='position:absolute;top:4px;left:50px;z-index:9999;font:bold 9px monospace;padding:3px 8px;border-radius:3px;background:rgba(255,59,48,0.9);color:#fff';
+    geoDebug.textContent='MAP DATA: LOADING...';
+    document.getElementById('leaflet-map').appendChild(geoDebug);
+    (function tryGeoFetch(idx){
+      if(idx>=geoSources.length){
+        geoDebug.textContent='MAP DATA: ALL SOURCES FAILED';
+        geoDebug.style.background='rgba(255,59,48,0.9)';
+        return;
+      }
+      var src=geoSources[idx];
+      geoDebug.textContent='MAP DATA: TRYING SOURCE '+(idx+1)+'/'+geoSources.length+'...';
+      geoDebug.style.background='rgba(255,214,10,0.9)';geoDebug.style.color='#000';
+      fetch(src.url)
         .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-        .then(function(topo){
-          // Convert TopoJSON to GeoJSON
-          var objKey=topo.objects.countries?'countries':Object.keys(topo.objects)[0];
-          var geo=topojson.feature(topo,topo.objects[objKey]);
-          console.log('TopoJSON converted to GeoJSON:',geo.features.length,'countries, source:',topoSources[idx]);
+        .then(function(data){
+          var geo;
+          if(src.type==='topo'){
+            if(typeof topojson==='undefined'||!topojson.feature){throw new Error('topojson library not loaded');}
+            var objKey=data.objects.countries?'countries':Object.keys(data.objects)[0];
+            geo=topojson.feature(data,data.objects[objKey]);
+          }else{
+            geo=data;
+          }
+          if(!geo||!geo.features||geo.features.length<50)throw new Error('Bad data: '+((geo&&geo.features)?geo.features.length:0)+' features');
+          geoDebug.textContent='MAP DATA: OK — '+geo.features.length+' countries (src '+(idx+1)+')';
+          geoDebug.style.background='rgba(48,209,88,0.9)';geoDebug.style.color='#fff';
+          setTimeout(function(){geoDebug.style.display='none';},5000);
           setGeoData(geo);
         })
         .catch(function(e){
-          console.warn('TopoJSON source',idx+1,'failed:',e.message,', trying next...');
-          tryTopoFetch(idx+1);
+          geoDebug.textContent='MAP SRC '+(idx+1)+' FAILED: '+e.message;
+          geoDebug.style.background='rgba(255,149,0,0.9)';geoDebug.style.color='#000';
+          tryGeoFetch(idx+1);
         });
     })(0);
 
@@ -1137,6 +1156,15 @@ function App(){
     layer.bringToBack();
     geoLayerRef.current=layer;
     console.log('Advisory shading complete:',matchCount,'countries colored');
+    // Update debug indicator
+    var dbg=document.getElementById('geo-debug');
+    if(dbg){
+      dbg.style.display='block';
+      dbg.textContent='SHADING: '+matchCount+' countries colored';
+      dbg.style.background=matchCount>10?'rgba(48,209,88,0.9)':'rgba(255,59,48,0.9)';
+      dbg.style.color='#fff';
+      setTimeout(function(){dbg.style.display='none';},8000);
+    }
   },[geoData,advisories]);
 
   const fi=mf==='ALL'?INCIDENTS:INCIDENTS.filter(i=>i.cat===mf);
