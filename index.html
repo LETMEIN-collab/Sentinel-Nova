@@ -325,7 +325,8 @@ const ADV_FALLBACK=[
 
 /* Polymarket geopolitical search terms — used to find relevant markets */
 const POLY_GEO_TERMS=['war','conflict','military','nuclear','invasion','ceasefire','nato','sanctions','coup','assassination','missile','iran','russia','ukraine','china','taiwan','korea','middle east','terrorism','troops','election','president','prime minister','parliament','tariff','embargo','drone','strike','border','refugee','diplomat','treaty','security','geopolit','protest','uprising','regime','dictator','authoritarian','democrat','republic','congress','senate','legislation','indictment','impeach','arrest','detain','hostage','kidnap','cartel','insurgent','rebel','separatist','annexation','occupation','airstrike','casualt','deploy','weapon','cyber','hack','breach','espionage','intelligence','surveillance','climate','hurricane','earthquake','tsunami','pandemic','outbreak','famine'];
-const POLY_EXCLUDE=/\b(nba|nfl|mlb|nhl|soccer|football match|premier league|champions league|world cup|super bowl|oscar|grammy|emmy|tony award|billboard|box office|fashion|kardashian|celebrity|tiktok|youtube|spotify|netflix|bachelor|bachelorette|love island|crypto price|bitcoin price|ethereum price|solana price|memecoin|dogecoin|shiba|pepe coin)\b/i;
+const POLY_EXCLUDE=/\b(nba|nfl|mlb|nhl|nascar|ufc|mma|boxing|soccer|football match|premier league|la liga|bundesliga|serie a|ligue 1|champions league|world cup|super bowl|march madness|wimbledon|us open tennis|f1 grand prix|oscar|grammy|emmy|tony award|golden globe|billboard|box office|fashion|vogue|met gala|kardashian|celebrity|influencer|tiktok|youtube|twitch|spotify|netflix|hulu|disney\+|bachelor|bachelorette|love island|survivor|big brother|american idol|crypto price|bitcoin price|bitcoin etf|ethereum price|solana price|memecoin|dogecoin|shiba|pepe coin|nft|defi|airdrop|token launch|ipo price|stock price|earnings beat|revenue target|will .+ win the|who will win|mvp|rookie|playoff|championship|draft pick|transfer fee|album|song|movie|tv show|release date|game of the year|console|playstation|xbox|nintendo|streamer|podcast|book sales|bestseller|real estate|home price|mortgage rate|weather forecast|temperature|rain|snow)\b/i;
+const POLY_EXCLUDE_CATS=/^(sports|entertainment|pop culture|music|gaming|crypto|business|science|technology)$/i;
 /* Fallback markets if API is unavailable */
 const POLY_FALLBACK=[
   {question:'Russia-Ukraine ceasefire in 2026?',yes:0.18,volume:'$12.4M',slug:'russia-ukraine-ceasefire-2026',category:'Geopolitics'},
@@ -637,17 +638,20 @@ function App(){
       if(!resp){setPolyMarkets(POLY_FALLBACK);setPolyLive(true);return;}
       var allMarkets=await resp.json();
       if(!Array.isArray(allMarkets)||allMarkets.length===0){setPolyMarkets(POLY_FALLBACK);setPolyLive(true);return;}
-      // Filter for geopolitical/security/politics markets — exclude sports, entertainment, crypto prices
+      // Filter for geopolitical/security/politics markets — exclude sports, entertainment, crypto, etc.
       var geoMarkets=allMarkets.filter(function(m){
-        var q=(m.question||'')+' '+(m.description||'')+' '+(m.category||'');
-        // Hard exclude: sports, entertainment, fashion, crypto prices
+        var q=(m.question||'')+' '+(m.description||'');
+        var cat=(m.category||'').trim();
+        // Hard exclude: blocked categories
+        if(POLY_EXCLUDE_CATS.test(cat))return false;
+        // Hard exclude: blocked keywords in question/description
         if(POLY_EXCLUDE.test(q))return false;
-        var ql=q.toLowerCase();
+        var ql=q.toLowerCase()+' '+cat.toLowerCase();
         // Include if matches any geo/security/politics term
         if(POLY_GEO_TERMS.some(function(term){return ql.indexOf(term)!==-1;}))return true;
         // Include if categorised as politics/world/geopolitics
-        var cat=(m.category||'').toLowerCase();
-        if(cat==='politics'||cat==='world'||cat==='geopolitics'||cat==='science'||cat==='climate')return true;
+        var catl=cat.toLowerCase();
+        if(catl==='politics'||catl==='world'||catl==='geopolitics'||catl==='climate')return true;
         return false;
       });
       // Parse and format
@@ -662,6 +666,7 @@ function App(){
           yes:yesPrice,
           volume:volStr,
           slug:m.slug||'',
+          url:m.url||'',
           category:m.category||'Geopolitics',
           endDate:m.endDate||''
         };
@@ -1594,7 +1599,8 @@ function App(){
                   <span style={{font:'400 8px var(--mono)',color:'var(--t3)',minWidth:44,textAlign:'right'}}>{m.volume}</span>
                 </div>
               </div>;
-              return m.slug?<a key={i} href={'https://polymarket.com/event/'+m.slug} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>{inner}</a>:inner;
+              var pmUrl=m.url?m.url:m.slug?'https://polymarket.com/event/'+m.slug:'https://polymarket.com/search?query='+encodeURIComponent(m.question);
+              return <a key={i} href={pmUrl} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>{inner}</a>;
             }):<div style={{font:'400 10px var(--mono)',color:'var(--t3)',padding:'8px 0'}}>Loading markets...</div>}
           </div>
         </div>
