@@ -434,10 +434,50 @@ function classifyHeadline(title){
   return best;
 }
 function timeAgo(dateStr){
-  const d=new Date(dateStr);const now=new Date();const mins=Math.floor((now-d)/60000);
+  if(!dateStr)return 'Active';
+  // Handle various date formats: ISO, FAA (MM/DD/YYYY HH:MM), epoch ms, YYYYMMDDHHMMSS
+  var d;
+  if(typeof dateStr==='number')d=new Date(dateStr);
+  else if(/^\d{12,14}$/.test(dateStr))d=new Date(dateStr.slice(0,4)+'-'+dateStr.slice(4,6)+'-'+dateStr.slice(6,8)+'T'+dateStr.slice(8,10)+':'+dateStr.slice(10,12)+':00Z');
+  else if(/^\d{4}\/\d{2}\/\d{2}/.test(dateStr))d=new Date(dateStr.replace(/\//g,'-'));
+  else d=new Date(dateStr);
+  if(!d||isNaN(d.getTime()))return 'Active';
+  var now=new Date();var mins=Math.floor((now-d)/60000);
+  if(mins<0)return 'Upcoming';
   if(mins<60)return mins+'m ago';
-  const hrs=Math.floor(mins/60);if(hrs<24)return hrs+'h ago';
+  var hrs=Math.floor(mins/60);if(hrs<24)return hrs+'h ago';
   return Math.floor(hrs/24)+'d ago';
+}
+// Humanize raw NOTAM ICAO text into readable English
+function humanizeNotam(raw){
+  if(!raw||raw.length<5)return raw||'';
+  var t=raw;
+  // Common ICAO abbreviations → plain English
+  t=t.replace(/\bCLSD\b/gi,'CLOSED');t=t.replace(/\bDUE TO\b/gi,'due to');
+  t=t.replace(/\bOPS\b/gi,'operations');t=t.replace(/\bMIL\b/gi,'military');
+  t=t.replace(/\bACFT\b/gi,'aircraft');t=t.replace(/\bFLT\b/gi,'flight');
+  t=t.replace(/\bRWY\b/gi,'Runway');t=t.replace(/\bTWY\b/gi,'Taxiway');
+  t=t.replace(/\bSFC\b/gi,'surface');t=t.replace(/\bUNL\b/gi,'unlimited');
+  t=t.replace(/\bABV\b/gi,'above');t=t.replace(/\bBLW\b/gi,'below');
+  t=t.replace(/\bEFF\b/gi,'effective');t=t.replace(/\bTIL\b/gi,'until');
+  t=t.replace(/\bUFN\b/gi,'further notice');t=t.replace(/\bPJE\b/gi,'parachute jumping');
+  t=t.replace(/\bNAV\b/gi,'navigation');t=t.replace(/\bSVCE?\b/gi,'service');
+  t=t.replace(/\bUNSVCBL\b/gi,'unserviceable');t=t.replace(/\bINOP\b/gi,'inoperative');
+  t=t.replace(/\bU\/S\b/gi,'unserviceable');t=t.replace(/\bAP\b/gi,'airport');
+  t=t.replace(/\bAD\b/gi,'aerodrome');t=t.replace(/\bFIR\b/gi,'Flight Information Region');
+  t=t.replace(/\bUIR\b/gi,'Upper Information Region');
+  t=t.replace(/\bTFR\b/gi,'Temporary Flight Restriction');
+  t=t.replace(/\bGNSS\b/gi,'GPS/GNSS');t=t.replace(/\bIAMG\b/gi,'Iranian-aligned militia');
+  t=t.replace(/\bUAS\b/gi,'drone');t=t.replace(/\bRPAS\b/gi,'drone');
+  t=t.replace(/\bSEC\b/gi,'security');t=t.replace(/\bHAZ\b/gi,'hazard');
+  t=t.replace(/\bWIP\b/gi,'work in progress');t=t.replace(/\bCTN\b/gi,'caution');
+  t=t.replace(/\bEMERG\b/gi,'emergency');t=t.replace(/\bPROHIB\b/gi,'prohibited');
+  t=t.replace(/\bFL(\d+)/g,function(_,n){return n+'00ft (~'+Math.round(n*100*0.3048/1000)+'km alt)';});
+  // Clean up excessive whitespace/newlines
+  t=t.replace(/\s+/g,' ').trim();
+  // Sentence case — first letter upper, rest preserved
+  if(t.length>0)t=t.charAt(0).toUpperCase()+t.slice(1);
+  return t;
 }
 
 /* ═══ WEATHER ALERTS (current real events — Feb 23, 2026) ═══ */
@@ -455,15 +495,15 @@ const WEATHER_FALLBACK=[
 ];
 
 const NOTAM_FALLBACK=[
-  {id:'A0095/25',zone:'UKBV — Ukraine All FIRs',status:'PROHIBITED',detail:'All altitudes. Full airspace closure since Feb 2022. Armed conflict.',color:'#ff3b30',time:'Active'},
-  {id:'A0131/26',zone:'ORBB — Baghdad FIR / Iraq',status:'RESTRICTED',detail:'Below FL320 prohibited (SFAR 77). IAMG UAS/missile threat. GNSS spoofing reported. EASA CZIB active.',color:'#ff9500',time:'Active'},
-  {id:'A0561/26',zone:'HSSS — Sudan/Khartoum FIR',status:'PROHIBITED',detail:'All altitudes. Khartoum airport closed. Armed conflict. No ATC available.',color:'#ff3b30',time:'Active'},
-  {id:'SFAR117',zone:'OIIX — Iran Tehran FIR',status:'PROHIBITED',detail:'FAA SFAR 117. All US civil ops prohibited. EASA warning active.',color:'#ff3b30',time:'Active'},
-  {id:'A0001/21',zone:'OPKR/OPLR — Pakistan FIRs',status:'WARNING',detail:'Caution all altitudes. Islamabad attack Feb 6. Airstrikes into Afghanistan Feb 22.',color:'#ff9500',time:'2d ago'},
-  {id:'W0120/21',zone:'OEJD — Saudi/Yemen Border',status:'RESTRICTED',detail:'ESCAT active. Houthi drone/missile threat. Asir, Jizan, Najran provinces.',color:'#ff9500',time:'Active'},
-  {id:'FZNA/25',zone:'FZNA — DRC Eastern/Goma',status:'RESTRICTED',detail:'200NM eastern border. Goma airport closed. Anti-aircraft weaponry risk.',color:'#ff9500',time:'Active'},
-  {id:'A0334/26',zone:'GABS/DRRR — Sahel Region',status:'WARNING',detail:'FL320+ only. AES shoot-down threat. Wagner air defense active.',color:'#ffd60a',time:'Active'},
-  {id:'KICZ/26',zone:'Eastern Pacific Corridors',status:'WARNING',detail:'FAA advisory: GNSS interference & military activity. Jan 16–Mar 17 2026.',color:'#ffd60a',time:'Active'},
+  {id:'A0095/25',zone:'Ukraine — All Airspace',status:'PROHIBITED',detail:'Complete airspace closure, all altitudes. Armed conflict since Feb 2022. No civilian flights permitted.',color:'#ff3b30',time:'Active'},
+  {id:'A0131/26',zone:'Iraq — Baghdad Region',status:'RESTRICTED',detail:'Flights below 32,000ft prohibited. Militia drone and missile threat. GPS spoofing reported. US and EU restrictions active.',color:'#ff9500',time:'Active'},
+  {id:'A0561/26',zone:'Sudan — Khartoum Region',status:'PROHIBITED',detail:'All altitudes closed. Khartoum airport destroyed. Armed conflict. No air traffic control available.',color:'#ff3b30',time:'Active'},
+  {id:'SFAR117',zone:'Iran — Tehran Region',status:'PROHIBITED',detail:'All US civil flights prohibited (FAA SFAR 117). European safety warning active. Full airspace ban.',color:'#ff3b30',time:'Active'},
+  {id:'A0001/21',zone:'Pakistan — Islamabad/Lahore',status:'WARNING',detail:'Heightened security alert. Islamabad mosque attack Feb 6. Pakistan airstrikes into Afghanistan Feb 22.',color:'#ff9500',time:'2d ago'},
+  {id:'W0120/21',zone:'Saudi Arabia — Yemen Border',status:'RESTRICTED',detail:'Active military operations. Houthi drone and missile threat. Asir, Jizan, Najran provinces affected.',color:'#ff9500',time:'Active'},
+  {id:'FZNA/25',zone:'DR Congo — Eastern/Goma',status:'RESTRICTED',detail:'200-mile eastern border restriction. Goma airport closed. Anti-aircraft weapon risk from armed groups.',color:'#ff9500',time:'Active'},
+  {id:'A0334/26',zone:'Sahel Region — West Africa',status:'WARNING',detail:'High-altitude flights only (above 32,000ft). Military shoot-down threat. Wagner Group air defense active.',color:'#ffd60a',time:'Active'},
+  {id:'KICZ/26',zone:'Eastern Pacific Ocean',status:'WARNING',detail:'FAA advisory: GPS interference and military activity. Active Jan 16 through Mar 17, 2026.',color:'#ffd60a',time:'Active'},
 ];
 
 const WX_SEV_COLORS={extreme:'#ff3b30',severe:'#ff9500',moderate:'#ffd60a',watch:'#64d2ff'};
@@ -826,7 +866,12 @@ function App(){
   };
 
   // ═══ NOTAM FETCH — FAA direct API (primary) + news supplements ═══
-  // Key FIRs and airports to monitor for NOTAMs
+  // ICAO code → readable location name
+  var ICAO_NAMES={ORBB:'Baghdad FIR, Iraq',ORBI:'Baghdad Intl, Iraq',UKBV:'Kyiv FIR, Ukraine',UKBB:'Boryspil, Ukraine',
+    HSSS:'Khartoum FIR, Sudan',HSSK:'Khartoum, Sudan',OIIX:'Tehran FIR, Iran',OIIE:'Tehran Imam Khomeini, Iran',
+    OPKR:'Karachi FIR, Pakistan',OPLR:'Lahore FIR, Pakistan',FZZA:'Kinshasa FIR, DRC',FZNA:'Goma, DRC',
+    OEJD:'Jeddah FIR, Saudi Arabia',KZDC:'Washington DC ARTCC',LTBB:'Istanbul FIR, Turkey',
+    VHHH:'Hong Kong Intl',RCTP:'Taipei Taoyuan',EGLL:'London Heathrow',LFPG:'Paris CDG'};
   var NOTAM_LOCATIONS='ORBB,UKBV,HSSS,OIIX,OPKR,FZZA,OEJD,KZDC,ORBI,UKBB,HSSK,OIIE,FZNA,LTBB,VHHH,RCTP,EGLL,LFPG';
   const fetchNotams=async()=>{
     const allNotams=[];
@@ -836,31 +881,34 @@ function App(){
       var body='searchType=0&designatorsForLocation='+NOTAM_LOCATIONS;
       var pUrl='https://corsproxy.io/?'+encodeURIComponent(faaUrl);
       var controller=new AbortController();
-      var tm=setTimeout(function(){controller.abort();},12000);
+      var tmr=setTimeout(function(){controller.abort();},12000);
       var resp=await fetch(pUrl,{
         method:'POST',signal:controller.signal,
         headers:{'Content-Type':'application/x-www-form-urlencoded'},
         body:body
       });
-      clearTimeout(tm);
+      clearTimeout(tmr);
       if(resp.ok){
         var faaData=await resp.json();
-        // FAA returns {notamList:[{facilityDesignator,notamNumber,icaoMessage,issueDate,startDate,endDate,...}]}
         var items=faaData.notamList||faaData.endpointResponse||faaData;
         if(Array.isArray(items)){
           items.forEach(function(n){
-            var msg=(n.icaoMessage||n.traditionalMessage||n.text||'').toUpperCase();
+            var msg=(n.icaoMessage||n.traditionalMessage||n.text||'');
             var loc=n.facilityDesignator||n.icaoLocation||'';
             var id=n.notamNumber||n.id||'FAA';
-            // Filter: only show significant NOTAMs (closures, restrictions, hazards, prohibited)
-            var isSig=msg.match(/CLSD|CLOSED|PROHIBIT|RESTRICT|TFR|NO.FLY|HAZARD|MILITARY|ARMED CONFLICT|LASER|UAS|DRONE|GPS|GNSS|JAMM|SPOOF|MISSILE|VOLCANIC|ASH|NUCLEAR/);
+            var msgUp=msg.toUpperCase();
+            // Filter: only significant NOTAMs
+            var isSig=msgUp.match(/CLSD|CLOSED|PROHIBIT|RESTRICT|TFR|NO.FLY|HAZARD|MILITARY|ARMED CONFLICT|LASER|UAS|DRONE|GPS|GNSS|JAMM|SPOOF|MISSILE|VOLCANIC|ASH|NUCLEAR|SECURITY/);
             if(!isSig)return;
             var status='WARNING',color='#ffd60a';
-            if(msg.match(/CLSD|CLOSED|PROHIBIT|NO.FLY/)){status='PROHIBITED';color='#ff3b30';}
-            else if(msg.match(/RESTRICT|TFR|MILITARY|ARMED|MISSILE|HAZARD/)){status='RESTRICTED';color='#ff9500';}
-            var zone=loc;
-            if(msg.length>10)zone=loc+' — '+msg.slice(0,50).replace(/\n/g,' ');
-            var detail=msg.slice(0,120).replace(/\n/g,' ');
+            if(msgUp.match(/CLSD|CLOSED|PROHIBIT|NO.FLY/)){status='PROHIBITED';color='#ff3b30';}
+            else if(msgUp.match(/RESTRICT|TFR|MILITARY|ARMED|MISSILE|HAZARD|SECURITY/)){status='RESTRICTED';color='#ff9500';}
+            // Readable location name
+            var locName=ICAO_NAMES[loc]||(loc+' region');
+            // Humanize the raw NOTAM text
+            var readable=humanizeNotam(msg);
+            var zone=locName;
+            var detail=readable.slice(0,140);
             var t='Active';
             if(n.issueDate)t=timeAgo(n.issueDate);
             else if(n.startDate)t=timeAgo(n.startDate);
