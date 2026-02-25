@@ -154,6 +154,33 @@ body{font-family:'Inter',sans-serif;background:#000;color:#d4d4d4;overflow-x:hid
 /* REGIONAL */
 .rr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bdr);font:400 10px var(--mono)}
 .rr:last-child{border-bottom:none}
+
+/* ALERT FLASH */
+.alert-flash{position:fixed;top:55px;left:0;right:0;background:var(--bg2);border-bottom:3px solid;padding:10px 16px;z-index:150;animation:alertSlide .3s ease-out;font:500 11px Inter,sans-serif;color:var(--t1);box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.alert-flash.alert-red{border-bottom-color:#ff3b30;background:rgba(255,59,48,0.08)}
+.alert-flash.alert-orange{border-bottom-color:#ff9500;background:rgba(255,149,0,0.08)}
+.alert-flash.alert-yellow{border-bottom-color:#ffd60a;background:rgba(255,214,10,0.08)}
+@keyframes alertSlide{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* COUNTRY BRIEF PANEL */
+.country-brief{position:fixed;right:12px;top:80px;width:340px;max-height:calc(100vh - 100px);background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;box-shadow:0 8px 32px rgba(0,0,0,.6);overflow-y:auto;z-index:140;animation:briefSlide .3s ease-out;font-family:Inter,sans-serif}
+@keyframes briefSlide{from{transform:translateX(360px);opacity:0}to{transform:translateX(0);opacity:1}}
+.country-brief-header{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--bdr);gap:8px}
+.country-brief-title{font:700 13px var(--mono);color:var(--t1)}
+.country-brief-level{font:700 10px var(--mono);padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:.5px}
+.country-brief-close{background:none;border:none;color:var(--t3);cursor:pointer;font:700 16px var(--mono);padding:0}
+.country-brief-close:hover{color:var(--t1)}
+.country-brief-content{padding:12px}
+.cb-section{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bdr)}
+.cb-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.cb-section-title{font:600 10px var(--mono);color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.cb-item{font:400 9px Inter,sans-serif;color:var(--t2);line-height:1.5;margin-bottom:4px}
+.cb-item:last-child{margin-bottom:0}
+.cb-desc{font:400 10px Inter,sans-serif;color:var(--t1);line-height:1.4}
+
+/* THEME TOGGLE */
+.theme-toggle{background:transparent;border:1px solid var(--bdr);color:var(--t2);padding:3px 8px;border-radius:3px;cursor:pointer;font:500 11px var(--mono);transition:all .2s;margin-left:8px}
+.theme-toggle:hover{border-color:var(--bdrh);color:var(--t1)}
 </style>
 </head>
 <body>
@@ -543,6 +570,9 @@ function App(){
   const[livePrices,setLivePrices]=useState({});
   const[spgiIntraday,setSpgiIntraday]=useState(SPGI);
   const[geoData,setGeoData]=useState(null);
+  const[countryBrief,setCountryBrief]=useState(null);
+  const[alertQueue,setAlertQueue]=useState([]);
+  const[darkMode,setDarkMode]=useState(true);
   const geoLayerRef=useRef(null);
 
   // Fetch US State Dept Travel Advisories
@@ -1076,8 +1106,60 @@ function App(){
   const mapRef=useRef(null);
   const markersRef=useRef([]);
   const linesRef=useRef([]);
+  const alertAudioRef=useRef(null);
+
+  const triggerAlert=function(type,message){
+    const newAlert={id:Date.now(),type,message};
+    setAlertQueue(prev=>[...prev,newAlert]);
+    // Play beep
+    try{
+      const ctx=new(window.AudioContext||window.webkitAudioContext)();
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value=440;
+      gain.gain.setValueAtTime(0.15,ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.2);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime+0.2);
+    }catch(e){}
+    // Auto-remove after 5 seconds
+    setTimeout(function(){setAlertQueue(prev=>prev.filter(a=>a.id!==newAlert.id));},5000);
+  };
 
   useEffect(()=>{const i=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(i)},[]);
+
+  // Theme toggle effect
+  useEffect(()=>{
+    const root=document.documentElement;
+    if(darkMode){
+      root.style.setProperty('--bg0','#000');
+      root.style.setProperty('--bg1','#0a0a0a');
+      root.style.setProperty('--bg2','#111');
+      root.style.setProperty('--bg3','#1a1a1a');
+      root.style.setProperty('--bdr','#222');
+      root.style.setProperty('--bdrh','#333');
+      root.style.setProperty('--t1','#e5e5e5');
+      root.style.setProperty('--t2','#999');
+      root.style.setProperty('--t3','#666');
+      document.body.style.background='#000';
+      document.body.style.color='#d4d4d4';
+    }else{
+      root.style.setProperty('--bg0','#fff');
+      root.style.setProperty('--bg1','#f5f5f5');
+      root.style.setProperty('--bg2','#eee');
+      root.style.setProperty('--bg3','#e0e0e0');
+      root.style.setProperty('--bdr','#ddd');
+      root.style.setProperty('--bdrh','#ccc');
+      root.style.setProperty('--t1','#1a1a1a');
+      root.style.setProperty('--t2','#555');
+      root.style.setProperty('--t3','#888');
+      document.body.style.background='#fff';
+      document.body.style.color='#1a1a1a';
+    }
+  },[darkMode]);
+
   // ═══ TIERED REFRESH RATES ═══
   // Breaking news: 30s (near-immediate)
   useEffect(()=>{fetchBreakingNews();const i=setInterval(fetchBreakingNews,30*1000);return()=>clearInterval(i)},[]);
@@ -1096,11 +1178,13 @@ function App(){
       zoomControl:true,attributionControl:false,
       worldCopyJump:true
     });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{
+    const tileUrl=darkMode?'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+    const labelUrl=darkMode?'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png';
+    L.tileLayer(tileUrl,{
       subdomains:'abcd',maxZoom:19
     }).addTo(map);
-    // Labels layer — CartoDB dark labels (English for major features)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{
+    // Labels layer — CartoDB labels (English for major features)
+    L.tileLayer(labelUrl,{
       subdomains:'abcd',maxZoom:19,pane:'shadowPane'
     }).addTo(map);
     mapRef.current=map;
@@ -1148,7 +1232,7 @@ function App(){
           iconAnchor:[s/2,s/2],
           html:'<div style="width:'+s+'px;height:'+s+'px;border-radius:50%;background:'+advColors[c.lv]+';border:1.5px solid '+advBorders[c.lv]+';pointer-events:auto;cursor:pointer" title="'+c.n+' — '+lvlLabels[c.lv]+'"></div>'
         });
-        L.marker([c.lat,c.lon],{icon:icon,interactive:true}).addTo(map).bindPopup('<div style="font-family:Inter,sans-serif"><div style="font:700 10px JetBrains Mono;color:'+advBorders[c.lv]+';letter-spacing:1px;margin-bottom:4px">'+lvlLabels[c.lv]+'</div><div style="font:600 12px Inter;color:#e5e5e5">'+c.n+'</div></div>',{maxWidth:260});
+        L.marker([c.lat,c.lon],{icon:icon,interactive:true}).addTo(map).on('click',function(){setCountryBrief({name:c.n,level:c.lv,lat:c.lat,lon:c.lon});});
         advCount++;
       });
       console.log('SENTINEL NOVA v7: '+advCount+' advisory markers painted OK');
@@ -1234,9 +1318,17 @@ function App(){
         </div>
       </div>}
 
+      {/* Alert Queue */}
+      {alertQueue.map(alert=>{
+        let color='alert-red';
+        if(alert.type==='orange')color='alert-orange';
+        else if(alert.type==='yellow')color='alert-yellow';
+        return <div key={alert.id} className={'alert-flash '+color}>{alert.message}</div>;
+      })}
+
       {/* Header */}
       <div className="hdr">
-        <div className="hdr-l"><div className="logo">SENTINEL NOVA<span>GLOBAL SECURITY TERMINAL</span></div><span style={{font:'600 8px var(--mono)',color:'#30d158',padding:'2px 8px',borderRadius:2,border:'1px solid rgba(48,209,88,.4)',background:'rgba(48,209,88,.1)',letterSpacing:'1.5px',marginLeft:12}}>GSSC-READY</span><span style={{font:'500 8px var(--mono)',color:'var(--t3)',marginLeft:8,letterSpacing:'1px'}}>BUILD v8</span></div>
+        <div className="hdr-l"><div className="logo">SENTINEL NOVA<span>GLOBAL SECURITY TERMINAL</span></div><span style={{font:'600 8px var(--mono)',color:'#30d158',padding:'2px 8px',borderRadius:2,border:'1px solid rgba(48,209,88,.4)',background:'rgba(48,209,88,.1)',letterSpacing:'1.5px',marginLeft:12}}>v1.9</span><span style={{font:'500 8px var(--mono)',color:'var(--t3)',marginLeft:8,letterSpacing:'1px'}}>BUILD v9</span></div>
         <div className="hdr-r">
           <div className="hdr-spgi">
             <span style={{font:'600 10px var(--mono)',color:'var(--t2)'}}>SPGI</span>
@@ -1248,6 +1340,7 @@ function App(){
           <span className="live"><span className="ldot"></span>LIVE</span>
           <span>{time.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</span>
           <span style={{color:'var(--t3)'}}>UTC {time.toISOString().slice(11,19)}</span>
+          <button className="theme-toggle" onClick={function(){setDarkMode(!darkMode);}} title={darkMode?'Light Mode':'Dark Mode'}>{darkMode?'☀':'☾'}</button>
         </div>
       </div>
 
@@ -1510,6 +1603,43 @@ function App(){
         <p style={{color:'var(--t1)',fontWeight:500}}>{tt.i.t}</p>
         <p style={{marginTop:3}}>{tt.i.reg} · {tt.i.tm} ago</p>
         <p style={{marginTop:2,color:'var(--t2)'}}>{tt.i.imp}</p>
+      </div>}
+
+      {/* Country Brief Panel */}
+      {countryBrief&&<div className="country-brief">
+        <div className="country-brief-header">
+          <div style={{display:'flex',alignItems:'center',gap:8,flex:1}}>
+            <span className="country-brief-title">{countryBrief.name}</span>
+            <span className="country-brief-level" style={{background:ADV_COLORS[countryBrief.level]+'18',border:'1px solid '+ADV_COLORS[countryBrief.level]+'35',color:ADV_COLORS[countryBrief.level]}}>L{countryBrief.level}</span>
+          </div>
+          <button className="country-brief-close" onClick={function(){setCountryBrief(null);}}>✕</button>
+        </div>
+        <div className="country-brief-content">
+          {/* Advisory Description */}
+          <div className="cb-section">
+            <div className="cb-section-title">Travel Advisory</div>
+            <div className="cb-desc">{ADV_LABELS[countryBrief.level]}</div>
+            {advisories.find(a=>a.country===countryBrief.name)?.desc&&<div className="cb-item" style={{marginTop:6}}>{advisories.find(a=>a.country===countryBrief.name).desc}</div>}
+          </div>
+
+          {/* Matching NOTAMs */}
+          {notams.filter(n=>n.zone.toLowerCase().includes(countryBrief.name.toLowerCase())).length>0&&<div className="cb-section">
+            <div className="cb-section-title">NOTAMs</div>
+            {notams.filter(n=>n.zone.toLowerCase().includes(countryBrief.name.toLowerCase())).slice(0,3).map((n,i)=><div key={i} className="cb-item"><strong>{n.status}</strong>: {n.zone} — {n.detail.slice(0,50)}</div>)}
+          </div>}
+
+          {/* Matching Headlines */}
+          {(liveNews.length>0?liveNews:NEWS).filter(n=>(n.t||n.title||'').toLowerCase().includes(countryBrief.name.toLowerCase())||(n.reg||'').toLowerCase().includes(countryBrief.name.toLowerCase())).length>0&&<div className="cb-section">
+            <div className="cb-section-title">Headlines</div>
+            {(liveNews.length>0?liveNews:NEWS).filter(n=>(n.t||n.title||'').toLowerCase().includes(countryBrief.name.toLowerCase())||(n.reg||'').toLowerCase().includes(countryBrief.name.toLowerCase())).slice(0,3).map((n,i)=><div key={i} className="cb-item">{n.t||n.title}</div>)}
+          </div>}
+
+          {/* Matching Sovereign Ratings */}
+          {ratings.filter(r=>r.headline.toLowerCase().includes(countryBrief.name.toLowerCase())).length>0&&<div className="cb-section">
+            <div className="cb-section-title">Ratings</div>
+            {ratings.filter(r=>r.headline.toLowerCase().includes(countryBrief.name.toLowerCase())).slice(0,2).map((r,i)=><div key={i} className="cb-item" style={{color:r.color}}><strong>{r.direction.toUpperCase()}</strong> by {r.agency} — {r.headline.slice(0,50)}</div>)}
+          </div>}
+        </div>
       </div>}
     </div>
   );
