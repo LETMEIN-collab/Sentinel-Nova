@@ -1384,34 +1384,33 @@ function App(){
     };
     // Build document — compact layout, minimal whitespace
     var children=[];
-    children.push(new D.Paragraph({spacing:{after:40},children:[
-      new D.TextRun({text:'SENTINEL NOVA  ',font:'Arial',size:28,bold:true,color:'cc0000'}),
-      new D.TextRun({text:'Global Security Brief',font:'Arial',size:20,color:'555555'}),
+    children.push(new D.Paragraph({spacing:{after:60},children:[
+      new D.TextRun({text:'SENTINEL NOVA  ',font:'Arial',size:36,bold:true,color:'cc0000'}),
+      new D.TextRun({text:'Global Security Brief',font:'Arial',size:24,color:'555555'}),
     ]}));
-    children.push(new D.Paragraph({spacing:{after:80},border:{bottom:{style:D.BorderStyle.SINGLE,size:3,color:'cc0000',space:3}},children:[
-      new D.TextRun({text:'Top 10 Developments  |  Past 24 Hours  |  '+dateStr+'  |  '+timeStr,font:'Arial',size:13,color:'999999'}),
+    children.push(new D.Paragraph({spacing:{after:160},border:{bottom:{style:D.BorderStyle.SINGLE,size:3,color:'cc0000',space:6}},children:[
+      new D.TextRun({text:'Top 10 Developments  |  Past 24 Hours  |  '+dateStr+'  |  '+timeStr,font:'Arial',size:17,color:'999999'}),
     ]}));
     top10.forEach(function(d,idx){
-      // Pick a varied analytical phrase
       var phrases=catAnalysis[d.tag]||['Assessed as a notable security development','Likely to warrant continued monitoring','Indicates an evolving risk environment'];
       var phrase=phrases[idx%phrases.length];
-      children.push(new D.Paragraph({spacing:{before:idx===0?0:50,after:8},children:[
-        new D.TextRun({text:String(idx+1)+'.  ',font:'Arial',size:16,bold:true,color:'cc0000'}),
-        new D.TextRun({text:d.headline,font:'Arial',size:15,bold:true,color:'1a1a1a'}),
+      children.push(new D.Paragraph({spacing:{before:idx===0?0:100,after:16},children:[
+        new D.TextRun({text:String(idx+1)+'.  ',font:'Arial',size:20,bold:true,color:'cc0000'}),
+        new D.TextRun({text:d.headline,font:'Arial',size:19,bold:true,color:'1a1a1a'}),
       ]}));
-      children.push(new D.Paragraph({spacing:{after:4},indent:{left:340},children:[
-        new D.TextRun({text:d.tag,font:'Arial',size:11,bold:true,color:'0055aa'}),
-        new D.TextRun({text:'  \u2014  '+phrase+'.',font:'Arial',size:12,color:'555555',italics:true}),
-        new D.TextRun({text:'  ('+d.source+(d.time?', '+d.time:'')+')',font:'Arial',size:11,color:'AAAAAA'}),
+      children.push(new D.Paragraph({spacing:{after:10},indent:{left:380},children:[
+        new D.TextRun({text:d.tag,font:'Arial',size:15,bold:true,color:'0055aa'}),
+        new D.TextRun({text:'  \u2014  '+phrase+'.',font:'Arial',size:16,color:'555555',italics:true}),
+        new D.TextRun({text:'  ('+d.source+(d.time?', '+d.time:'')+')',font:'Arial',size:14,color:'AAAAAA'}),
       ]}));
     });
-    children.push(new D.Paragraph({spacing:{before:80},border:{top:{style:D.BorderStyle.SINGLE,size:1,color:'DDDDDD',space:3}},children:[
-      new D.TextRun({text:'OSINT assessment compiled from open-source feeds. Probabilistic language reflects assessed confidence based on source reliability and multi-source corroboration. All items require independent human verification prior to operational use. Classification: UNCLASSIFIED / FOUO.',font:'Arial',size:11,color:'BBBBBB',italics:true}),
+    children.push(new D.Paragraph({spacing:{before:160},border:{top:{style:D.BorderStyle.SINGLE,size:1,color:'DDDDDD',space:6}},children:[
+      new D.TextRun({text:'OSINT assessment compiled from open-source feeds. Probabilistic language reflects assessed confidence based on source reliability and multi-source corroboration. All items require independent human verification prior to operational use. Classification: UNCLASSIFIED / FOUO.',font:'Arial',size:15,color:'BBBBBB',italics:true}),
     ]}));
     var doc=new D.Document({
-      styles:{default:{document:{run:{font:'Arial',size:16}}}},
+      styles:{default:{document:{run:{font:'Arial',size:20}}}},
       sections:[{
-        properties:{page:{size:{width:12240,height:15840},margin:{top:760,right:1000,bottom:620,left:1000}}},
+        properties:{page:{size:{width:12240,height:15840},margin:{top:1080,right:1200,bottom:900,left:1200}}},
         footers:{default:new D.Footer({children:[
           new D.Paragraph({alignment:D.AlignmentType.CENTER,children:[
             new D.TextRun({text:'Powered by SENTINEL NOVA \u2014 Human Verified',font:'Arial',size:12,color:'BBBBBB',italics:true}),
