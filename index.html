@@ -323,20 +323,18 @@ const ADV_FALLBACK=[
   {country:'Guinea',level:2,title:'Guinea — Level 2: Exercise Increased Caution',date:new Date('2026-01-09'),url:'https://travel.state.gov',desc:'Civil unrest, crime'},
 ];
 
-/* Current fallback sovereign rating changes */
-const RATING_FALLBACK=[
-  {headline:'Fitch Warns Eastern Europe Faces Downgrades if Greenland Strife Cracks NATO',src:'Fitch Ratings',agency:'Fitch',direction:'watch',color:'#ffd60a',time:'Jan 2026',url:'https://www.insurancejournal.com/news/international/2026/01/16/854630.htm'},
-  {headline:'Moody\'s Upgrades Israel Outlook to Stable from Negative — Ceasefire Effect',src:'Moody\'s',agency:'Moody\'s',direction:'upgrade',color:'#30d158',time:'Jan 2026',url:'https://ratings.moodys.com/ratings-news/429502'},
-  {headline:'Scope Downgrades US to AA- from AA — Fiscal Deterioration & Governance',src:'Scope Ratings',agency:'Scope',direction:'downgrade',color:'#ff3b30',time:'Oct 2025',url:'https://scoperatings.com'},
-  {headline:'S&P Downgrades France to A+ from AA- — Unscheduled Move on Budget Risk',src:'S&P Global',agency:'S&P',direction:'downgrade',color:'#ff3b30',time:'Oct 2025',url:'https://www.spglobal.com/ratings'},
-  {headline:'Moody\'s France Outlook Cut to Negative — Political Fragmentation Risk',src:'Moody\'s',agency:'Moody\'s',direction:'downgrade',color:'#ff3b30',time:'Oct 2025',url:'https://ratings.moodys.com/ratings-news/453186'},
-  {headline:'S&P Upgrades South Africa to BB — First Upgrade in Nearly Two Decades',src:'S&P Global',agency:'S&P',direction:'upgrade',color:'#30d158',time:'Nov 2025',url:'https://www.spglobal.com/ratings'},
-  {headline:'Moody\'s Downgrades Botswana to Baa1 — Diamond Downturn & Rising Debt',src:'Moody\'s',agency:'Moody\'s',direction:'downgrade',color:'#ff3b30',time:'Oct 2025',url:'https://www.moodys.com'},
-  {headline:'Moody\'s Downgrades US to Aa1 — Last AAA Rating Lost by Any Major Agency',src:'Moody\'s',agency:'Moody\'s',direction:'downgrade',color:'#ff3b30',time:'May 2025',url:'https://www.moodys.com/web/en/us/about-us/usrating.html'},
-  {headline:'Fitch Downgrades China to A from A+ — Debt Trajectory & Tariff Impact',src:'Fitch Ratings',agency:'Fitch',direction:'downgrade',color:'#ff3b30',time:'Apr 2025',url:'https://www.fitchratings.com'},
-  {headline:'Fitch 2026 Sovereign Outlook: Neutral — Fiscal Consolidation Will Be Painful',src:'Fitch Ratings',agency:'Fitch',direction:'watch',color:'#ffd60a',time:'Feb 2026',url:'https://www.investmentexecutive.com/uncategorized/sovereign-rating-outlook-neutral-for-2026-fitch/'},
-  {headline:'Moody\'s 2026: Debt/GDP Ratios Remain High — Limited Room for Shocks',src:'Moody\'s',agency:'Moody\'s',direction:'watch',color:'#ffd60a',time:'Feb 2026',url:'https://www.moodys.com/web/en/us/insights/credit-risk/outlooks/global-sovereigns-2026.html'},
-  {headline:'S&P 2026 Outlook: Geopolitical Risks Could Destabilize Credit Quality',src:'S&P Global',agency:'S&P',direction:'watch',color:'#ffd60a',time:'Feb 2026',url:'https://www.spglobal.com/ratings/en/regulatory/article/global-sovereign-rating-trends-2026-geopolitical-risks-could-destabilize-credit-quality-dynamics-s101667695'},
+/* Polymarket geopolitical search terms — used to find relevant markets */
+const POLY_GEO_TERMS=['war','conflict','military','nuclear','invasion','ceasefire','nato','sanctions','coup','assassination','missile','iran','russia','ukraine','china','taiwan','korea','middle east','terrorism','troops'];
+/* Fallback markets if API is unavailable */
+const POLY_FALLBACK=[
+  {question:'Russia-Ukraine ceasefire in 2026?',yes:0.18,volume:'$12.4M',slug:'russia-ukraine-ceasefire-2026',category:'Geopolitics'},
+  {question:'US-Iran military conflict in 2026?',yes:0.14,volume:'$8.2M',slug:'us-iran-military-conflict-2026',category:'Geopolitics'},
+  {question:'China military action against Taiwan by 2027?',yes:0.06,volume:'$15.1M',slug:'china-taiwan-military-2027',category:'Geopolitics'},
+  {question:'North Korea nuclear test in 2026?',yes:0.22,volume:'$3.8M',slug:'north-korea-nuclear-test-2026',category:'Geopolitics'},
+  {question:'NATO Article 5 invoked by 2027?',yes:0.04,volume:'$5.6M',slug:'nato-article-5-2027',category:'Geopolitics'},
+  {question:'Israel-Hezbollah ceasefire holds through 2026?',yes:0.42,volume:'$6.9M',slug:'israel-hezbollah-ceasefire-2026',category:'Geopolitics'},
+  {question:'New US sanctions on China in 2026?',yes:0.71,volume:'$4.3M',slug:'us-china-sanctions-2026',category:'Geopolitics'},
+  {question:'Venezuela military intervention by 2027?',yes:0.05,volume:'$2.1M',slug:'venezuela-intervention-2027',category:'Geopolitics'},
 ];
 
 const INCIDENTS=[
@@ -564,8 +562,8 @@ function App(){
   const[spgiNewsLive,setSpgiNewsLive]=useState(false);
   const[advisories,setAdvisories]=useState(ADV_FALLBACK);
   const[advLive,setAdvLive]=useState(false);
-  const[ratings,setRatings]=useState([]);
-  const[ratingsLive,setRatingsLive]=useState(false);
+  const[polyMarkets,setPolyMarkets]=useState([]);
+  const[polyLive,setPolyLive]=useState(false);
   const[notamLive,setNotamLive]=useState(false);
   const[searchQuery,setSearchQuery]=useState('');
   const[searchResults,setSearchResults]=useState([]);
@@ -610,46 +608,75 @@ function App(){
   };
 
   // Fetch sovereign credit rating changes
-  const fetchRatings=async()=>{
-    // Load curated fallback immediately
-    if(ratings.length===0)setRatings(RATING_FALLBACK);
-    // Try GDELT for recent sovereign rating news (via corsproxy — GDELT has no CORS)
+  // Fetch Polymarket geopolitical prediction markets
+  const fetchPolymarkets=async()=>{
+    if(polyMarkets.length===0)setPolyMarkets(POLY_FALLBACK);
     try{
-      var gq='(credit rating OR sovereign rating OR downgrades OR upgrades OR outlook negative) (Moodys OR Fitch OR S&P Global OR Scope Ratings) sourcelang:eng';
-      var data=await gdeltFetch(gq,30,'10080min');
-      if(!data||!data.articles||data.articles.length<3){setRatings(RATING_FALLBACK);setRatingsLive(true);return;}
-      var seen=new Set();
-      var items=[];
-      data.articles.forEach(function(art){
-        if(!art.title)return;
-        var t=decEnt(art.title);
-        var key=t.slice(0,40).toLowerCase();
-        if(seen.has(key))return;seen.add(key);
-        // Detect agency
-        var agency='Ratings';
-        if(/moody/i.test(t))agency="Moody's";
-        else if(/fitch/i.test(t))agency='Fitch';
-        else if(/s.p global|s.p rating/i.test(t))agency='S&P';
-        else if(/scope/i.test(t))agency='Scope';
-        else if(/dbrs/i.test(t))agency='DBRS';
-        // Detect direction
-        var direction='watch',color='#ffd60a';
-        if(/downgrad|cut|lower|negative/i.test(t)){direction='downgrade';color='#ff3b30';}
-        else if(/upgrad|rais|positive|stable from negative/i.test(t)){direction='upgrade';color='#30d158';}
-        // Parse source
-        var src=art.domain?art.domain.replace('www.',''):'News';
-        // Parse time
-        var tm='Recent';
-        if(art.seendate){
-          var d=art.seendate.replace(/(\d{4})(\d{2})(\d{2})T.*/,'$1-$2-$3');
-          var diff=Math.floor((new Date()-new Date(d))/(1000*60*60*24));
-          if(diff===0)tm='Today';else if(diff===1)tm='Yesterday';else if(diff<7)tm=diff+'d ago';else tm=d;
-        }
-        items.push({headline:t.split(' - ')[0].trim(),src:src,agency:agency,direction:direction,color:color,time:tm,url:art.url||'#'});
+      // Gamma API — public, no auth needed. Try direct first (has CORS), then proxy.
+      var baseUrl='https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=50&order=volume&ascending=false';
+      var resp=null;
+      try{
+        var controller=new AbortController();
+        var tm=setTimeout(function(){controller.abort();},8000);
+        resp=await fetch(baseUrl,{signal:controller.signal});
+        clearTimeout(tm);
+        if(!resp.ok)resp=null;
+      }catch(e){resp=null;}
+      // Fallback to CORS proxy if direct fails
+      if(!resp){
+        try{
+          var proxyUrl='https://corsproxy.io/?'+encodeURIComponent(baseUrl);
+          var controller2=new AbortController();
+          var tm2=setTimeout(function(){controller2.abort();},8000);
+          resp=await fetch(proxyUrl,{signal:controller2.signal});
+          clearTimeout(tm2);
+          if(!resp.ok)resp=null;
+        }catch(e){resp=null;}
+      }
+      if(!resp){setPolyMarkets(POLY_FALLBACK);setPolyLive(true);return;}
+      var allMarkets=await resp.json();
+      if(!Array.isArray(allMarkets)||allMarkets.length===0){setPolyMarkets(POLY_FALLBACK);setPolyLive(true);return;}
+      // Filter for geopolitical/security-relevant markets
+      var geoMarkets=allMarkets.filter(function(m){
+        var q=(m.question||'').toLowerCase()+' '+(m.description||'').toLowerCase()+' '+(m.category||'').toLowerCase();
+        return POLY_GEO_TERMS.some(function(term){return q.indexOf(term)!==-1;});
       });
-      if(items.length>=3){setRatings(items.slice(0,12));setRatingsLive(true);return;}
+      if(geoMarkets.length<3){
+        // Broaden: also include any "Politics" or "World" tagged markets
+        allMarkets.forEach(function(m){
+          var cat=(m.category||'').toLowerCase();
+          if((cat==='politics'||cat==='world'||cat==='geopolitics')&&!geoMarkets.includes(m)){
+            geoMarkets.push(m);
+          }
+        });
+      }
+      // Parse and format
+      var items=geoMarkets.slice(0,12).map(function(m){
+        var prices=[];
+        try{prices=JSON.parse(m.outcomePrices||'[]');}catch(e){}
+        var yesPrice=prices[0]?parseFloat(prices[0]):0;
+        var vol=parseFloat(m.volume||0);
+        var volStr=vol>=1000000?'$'+( vol/1000000).toFixed(1)+'M':vol>=1000?'$'+(vol/1000).toFixed(0)+'K':'$'+vol.toFixed(0);
+        return{
+          question:(m.question||'').slice(0,80),
+          yes:yesPrice,
+          volume:volStr,
+          slug:m.slug||'',
+          category:m.category||'Geopolitics',
+          endDate:m.endDate||''
+        };
+      });
+      // Sort by volume (highest first)
+      items.sort(function(a,b){
+        var aV=parseFloat(a.volume.replace(/[$MK,]/g,''))||0;
+        var bV=parseFloat(b.volume.replace(/[$MK,]/g,''))||0;
+        if(a.volume.includes('M'))aV*=1000;
+        if(b.volume.includes('M'))bV*=1000;
+        return bV-aV;
+      });
+      if(items.length>=2){setPolyMarkets(items);setPolyLive(true);return;}
     }catch(e){}
-    setRatings(RATING_FALLBACK);setRatingsLive(true);
+    setPolyMarkets(POLY_FALLBACK);setPolyLive(true);
   };
 
   // ═══ LIVE STOCK PRICES — Multi-proxy Yahoo Finance + Finnhub fallback ═══
@@ -1228,7 +1255,7 @@ function App(){
   // Intel feed, weather, NOTAMs, SPGI news: 2 min
   useEffect(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews();const i=setInterval(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews()},2*60*1000);return()=>clearInterval(i)},[]);
   // Advisories + ratings: 10 min (rarely change)
-  useEffect(()=>{fetchAdvisories();fetchRatings();const i=setInterval(()=>{fetchAdvisories();fetchRatings()},10*60*1000);return()=>clearInterval(i)},[]);
+  useEffect(()=>{fetchAdvisories();fetchPolymarkets();const i=setInterval(()=>{fetchAdvisories();fetchPolymarkets()},10*60*1000);return()=>clearInterval(i)},[]);
 
   // Initialize Leaflet map
   useEffect(()=>{
@@ -1551,21 +1578,24 @@ function App(){
             }):<div style={{font:'400 10px var(--mono)',color:'var(--t3)',padding:'8px 0'}}>Loading advisories...</div>}
           </div>
 
-          {/* SOVEREIGN RISK RATINGS */}
-          <div className="ph"><div className="pt">◆ Sovereign Risk Ratings</div><span className="pb" style={{background:ratingsLive?'var(--grnbg)':'rgba(102,102,102,.15)',color:ratingsLive?'var(--grn)':'var(--t3)'}}>{ratingsLive?'● LIVE':'LOADING'}</span></div>
+          {/* POLYMARKET — GEOPOLITICAL RISK */}
+          <div className="ph"><div className="pt">◆ Polymarket Geopolitical Risk</div><span className="pb" style={{background:polyLive?'var(--grnbg)':'rgba(102,102,102,.15)',color:polyLive?'var(--grn)':'var(--t3)'}}>{polyLive?'● LIVE':'LOADING'}</span></div>
           <div className="pbd" style={{padding:'6px 12px'}}>
-            {ratings.length>0?ratings.map((r,i)=>{
-              const inner=<div key={i} style={{padding:'5px 0',borderBottom:i<ratings.length-1?'1px solid var(--bdr)':'none',overflow:'hidden'}}>
-                <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:2,overflow:'hidden'}}>
-                  <span style={{font:'600 7px var(--mono)',color:r.color,padding:'1px 4px',borderRadius:2,background:r.color+'18',border:'1px solid '+r.color+'35',letterSpacing:'.5px',textTransform:'uppercase',flexShrink:0,whiteSpace:'nowrap'}}>{r.direction}</span>
-                  {r.agency&&<span style={{font:'500 8px var(--mono)',color:'var(--t2)',flexShrink:0}}>{r.agency}</span>}
-                  <span style={{font:'400 8px var(--mono)',color:'var(--t3)',marginLeft:'auto',flexShrink:0}}>{r.time}</span>
+            {polyMarkets.length>0?polyMarkets.map((m,i)=>{
+              var pct=Math.round(m.yes*100);
+              var barColor=pct>=60?'#ff3b30':pct>=35?'#ff9500':'#30d158';
+              var inner=<div key={i} style={{padding:'6px 0',borderBottom:i<polyMarkets.length-1?'1px solid var(--bdr)':'none'}}>
+                <div style={{font:'500 10px/1.3 Inter,sans-serif',color:'var(--t1)',marginBottom:4}}>{m.question}</div>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <div style={{flex:1,height:6,background:'var(--bg0)',borderRadius:3,overflow:'hidden'}}>
+                    <div style={{width:pct+'%',height:'100%',background:barColor,borderRadius:3,transition:'width 1s ease'}}></div>
+                  </div>
+                  <span style={{font:'700 11px var(--mono)',color:barColor,minWidth:36,textAlign:'right'}}>{pct}%</span>
+                  <span style={{font:'400 8px var(--mono)',color:'var(--t3)',minWidth:44,textAlign:'right'}}>{m.volume}</span>
                 </div>
-                <div style={{font:'500 10px/1.3 Inter,sans-serif',color:'var(--t1)',cursor:r.url?'pointer':'default',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.headline.slice(0,55)}{r.headline.length>55?'...':''}{r.url&&<span style={{color:'var(--t3)',fontSize:9,marginLeft:4}}>↗</span>}</div>
-                <div style={{font:'400 9px var(--mono)',color:'var(--t3)',marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.src}</div>
               </div>;
-              return r.url?<a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>{inner}</a>:inner;
-            }):<div style={{font:'400 10px var(--mono)',color:'var(--t3)',padding:'8px 0'}}>Loading ratings...</div>}
+              return m.slug?<a key={i} href={'https://polymarket.com/event/'+m.slug} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>{inner}</a>:inner;
+            }):<div style={{font:'400 10px var(--mono)',color:'var(--t3)',padding:'8px 0'}}>Loading markets...</div>}
           </div>
         </div>
 
@@ -1807,10 +1837,10 @@ function App(){
             {(liveNews.length>0?liveNews:NEWS).filter(n=>(n.t||n.title||'').toLowerCase().includes(countryBrief.name.toLowerCase())||(n.reg||'').toLowerCase().includes(countryBrief.name.toLowerCase())).slice(0,3).map((n,i)=><div key={i} className="cb-item">{n.t||n.title}</div>)}
           </div>}
 
-          {/* Matching Sovereign Ratings */}
-          {ratings.filter(r=>r.headline.toLowerCase().includes(countryBrief.name.toLowerCase())).length>0&&<div className="cb-section">
-            <div className="cb-section-title">Ratings</div>
-            {ratings.filter(r=>r.headline.toLowerCase().includes(countryBrief.name.toLowerCase())).slice(0,2).map((r,i)=><div key={i} className="cb-item" style={{color:r.color}}><strong>{r.direction.toUpperCase()}</strong> by {r.agency} — {r.headline.slice(0,50)}</div>)}
+          {/* Matching Prediction Markets */}
+          {polyMarkets.filter(m=>m.question.toLowerCase().includes(countryBrief.name.toLowerCase())).length>0&&<div className="cb-section">
+            <div className="cb-section-title">Prediction Markets</div>
+            {polyMarkets.filter(m=>m.question.toLowerCase().includes(countryBrief.name.toLowerCase())).slice(0,2).map((m,i)=><div key={i} className="cb-item"><span style={{color:Math.round(m.yes*100)>=50?'#ff3b30':'#30d158',fontWeight:700}}>{Math.round(m.yes*100)}%</span> — {m.question.slice(0,55)}</div>)}
           </div>}
         </div>
       </div>}
