@@ -615,7 +615,8 @@ function App(){
     if(polyMarkets.length===0)setPolyMarkets(POLY_FALLBACK);
     try{
       // Gamma API — public, no auth needed. Try direct first (has CORS), then proxy.
-      var baseUrl='https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=50&order=volume&ascending=false';
+      // Use /events endpoint — event slugs work in polymarket.com/event/{slug} URLs
+      var baseUrl='https://gamma-api.polymarket.com/events?active=true&closed=false&limit=80&order=volume&ascending=false';
       var resp=null;
       try{
         var controller=new AbortController();
@@ -624,7 +625,6 @@ function App(){
         clearTimeout(tm);
         if(!resp.ok)resp=null;
       }catch(e){resp=null;}
-      // Fallback to CORS proxy if direct fails
       if(!resp){
         try{
           var proxyUrl='https://corsproxy.io/?'+encodeURIComponent(baseUrl);
@@ -636,42 +636,40 @@ function App(){
         }catch(e){resp=null;}
       }
       if(!resp){setPolyMarkets(POLY_FALLBACK);setPolyLive(true);return;}
-      var allMarkets=await resp.json();
-      if(!Array.isArray(allMarkets)||allMarkets.length===0){setPolyMarkets(POLY_FALLBACK);setPolyLive(true);return;}
-      // Filter for geopolitical/security/politics markets — exclude sports, entertainment, crypto, etc.
-      var geoMarkets=allMarkets.filter(function(m){
-        var q=(m.question||'')+' '+(m.description||'');
-        var cat=(m.category||'').trim();
-        // Hard exclude: blocked categories
+      var allEvents=await resp.json();
+      if(!Array.isArray(allEvents)||allEvents.length===0){setPolyMarkets(POLY_FALLBACK);setPolyLive(true);return;}
+      // Filter for geopolitical/security/politics events
+      var geoEvents=allEvents.filter(function(ev){
+        var title=(ev.title||ev.question||'');
+        var desc=(ev.description||'');
+        var cat=(ev.category||'').trim();
+        var q=title+' '+desc;
         if(POLY_EXCLUDE_CATS.test(cat))return false;
-        // Hard exclude: blocked keywords in question/description
         if(POLY_EXCLUDE.test(q))return false;
         var ql=q.toLowerCase()+' '+cat.toLowerCase();
-        // Include if matches any geo/security/politics term
         if(POLY_GEO_TERMS.some(function(term){return ql.indexOf(term)!==-1;}))return true;
-        // Include if categorised as politics/world/geopolitics
         var catl=cat.toLowerCase();
         if(catl==='politics'||catl==='world'||catl==='geopolitics'||catl==='climate')return true;
         return false;
       });
-      // Parse and format
-      var items=geoMarkets.slice(0,12).map(function(m){
+      // Parse events — extract top market from each event for the probability
+      var items=geoEvents.slice(0,12).map(function(ev){
+        var markets=ev.markets||[];
+        var topMarket=markets[0]||{};
         var prices=[];
-        try{prices=JSON.parse(m.outcomePrices||'[]');}catch(e){}
+        try{prices=JSON.parse(topMarket.outcomePrices||'[]');}catch(e){}
         var yesPrice=prices[0]?parseFloat(prices[0]):0;
-        var vol=parseFloat(m.volume||0);
-        var volStr=vol>=1000000?'$'+( vol/1000000).toFixed(1)+'M':vol>=1000?'$'+(vol/1000).toFixed(0)+'K':'$'+vol.toFixed(0);
+        var vol=parseFloat(ev.volume||topMarket.volume||0);
+        var volStr=vol>=1000000?'$'+(vol/1000000).toFixed(1)+'M':vol>=1000?'$'+(vol/1000).toFixed(0)+'K':'$'+vol.toFixed(0);
         return{
-          question:(m.question||'').slice(0,80),
+          question:(ev.title||topMarket.question||'').slice(0,80),
           yes:yesPrice,
           volume:volStr,
-          slug:m.slug||'',
-          url:m.url||'',
-          category:m.category||'Geopolitics',
-          endDate:m.endDate||''
+          slug:ev.slug||'',
+          category:ev.category||'Geopolitics',
+          endDate:ev.endDate||topMarket.endDate||''
         };
       });
-      // Sort by volume (highest first)
       items.sort(function(a,b){
         var aV=parseFloat(a.volume.replace(/[$MK,]/g,''))||0;
         var bV=parseFloat(b.volume.replace(/[$MK,]/g,''))||0;
@@ -1599,7 +1597,7 @@ function App(){
                   <span style={{font:'400 8px var(--mono)',color:'var(--t3)',minWidth:44,textAlign:'right'}}>{m.volume}</span>
                 </div>
               </div>;
-              var pmUrl=m.url?m.url:m.slug?'https://polymarket.com/event/'+m.slug:'https://polymarket.com/search?query='+encodeURIComponent(m.question);
+              var pmUrl=m.slug?'https://polymarket.com/event/'+m.slug:'https://polymarket.com/search?query='+encodeURIComponent(m.question);
               return <a key={i} href={pmUrl} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>{inner}</a>;
             }):<div style={{font:'400 10px var(--mono)',color:'var(--t3)',padding:'8px 0'}}>Loading markets...</div>}
           </div>
