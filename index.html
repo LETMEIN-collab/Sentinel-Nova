@@ -1382,38 +1382,39 @@ function App(){
       'POLITICAL INSTABILITY':['Assessed as a probable inflection point for governance continuity','Likely to trigger cascading political and security effects','Indicates elevated risk of civil unrest or authoritarian consolidation'],
       'WMD / PROLIFERATION':['Assessed with high confidence as a strategic provocation','Likely intended to signal deterrence capability or coercive intent','Indicates a material threat to regional or global security architecture'],
     };
-    // Build document — sizes are in HALF-POINTS (size:24 = 12pt)
+    // Build document — sizes in HALF-POINTS (size:24 = 12pt), spacing in twips (1440 = 1 inch)
     var children=[];
-    children.push(new D.Paragraph({spacing:{after:80},children:[
-      new D.TextRun({text:'SENTINEL NOVA  ',font:'Arial',size:56,bold:true,color:'cc0000'}),
-      new D.TextRun({text:'Global Security Brief',font:'Arial',size:40,color:'555555'}),
+    children.push(new D.Paragraph({spacing:{after:120,line:276},children:[
+      new D.TextRun({text:'SENTINEL NOVA',font:'Arial',size:72,bold:true,color:'cc0000'}),
     ]}));
-    children.push(new D.Paragraph({spacing:{after:200},border:{bottom:{style:D.BorderStyle.SINGLE,size:3,color:'cc0000',space:8}},children:[
-      new D.TextRun({text:'Top 10 Developments  |  Past 24 Hours  |  '+dateStr+'  |  '+timeStr,font:'Arial',size:24,color:'999999'}),
+    children.push(new D.Paragraph({spacing:{after:100,line:276},children:[
+      new D.TextRun({text:'Global Security Brief',font:'Arial',size:44,color:'444444'}),
+    ]}));
+    children.push(new D.Paragraph({spacing:{after:300,line:276},border:{bottom:{style:D.BorderStyle.SINGLE,size:4,color:'cc0000',space:10}},children:[
+      new D.TextRun({text:'Top 10 Developments  \u2022  Past 24 Hours  \u2022  '+dateStr+'  \u2022  '+timeStr,font:'Arial',size:24,color:'888888'}),
     ]}));
     top10.forEach(function(d,idx){
       var phrases=catAnalysis[d.tag]||['Assessed as a notable security development','Likely to warrant continued monitoring','Indicates an evolving risk environment'];
       var phrase=phrases[idx%phrases.length];
-      children.push(new D.Paragraph({spacing:{before:idx===0?40:240,after:30},children:[
-        new D.TextRun({text:String(idx+1)+'.  ',font:'Arial',size:28,bold:true,color:'cc0000'}),
-        new D.TextRun({text:d.headline,font:'Arial',size:28,bold:true,color:'1a1a1a'}),
+      children.push(new D.Paragraph({spacing:{before:idx===0?60:340,after:60,line:300},children:[
+        new D.TextRun({text:String(idx+1)+'.  ',font:'Arial',size:36,bold:true,color:'cc0000'}),
+        new D.TextRun({text:d.headline,font:'Arial',size:32,bold:true,color:'1a1a1a'}),
       ]}));
-      children.push(new D.Paragraph({spacing:{after:20},indent:{left:420},children:[
-        new D.TextRun({text:d.tag,font:'Arial',size:22,bold:true,color:'0055aa'}),
-        new D.TextRun({text:'  \u2014  '+phrase+'.',font:'Arial',size:24,color:'555555',italics:true}),
-        new D.TextRun({text:'  ('+d.source+(d.time?', '+d.time:'')+')',font:'Arial',size:20,color:'AAAAAA'}),
+      children.push(new D.Paragraph({spacing:{after:40,line:300},indent:{left:460},children:[
+        new D.TextRun({text:d.tag+'  ',font:'Arial',size:24,bold:true,color:'0055aa'}),
+        new D.TextRun({text:phrase+'. Source: '+d.source+(d.time?' ('+d.time+')':'')+'. This development warrants continued monitoring for downstream security implications.',font:'Arial',size:24,color:'555555',italics:true}),
       ]}));
     });
-    children.push(new D.Paragraph({spacing:{before:240},border:{top:{style:D.BorderStyle.SINGLE,size:1,color:'DDDDDD',space:8}},children:[
-      new D.TextRun({text:'OSINT assessment compiled from open-source feeds. Probabilistic language reflects assessed confidence based on source reliability and multi-source corroboration. All items require independent human verification prior to operational use. Classification: UNCLASSIFIED / FOUO.',font:'Arial',size:22,color:'BBBBBB',italics:true}),
+    children.push(new D.Paragraph({spacing:{before:400,line:276},border:{top:{style:D.BorderStyle.SINGLE,size:1,color:'CCCCCC',space:10}},children:[
+      new D.TextRun({text:'OSINT assessment compiled from open-source feeds. Probabilistic language reflects assessed confidence based on source reliability and multi-source corroboration. All items require independent human verification prior to operational use. Classification: UNCLASSIFIED / FOUO.',font:'Arial',size:22,color:'AAAAAA',italics:true}),
     ]}));
     var doc=new D.Document({
-      styles:{default:{document:{run:{font:'Arial',size:20}}}},
+      styles:{default:{document:{run:{font:'Arial',size:24}}}},
       sections:[{
-        properties:{page:{size:{width:12240,height:15840},margin:{top:1080,right:1200,bottom:900,left:1200}}},
+        properties:{page:{size:{width:12240,height:15840},margin:{top:1200,right:1300,bottom:1000,left:1300}}},
         footers:{default:new D.Footer({children:[
           new D.Paragraph({alignment:D.AlignmentType.CENTER,children:[
-            new D.TextRun({text:'Powered by SENTINEL NOVA \u2014 Human Verified',font:'Arial',size:12,color:'BBBBBB',italics:true}),
+            new D.TextRun({text:'Powered by SENTINEL NOVA \u2014 Human Verified',font:'Arial',size:18,color:'BBBBBB',italics:true}),
           ]})
         ]})},
         children:children
