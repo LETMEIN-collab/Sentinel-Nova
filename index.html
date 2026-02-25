@@ -1070,29 +1070,73 @@ function App(){
     return await resp.json();
   };
 
+  // ── TIER 1: Direct RSS scan of major outlets for stories they tag as "breaking" ──
+  var BREAKING_RSS=[
+    {url:'https://feeds.bbci.co.uk/news/world/rss.xml',name:'BBC'},
+    {url:'http://rss.cnn.com/rss/edition_world.rss',name:'CNN'},
+    {url:'https://www.aljazeera.com/xml/rss/all.xml',name:'Al Jazeera'},
+    {url:'https://feeds.reuters.com/reuters/topNews',name:'Reuters'},
+    {url:'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',name:'NY Times'},
+  ];
+  var breakingPattern=/breaking|just in|developing|flash|urgent/i;
+  var securityBreaking=/kill|dead|shot|attack|bomb|strike|shoot|war|coup|quake|tsunami|hurricane|crash|hostage|kidnap|missile|nuclear|terror|explo|casualt|evacuat|siege|fire|collaps|shoot|armed|troops|invasion/i;
+
+  var fetchBreakingRSS=async function(){
+    try{
+      var candidates=[];
+      var rssPromises=BREAKING_RSS.map(function(feed){
+        return fetch(PROXY+encodeURIComponent(feed.url),{signal:AbortSignal.timeout(8000)}).then(function(r){return r.json();}).then(function(data){
+          if(!data.items)return;
+          // Check items published in the last 60 minutes
+          var cutoff=Date.now()-60*60*1000;
+          data.items.slice(0,10).forEach(function(item){
+            var pubTime=new Date(item.pubDate).getTime();
+            if(pubTime<cutoff)return;
+            var title=decEnt(item.title||'');
+            // Promote if outlet tags it as breaking OR headline matches urgent security terms
+            var isTaggedBreaking=breakingPattern.test(title)||breakingPattern.test(item.description||'')||((item.categories||[]).join(' ').toLowerCase().indexOf('breaking')!==-1);
+            var isUrgentSecurity=securityBreaking.test(title);
+            if(isTaggedBreaking||isUrgentSecurity){
+              candidates.push({title:title.replace(/^(BREAKING|JUST IN|DEVELOPING)[:\s\-]*/i,'').trim(),url:item.link,source:feed.name,time:new Date(item.pubDate).toISOString().slice(11,16)+' UTC',priority:isTaggedBreaking?2:1,pubTime:pubTime});
+            }
+          });
+        }).catch(function(){});
+      });
+      await Promise.all(rssPromises);
+      if(candidates.length===0)return false;
+      // Sort: tagged breaking first, then by recency
+      candidates.sort(function(a,b){return b.priority-a.priority||b.pubTime-a.pubTime;});
+      var top=candidates[0];
+      if(bannerDismissed&&top.title.substring(0,40)===bannerDismissed)return false;
+      setBreakingNews({title:top.title,url:top.url,sources:candidates.length,domain:top.source,time:top.time});
+      return true;
+    }catch(e){return false;}
+  };
+
+  // ── TIER 2: GDELT cluster-based breaking detection (fallback) ──
   var fetchBreakingNews=async function(){
     try{
+      // Tier 1: Check major outlet RSS feeds first — fastest path to real breaking news
+      var rssHit=await fetchBreakingRSS();
+      if(rssHit)return; // RSS found a breaking story, no need for GDELT
+
+      // Tier 2: GDELT multi-source clustering
       var q='('+GDELT_KEYWORDS.slice(0,12).join(' OR ')+') sourcelang:eng';
       var data=await gdeltFetch(q,75,'180min');
       if(!data)return;
       if(!data.articles||data.articles.length<1)return;
 
-      // Group articles by similarity to find multi-source stories
       var clusters=[];
       data.articles.forEach(function(art){
         if(!art.title)return;
         art.title=decEnt(art.title);
         var titleLower=art.title.toLowerCase();
-        // Skip junk: opinion, listicles, entertainment
         if(/opinion|editorial|top \d|best \d|review|recipe|horoscope|celebrity|kardashian/i.test(art.title))return;
-        // Check if matches any breaking keyword
         var isBreaking=GDELT_KEYWORDS.some(function(kw){return titleLower.indexOf(kw.toLowerCase())!==-1;});
         if(!isBreaking)return;
-        // Try to add to existing cluster
         var matched=false;
         for(var c=0;c<clusters.length;c++){
           var clusterTitle=clusters[c].title.toLowerCase();
-          // Simple word overlap check — if 3+ significant words match, same story
           var artWords=titleLower.replace(/[^a-z\s]/g,'').split(/\s+/).filter(function(w){return w.length>4;});
           var overlap=artWords.filter(function(w){return clusterTitle.indexOf(w)!==-1;}).length;
           if(overlap>=3){clusters[c].sources.push(art.domain||'unknown');clusters[c].count++;matched=true;break;}
@@ -1102,14 +1146,9 @@ function App(){
         }
       });
 
-      // Sort by source count — most-covered story = most significant
       clusters.sort(function(a,b){return b.count-a.count;});
-
-      // Only show if 3+ sources are covering it (confirmed breaking, not noise)
       var top=clusters[0];
       if(!top||top.count<3)return;
-
-      // Don't re-show same story if user dismissed it
       if(bannerDismissed&&top.title.substring(0,40)===bannerDismissed)return;
 
       setBreakingNews({
