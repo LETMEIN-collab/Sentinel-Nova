@@ -80,7 +80,7 @@ body{font-family:'Inter',sans-serif;background:#000;color:#d4d4d4;overflow-x:hid
 .leaflet-popup-close-button:hover{color:var(--t1)!important}
 .conn-arc{stroke-dasharray:6,4;animation:arcflow 3s linear infinite}
 @keyframes arcflow{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-30}}
-.mfilt{position:absolute;top:50px;left:8px;display:flex;gap:4px;flex-wrap:wrap;z-index:1000}
+.mfilt{position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap;z-index:1000}
 .mfb{font:500 9px var(--mono);padding:3px 8px;border-radius:2px;border:1px solid var(--bdr);background:var(--bg2);color:var(--t3);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.5px}
 .mfb:hover{border-color:var(--bdrh);color:var(--t2)}.mfb.a{background:var(--redbg);border-color:rgba(255,59,48,.4);color:var(--red)}
 .mstat{position:absolute;top:8px;right:8px;display:flex;gap:6px}
@@ -1446,7 +1446,7 @@ function App(){
     if(mapRef.current)return;
     const map=L.map('leaflet-map',{
       center:[20,15],zoom:2,minZoom:2,maxZoom:8,
-      zoomControl:true,attributionControl:false,
+      zoomControl:false,attributionControl:false,
       worldCopyJump:true
     });
     const tileUrl=darkMode?'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
@@ -1458,6 +1458,7 @@ function App(){
     L.tileLayer(labelUrl,{
       subdomains:'abcd',maxZoom:19,pane:'shadowPane'
     }).addTo(map);
+    L.control.zoom({position:'bottomright'}).addTo(map);
     mapRef.current=map;
 
     // ═══ ADVISORY SHADING — GeoJSON country fill ═══
