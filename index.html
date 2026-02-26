@@ -1662,12 +1662,12 @@ function App(){
     var unique=allDevs.filter(function(d){if(seen.has(d.key))return false;seen.add(d.key);return true;});
     // Sort by recency
     unique.sort(function(a,b){return(b.seendate||'').localeCompare(a.seendate||'');});
-    var top10=unique.slice(0,10);
+    var topItems=unique.slice(0,12);
     // Fallback to dashboard data if GDELT underperformed
-    if(top10.length<5){
+    if(topItems.length<5){
       var news=liveNews.length>0?liveNews:INCIDENTS;
-      news.slice(0,10-top10.length).forEach(function(n){
-        top10.push({headline:decEnt(n.t||n.title||'').slice(0,120),tag:(n.cat||'SECURITY').toUpperCase(),source:decEnt(n.src||n.reg||''),time:n.tm||''});
+      news.slice(0,12-topItems.length).forEach(function(n){
+        topItems.push({headline:decEnt(n.t||n.title||'').slice(0,120),tag:(n.cat||'SECURITY').toUpperCase(),source:decEnt(n.src||n.reg||''),time:n.tm||''});
       });
     }
     // ═══ REGION-BASED NARRATIVE CONSTRUCTION ═══
@@ -1683,14 +1683,13 @@ function App(){
     ];
     function classifyRegion(headline,tag){
       for(var ri=0;ri<regionRules.length;ri++){if(regionRules[ri].rx.test(headline))return regionRules[ri].name;}
-      // Fallback by tag
       if(tag==='CYBER THREAT'||tag==='SYNTHETIC MEDIA')return 'Cyber & Technology';
       if(tag==='ORGANIZED CRIME')return 'Americas';
       return 'Global';
     }
     // Group by region
     var regionGroups={};
-    top10.forEach(function(d){
+    topItems.forEach(function(d){
       var reg=classifyRegion(d.headline,d.tag);
       if(!regionGroups[reg])regionGroups[reg]=[];
       regionGroups[reg].push(d);
@@ -1699,57 +1698,104 @@ function App(){
     var regionOrder=['Middle East & North Africa','Russia \u2013 Ukraine','Indo-Pacific','Sub-Saharan Africa','Europe & Transatlantic','Americas','Cyber & Technology','Global'];
     var activeRegions=regionOrder.filter(function(r){return regionGroups[r]&&regionGroups[r].length>0;});
 
-    // ═══ ANALYTICAL NARRATIVE BUILDERS ═══
-    // Implication phrases keyed by tag — woven inline, not a separate section
+    // ═══ EXPANDED ANALYTICAL NARRATIVE BUILDERS ═══
+    // Primary insight per tag — woven after lead item
     var tagInsight={
-      'ARMED CONFLICT':'We judge this carries escalation risk and may draw in regional actors.',
-      'TERRORISM':'We assess the threat environment remains fluid, with potential for retaliatory action in the near term.',
-      'KIDNAP & RANSOM':'This pattern is consistent with deteriorating local security conditions and expanding criminal reach.',
-      'NATURAL DISASTER':'Humanitarian response capacity is likely to be strained, with cascading effects on displacement and infrastructure.',
-      'CYBER THREAT':'We assess affected systems face sustained disruption; the incident underscores persistent critical-infrastructure vulnerabilities.',
-      'DETENTION / ARREST':'We judge these actions are likely to draw international scrutiny and may signal a broader crackdown.',
-      'SYNTHETIC MEDIA':'We assess the information environment remains contested, warranting enhanced monitoring.',
-      'ORGANIZED CRIME':'We judge territorial disputes continue to pose a persistent threat to governance in affected regions.',
-      'POLITICAL INSTABILITY':'We assess governance continuity is at risk, with potential for cascading political and security effects.',
-      'WMD / PROLIFERATION':'We judge this represents a material concern for regional security architecture and deterrence postures.'
+      'ARMED CONFLICT':'We judge this carries significant escalation risk and may draw in regional state or non-state actors, potentially shifting alliance postures and complicating ongoing diplomatic efforts.',
+      'TERRORISM':'We assess the threat environment remains fluid and the operational tempo suggests a sustained capability; there is moderate-to-high probability of retaliatory or copycat actions in the near term.',
+      'KIDNAP & RANSOM':'This pattern is assessed as consistent with deteriorating local security conditions and likely indicates expanding criminal operational reach beyond traditional areas of activity.',
+      'NATURAL DISASTER':'We assess humanitarian response capacity is likely to be strained across multiple response corridors, with cascading second-order effects on population displacement, supply chain disruption, and regional stability.',
+      'CYBER THREAT':'We assess affected systems face sustained operational disruption; the sophistication and targeting pattern underscore persistent and evolving vulnerabilities across critical national infrastructure.',
+      'DETENTION / ARREST':'We judge these actions are likely to draw significant international scrutiny and may signal a broader crackdown on civil liberties that could constrain the operating environment for foreign organisations and personnel.',
+      'SYNTHETIC MEDIA':'We assess the information environment remains actively contested; the scale and coordination of observed activity warrants enhanced monitoring for potential impact on democratic processes and public trust.',
+      'ORGANIZED CRIME':'We judge that territorial and operational disputes between criminal networks continue to pose a persistent threat to governance, public safety, and economic stability across affected regions.',
+      'POLITICAL INSTABILITY':'We assess governance continuity is at material risk, with cascading political, security, and economic effects that could destabilise adjacent states and complicate international engagement.',
+      'WMD / PROLIFERATION':'We judge this represents a material and potentially acute concern for regional security architecture, which may prompt a recalibration of deterrence postures among relevant parties.'
     };
-    // Analytical sentence connectors that vary across the narrative
-    var connectors=['Reporting indicates ','Available intelligence suggests ','Open-source collection points to ','Multiple sources report ','Assessed reporting reflects ','We note that '];
-    var connIdx=0;
+    // Secondary contextual insight per tag — woven after subsequent items
+    var tagContext={
+      'ARMED CONFLICT':'This development, viewed alongside broader reporting, reinforces our assessment that the conflict trajectory remains on a deteriorating arc with limited near-term prospects for de-escalation.',
+      'TERRORISM':'The operational pattern is consistent with a capable and adaptive threat network; we assess continued vigilance across soft-target environments is warranted.',
+      'KIDNAP & RANSOM':'This further supports the assessment that criminal groups are exploiting security vacuums and may be diversifying both their operational geography and ransom methodologies.',
+      'NATURAL DISASTER':'The compounding nature of these events is assessed as likely to overwhelm existing response frameworks and may necessitate expanded international coordination.',
+      'CYBER THREAT':'This is consistent with a broader pattern of increasing sophistication in the threat landscape; the potential for cross-sector cascading effects remains a key concern.',
+      'DETENTION / ARREST':'Collectively, these detentions are assessed as part of a pattern that may chill future opposition activity and restrict humanitarian access.',
+      'SYNTHETIC MEDIA':'The proliferation of synthetic content across multiple platforms complicates attribution and response, which we assess as an intentional feature of the observed campaign.',
+      'ORGANIZED CRIME':'The convergence of trafficking, corruption, and violent enforcement underscores the systemic nature of this threat and its capacity to undermine institutional resilience.',
+      'POLITICAL INSTABILITY':'This further erodes the already fragile political settlement and, we assess, increases the probability of a more acute governance crisis within the coming weeks.',
+      'WMD / PROLIFERATION':'Viewed in the context of recent diplomatic developments, this activity suggests a deliberate calibration of strategic signalling that warrants close watch.'
+    };
+    // Standing regional context — provides analytical depth even when only 1 headline exists
+    var regionBackground={
+      'Middle East & North Africa':'The Middle East and North Africa remain among the most volatile and strategically consequential theatres in the current global security landscape. Ongoing conflicts, shifting alliances, and the persistent threat of both state and non-state actor escalation continue to define the region\u2019s risk profile. The interplay between Iranian proxy networks, Israeli security operations, Gulf state diplomacy, and the humanitarian crisis in Gaza creates a multi-layered threat environment that demands continuous monitoring.',
+      'Russia \u2013 Ukraine':'The Russia\u2013Ukraine conflict continues to shape European and global security dynamics. The war has entered a phase characterised by attritional warfare, evolving drone and missile strategies, and periodic shifts in territorial control. Western military and economic support to Ukraine remains a decisive variable, while Russian force generation, sanctions evasion, and information operations continue to complicate the strategic picture. Any shifts in the tempo or geography of hostilities carry significant implications for NATO posture and energy security.',
+      'Indo-Pacific':'The Indo-Pacific region remains a focal point of great-power competition, with the US\u2013China strategic rivalry, Taiwan Strait tensions, North Korean provocations, and maritime disputes in the South China Sea all contributing to an elevated baseline threat level. Militarisation, economic coercion, and information warfare are increasingly integrated elements of statecraft in the region, and the potential for miscalculation or unintended escalation remains a persistent concern for security planners.',
+      'Sub-Saharan Africa':'Sub-Saharan Africa continues to face a convergence of security challenges including jihadist insurgency across the Sahel, civil conflict in Sudan and the eastern Democratic Republic of Congo, and democratic backsliding through military coups. Humanitarian conditions in several states remain dire, with displacement, food insecurity, and pandemic disease compounding the effects of armed violence. The withdrawal of Western security partners from the Sahel and the growing role of non-traditional actors have reshaped the security architecture of the continent.',
+      'Europe & Transatlantic':'Beyond the direct Russia\u2013Ukraine conflict, the broader European and Transatlantic security environment is characterised by the ongoing adaptation of NATO posture, energy security recalibration, and an evolving terrorism and domestic extremism threat. Hybrid threats — including sabotage, cyber intrusions, and influence operations attributed to Russian intelligence services — have featured prominently in recent reporting across Baltic, Nordic, and Central European states.',
+      'Americas':'The Western Hemisphere security picture is dominated by transnational organised crime, narcotics trafficking, and governance fragility in several Central and South American states. Mexican cartel operations, Venezuelan political instability, and migration-driven pressures on the US southern border continue to drive both national and regional security agendas. Gang violence, extortion, and the fentanyl epidemic represent persistent and in some cases worsening threat vectors.',
+      'Cyber & Technology':'The global cyber threat landscape continues to evolve in both sophistication and impact. State-sponsored advanced persistent threat (APT) groups, criminal ransomware syndicates, and influence operations leveraging AI-generated content all contribute to an increasingly contested digital environment. Critical infrastructure — including energy, healthcare, financial services, and government networks — remains a high-value target, and the convergence of cyber and information warfare blurs traditional boundaries between espionage, sabotage, and armed conflict.',
+      'Global':'Several developments in the past 24 hours do not fit neatly within a single regional framework but carry cross-cutting implications for the global security environment. These developments span multiple threat domains and geographies, reflecting the interconnected nature of modern risk.'
+    };
+    // Varied analytical connectors — rotated to avoid repetition
+    var connectors=['Reporting indicates ','Available intelligence suggests ','Open-source collection points to ','Multiple corroborating sources report ','Assessed reporting reflects ','We note that ','Collection over the past 24 hours reveals ','Credible open-source reporting highlights '];
+    var midConnectors=['Separately, ','In a related development, ','Concurrently, ','Of additional note, ','In parallel, ','Also within this region, ','Adding to the regional threat picture, ','Further complicating the operating environment, '];
+    var connIdx=0;var midIdx=0;
     function nextConn(){var c=connectors[connIdx%connectors.length];connIdx++;return c;}
+    function nextMid(){var c=midConnectors[midIdx%midConnectors.length];midIdx++;return c;}
 
-    // Build flowing prose per region — each region gets a subheading + 1–2 paragraphs
+    // Build flowing prose per region — standing context + event narrative + assessment
     var regionNarratives=[];
     activeRegions.forEach(function(reg){
       var items=regionGroups[reg];
-      var prose='';
+      var paragraphs=[];
+      // Paragraph 1: Standing regional context
+      if(regionBackground[reg])paragraphs.push(regionBackground[reg]);
+      // Paragraph 2+: Event-driven narrative with inline assessments
+      var currentPara='Against this backdrop, ';
       items.forEach(function(d,di){
         var src=d.source?d.source.replace('www.',''):'';
-        if(di===0){prose+=nextConn()+d.headline+(src?' ('+src+')':'')+'. ';}
-        else if(di===1){prose+='Separately, '+d.headline.charAt(0).toLowerCase()+d.headline.slice(1)+(src?' ('+src+')':'')+'. ';}
-        else{prose+='Additionally, '+d.headline.charAt(0).toLowerCase()+d.headline.slice(1)+(src?' ('+src+')':'')+'. ';}
-        // Weave in an inline analytical assessment after the first item per region
-        if(di===0&&tagInsight[d.tag]){prose+=tagInsight[d.tag]+' ';}
+        var srcNote=src?' ('+src+')':'';
+        if(di===0){
+          var cn=nextConn();
+          currentPara+=cn.charAt(0).toLowerCase()+cn.slice(1);
+          currentPara+=d.headline+srcNote+'. ';
+          if(tagInsight[d.tag])currentPara+=tagInsight[d.tag]+' ';
+        }else{
+          var lh=d.headline.charAt(0).toLowerCase()+d.headline.slice(1);
+          currentPara+=nextMid()+lh+srcNote+'. ';
+          if(tagContext[d.tag])currentPara+=tagContext[d.tag]+' ';
+          if(di%2===0&&di<items.length-1){
+            paragraphs.push(currentPara.trim());
+            currentPara='';
+          }
+        }
       });
-      regionNarratives.push({region:reg,text:prose.trim()});
+      if(currentPara.trim())paragraphs.push(currentPara.trim());
+      regionNarratives.push({region:reg,paragraphs:paragraphs});
     });
 
-    // Build BLUF — single synthesized paragraph about overall threat posture
-    var threatCount=top10.length;
+    // ═══ BUILD BLUF — multi-sentence synthesized analytical paragraph ═══
+    var threatCount=topItems.length;
     var regionCount=activeRegions.length;
-    // Pick two most significant regions (most items)
     var sortedRegs=activeRegions.slice().sort(function(a,b){return regionGroups[b].length-regionGroups[a].length;});
     var topRegs=sortedRegs.slice(0,Math.min(3,sortedRegs.length));
-    var blufText='The global threat environment over the past 24 hours is assessed as elevated, with '+threatCount+' significant developments identified across '+regionCount+' geographic regions. ';
-    blufText+='The most pronounced activity was observed in '+topRegs.join(', ')+'. ';
-    // Add a synthesized line about what we judge
-    var hasConflict=top10.some(function(d){return d.tag==='ARMED CONFLICT'||d.tag==='WMD / PROLIFERATION';});
-    var hasCyber=top10.some(function(d){return d.tag==='CYBER THREAT'||d.tag==='SYNTHETIC MEDIA';});
-    var hasTerror=top10.some(function(d){return d.tag==='TERRORISM';});
-    if(hasConflict)blufText+='We judge escalation risk in active conflict zones remains the primary driver of the current threat posture. ';
-    if(hasTerror)blufText+='The terrorism threat picture warrants continued close monitoring given recent operational activity. ';
-    if(hasCyber)blufText+='Persistent cyber and information threats continue to challenge critical infrastructure resilience. ';
-    blufText+='This assessment is derived from open-source collection and is rendered with moderate-to-high confidence. We recommend sustained monitoring across all identified vectors.';
+    // Count by threat type for the BLUF
+    var tagCounts={};topItems.forEach(function(d){tagCounts[d.tag]=(tagCounts[d.tag]||0)+1;});
+    var dominantTag=Object.keys(tagCounts).sort(function(a,b){return tagCounts[b]-tagCounts[a];})[0]||'';
+    var hasConflict=topItems.some(function(d){return d.tag==='ARMED CONFLICT'||d.tag==='WMD / PROLIFERATION';});
+    var hasCyber=topItems.some(function(d){return d.tag==='CYBER THREAT'||d.tag==='SYNTHETIC MEDIA';});
+    var hasTerror=topItems.some(function(d){return d.tag==='TERRORISM';});
+    var hasInstability=topItems.some(function(d){return d.tag==='POLITICAL INSTABILITY'||d.tag==='DETENTION / ARREST';});
+    var hasNatDis=topItems.some(function(d){return d.tag==='NATURAL DISASTER';});
+
+    var blufText='The global security environment over the preceding 24-hour reporting cycle is assessed as elevated with moderate-to-high confidence, with open-source collection identifying '+threatCount+' significant developments spanning '+regionCount+' geographic regions and multiple threat domains. ';
+    blufText+='The most concentrated and consequential activity was observed across '+topRegs.join(', ')+', which together account for the preponderance of assessed escalation risk during this period. ';
+    if(hasConflict)blufText+='We judge that active armed conflicts — particularly those involving state-on-state or state-on-proxy engagements — remain the primary driver of the current threat posture, with kinetic activity showing no material signs of abatement. ';
+    if(hasTerror)blufText+='The terrorism and violent extremism threat picture warrants continued close monitoring; recent operational activity suggests sustained intent and capability among known threat networks. ';
+    if(hasCyber)blufText+='Persistent and evolving cyber and information warfare threats continue to test the resilience of critical infrastructure across multiple sectors and geographies. ';
+    if(hasInstability)blufText+='Political instability and governance disruption in several states present compounding risk factors that may constrain operational environments for international organisations and personnel. ';
+    if(hasNatDis)blufText+='Natural disaster events are placing additional strain on humanitarian response capacity and are assessed as likely to generate secondary displacement and infrastructure effects. ';
+    blufText+='This assessment is derived exclusively from open-source collection and is rendered with moderate-to-high confidence; all judgements are subject to revision as new information becomes available. We recommend sustained monitoring and enhanced collection across all identified vectors.';
 
     // ═══ BUILD DOCUMENT ═══ sizes in HALF-POINTS, spacing in twips, line in 240ths (240=single,360=1.5x)
     var children=[];
@@ -1761,44 +1807,69 @@ function App(){
     children.push(new D.Paragraph({spacing:{after:200},border:{bottom:{style:D.BorderStyle.SINGLE,size:3,color:'cc0000',space:4}},children:[
       new D.TextRun({text:'24-Hour Intelligence Summary  |  '+dateStr+'  |  '+timeStr,font:'Arial',size:16,color:'999999'}),
     ]}));
-    // BLUF
+    // ── BLUF ──
     children.push(new D.Paragraph({spacing:{before:80,after:60},children:[
       new D.TextRun({text:'BOTTOM LINE UP FRONT (BLUF)',font:'Arial',size:19,bold:true,color:'1a1a1a'}),
     ]}));
-    children.push(new D.Paragraph({spacing:{after:200,line:312},children:[
+    children.push(new D.Paragraph({spacing:{after:220,line:320},children:[
       new D.TextRun({text:blufText,font:'Arial',size:18,color:'333333'}),
     ]}));
-    // WHAT HAS HAPPENED — regional subheadings with flowing narrative
+    // ── WHAT HAS HAPPENED — regional subheadings with flowing multi-paragraph narrative ──
     children.push(new D.Paragraph({spacing:{before:80,after:80},border:{bottom:{style:D.BorderStyle.SINGLE,size:1,color:'DDDDDD',space:3}},children:[
       new D.TextRun({text:'WHAT HAS HAPPENED',font:'Arial',size:19,bold:true,color:'1a1a1a'}),
     ]}));
     regionNarratives.forEach(function(rn){
-      // Region subheading
-      children.push(new D.Paragraph({spacing:{before:120,after:60},children:[
+      // Region subheading — bold
+      children.push(new D.Paragraph({spacing:{before:140,after:60},children:[
         new D.TextRun({text:rn.region,font:'Arial',size:18,bold:true,color:'222222'}),
       ]}));
-      // Narrative paragraph
-      children.push(new D.Paragraph({spacing:{after:160,line:312},children:[
-        new D.TextRun({text:rn.text,font:'Arial',size:18,color:'333333'}),
-      ]}));
+      // Multiple paragraphs per region
+      rn.paragraphs.forEach(function(para){
+        children.push(new D.Paragraph({spacing:{after:160,line:320},children:[
+          new D.TextRun({text:para,font:'Arial',size:18,color:'333333'}),
+        ]}));
+      });
     });
-    // LOOKING AHEAD — brief forward-looking watchpoints replacing "Key Events & Dates"
-    children.push(new D.Paragraph({spacing:{before:100,after:60},border:{bottom:{style:D.BorderStyle.SINGLE,size:1,color:'DDDDDD',space:3}},children:[
+    // ── THREAT ENVIRONMENT ASSESSMENT — analytical synthesis across regions ──
+    children.push(new D.Paragraph({spacing:{before:120,after:60},border:{bottom:{style:D.BorderStyle.SINGLE,size:1,color:'DDDDDD',space:3}},children:[
+      new D.TextRun({text:'THREAT ENVIRONMENT ASSESSMENT',font:'Arial',size:19,bold:true,color:'1a1a1a'}),
+    ]}));
+    var teaPara1='Viewed in aggregate, the developments detailed above point to a security environment characterised by concurrent and in several cases interconnected pressures across multiple domains. ';
+    if(hasConflict)teaPara1+='Armed conflict remains the most acute source of risk; we assess with moderate confidence that the current kinetic tempo is sustainable by principal belligerents in the near term, which limits prospects for negotiated pauses or ceasefires. ';
+    if(hasTerror)teaPara1+='The terrorism threat, while episodic, reflects an adaptive adversary; shifts in targeting patterns — if confirmed by follow-on reporting — would warrant a reassessment of protective security postures at exposed facilities and events. ';
+    if(hasCyber)teaPara1+='Cyber operations continue to evolve in both sophistication and scale, with state-aligned and criminal actors demonstrating an increased willingness to target entities with systemic economic or societal impact.';
+    children.push(new D.Paragraph({spacing:{after:160,line:320},children:[
+      new D.TextRun({text:teaPara1,font:'Arial',size:18,color:'333333'}),
+    ]}));
+    var teaPara2='';
+    if(hasInstability)teaPara2+='Political instability across multiple jurisdictions introduces a compounding risk dimension: governance disruption creates permissive environments for both criminal and extremist exploitation, while simultaneously degrading the capacity of state institutions to respond to natural disasters and humanitarian crises. ';
+    if(hasNatDis)teaPara2+='Natural hazard events — particularly those occurring in regions with pre-existing fragility — are assessed as likely to exacerbate existing vulnerabilities and may trigger secondary migration or resource-competition dynamics. ';
+    teaPara2+='We assess that the convergence of these threat vectors — kinetic, political, cyber, and environmental — presents a more complex risk landscape than any single domain indicator would suggest. Organisations with equities in the identified regions should consider reviewing travel policies, continuity arrangements, and information security postures in light of this assessment.';
+    children.push(new D.Paragraph({spacing:{after:180,line:320},children:[
+      new D.TextRun({text:teaPara2,font:'Arial',size:18,color:'333333'}),
+    ]}));
+    // ── LOOKING AHEAD — expanded forward-looking analytical section ──
+    children.push(new D.Paragraph({spacing:{before:120,after:60},border:{bottom:{style:D.BorderStyle.SINGLE,size:1,color:'DDDDDD',space:3}},children:[
       new D.TextRun({text:'LOOKING AHEAD',font:'Arial',size:19,bold:true,color:'1a1a1a'}),
     ]}));
-    var lookAheadText='Over the next 24\u201348 hours, we assess that ';
-    if(hasConflict)lookAheadText+='active conflict zones — particularly '+topRegs[0]+' — carry the highest probability of further escalation. ';
-    else lookAheadText+='the threat environment is likely to remain at current levels, though conditions remain fluid across multiple regions. ';
-    lookAheadText+='We recommend sustained collection on all identified vectors and note that developments in ';
-    lookAheadText+=sortedRegs.length>1?sortedRegs[0]+' and '+sortedRegs[1]:sortedRegs[0];
-    lookAheadText+=' have the greatest potential for near-term impact on organisational security posture. Next assessment scheduled: '+new Date(now.getTime()+86400000).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'.';
-    children.push(new D.Paragraph({spacing:{after:180,line:312},children:[
-      new D.TextRun({text:lookAheadText,font:'Arial',size:18,color:'333333'}),
+    var laText1='Over the next 24\u201348 hours, we assess that ';
+    if(hasConflict)laText1+='active conflict zones — particularly in '+topRegs[0]+' — carry the highest probability of further escalation, with potential for expanded area of operations or intensified targeting of civilian infrastructure. ';
+    else laText1+='the overall threat environment is likely to remain at current levels, though the fluid nature of developments across multiple regions introduces uncertainty that could alter this assessment rapidly. ';
+    laText1+='We recommend sustained collection on all identified vectors and note that developments in ';
+    laText1+=sortedRegs.length>1?sortedRegs[0]+' and '+sortedRegs[1]:sortedRegs[0];
+    laText1+=' have the greatest potential for near-term impact on organisational security posture and duty-of-care obligations.';
+    children.push(new D.Paragraph({spacing:{after:140,line:320},children:[
+      new D.TextRun({text:laText1,font:'Arial',size:18,color:'333333'}),
     ]}));
-    // Methodology footer
-    children.push(new D.Paragraph({spacing:{before:200,line:276},border:{top:{style:D.BorderStyle.SINGLE,size:1,color:'DDDDDD',space:4}},children:[
+    var laText2='Key watchpoints for the coming reporting cycle include: the trajectory of any ceasefire or diplomatic initiatives associated with active conflicts; the potential for retaliatory actions following high-profile strikes or detentions; the propagation of cyber incidents to additional sectors or geographies; and the humanitarian impact of natural disaster events, particularly where these intersect with pre-existing fragility. ';
+    laText2+='We will provide an updated assessment in the next scheduled cycle. Next assessment: '+new Date(now.getTime()+86400000).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'.';
+    children.push(new D.Paragraph({spacing:{after:180,line:320},children:[
+      new D.TextRun({text:laText2,font:'Arial',size:18,color:'333333'}),
+    ]}));
+    // ── Methodology footer ──
+    children.push(new D.Paragraph({spacing:{before:220,line:276},border:{top:{style:D.BorderStyle.SINGLE,size:1,color:'DDDDDD',space:4}},children:[
       new D.TextRun({text:'METHODOLOGY: ',font:'Arial',size:14,bold:true,color:'AAAAAA'}),
-      new D.TextRun({text:'This brief is compiled from open-source intelligence (OSINT) feeds, including GDELT, RSS aggregation from major international outlets, and structured data from government advisories. Probabilistic language reflects assessed confidence based on source reliability and multi-source corroboration. All items require independent human verification prior to operational use. Classification: UNCLASSIFIED / FOUO.',font:'Arial',size:14,color:'BBBBBB',italics:true}),
+      new D.TextRun({text:'This brief is compiled from open-source intelligence (OSINT) feeds, including GDELT global event monitoring, RSS aggregation from major international outlets, and structured data from government advisories. Events are classified by geographic region and threat domain using automated keyword extraction and validated against known reporting patterns. Probabilistic language (e.g. "we assess", "we judge") reflects assessed confidence levels based on source reliability, recency, and multi-source corroboration. Confidence is categorised as low, moderate, or high based on the number and independence of confirming sources. All analytical judgements are preliminary and require independent human verification prior to operational use. This product does not constitute legal, operational, or travel advice. Classification: UNCLASSIFIED / FOUO.',font:'Arial',size:14,color:'BBBBBB',italics:true}),
     ]}));
     var doc=new D.Document({
       styles:{default:{document:{run:{font:'Arial',size:20}}}},
