@@ -818,11 +818,12 @@ function App(){
       var chartPrices={};
       var symbolToKey={};
       Object.keys(YAHOO_SYMBOLS).forEach(function(k){symbolToKey[YAHOO_SYMBOLS[k]]=k;});
+      var cacheBust='&_t='+Date.now();
       // Fetch in parallel batches of 4
       for(var i=0;i<allSymbols.length;i+=4){
         var batch=allSymbols.slice(i,i+4);
         var fetches=batch.map(function(sym){
-          var cUrl='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=5d';
+          var cUrl='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(sym)+'?interval=1d&range=5d'+cacheBust;
           return proxyFetch(cUrl,8000).then(function(cData){
             if(cData&&cData.chart&&cData.chart.result&&cData.chart.result[0]){
               var meta=cData.chart.result[0].meta;
@@ -845,14 +846,21 @@ function App(){
         });
         await Promise.all(fetches);
       }
-      if(Object.keys(chartPrices).length>0)setLivePrices(function(prev){return Object.assign({},prev,chartPrices);});
+      if(Object.keys(chartPrices).length>0){
+        setLivePrices(function(prev){
+          // Only update symbols that actually returned data — don't wipe out existing live prices for symbols that failed this cycle
+          var merged=Object.assign({},prev);
+          Object.keys(chartPrices).forEach(function(k){merged[k]=chartPrices[k];});
+          return merged;
+        });
+      }
     }catch(e){}
   };
 
   // Fetch SPGI intraday chart data for sparkline + extract current price
   var fetchSpgiChart=async function(){
     try{
-      var yUrl='https://query1.finance.yahoo.com/v8/finance/chart/SPGI?interval=15m&range=1d';
+      var yUrl='https://query1.finance.yahoo.com/v8/finance/chart/SPGI?interval=15m&range=1d&_t='+Date.now();
       var data=await proxyFetch(yUrl,10000);
       if(!data)return;
       var result=data.chart&&data.chart.result&&data.chart.result[0];
@@ -1736,7 +1744,7 @@ function App(){
         <div className="hdr-r">
           <div className="hdr-spgi">
             <span style={{font:'600 10px var(--mono)',color:'var(--t2)'}}>SPGI</span>
-            <span style={{font:'700 11px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.p:'512.38'}</span>
+            <span style={{font:'700 11px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.p:'435.58'}</span>
             <svg width="48" height="16" viewBox="0 0 48 16"><polyline points={spgiIntraday.map((d,i)=>{const x=i/(spgiIntraday.length-1)*48;const mn=Math.min(...spgiIntraday.map(s=>s.p));const mx=Math.max(...spgiIntraday.map(s=>s.p));const range=mx-mn||1;return `${x},${2+((mx-d.p)/range)*12}`}).join(' ')} fill="none" stroke={livePrices.SPGI?(livePrices.SPGI.u?'#30d158':'#ff3b30'):'#30d158'} strokeWidth="1.2"/></svg>
             <span style={{font:'500 9px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.c:'+1.24%'}</span>
           </div>
@@ -1771,7 +1779,7 @@ function App(){
               const inner=<div key={i} style={{padding:'5px 0',borderBottom:i<advisories.length-1?'1px solid var(--bdr)':'none',overflow:'hidden'}}>
                 <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:2,overflow:'hidden'}}>
                   <span style={{font:'600 7px var(--mono)',color:ADV_COLORS[adv.level],padding:'1px 4px',borderRadius:2,background:ADV_COLORS[adv.level]+'18',border:'1px solid '+ADV_COLORS[adv.level]+'35',letterSpacing:'.5px',flexShrink:0,whiteSpace:'nowrap'}}>{ADV_SHORT[adv.level]||'L'+adv.level}</span>
-                  <span style={{font:'400 8px var(--mono)',color:'var(--t3)',marginLeft:'auto',flexShrink:0}}>{adv.date?timeAgo(adv.date.toISOString()):''}</span>
+                  <span style={{font:'400 8px var(--mono)',color:'var(--t3)',marginLeft:'auto',flexShrink:0}}>{adv.date?adv.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''}</span>
                 </div>
                 <div style={{font:'500 10px/1.3 Inter,sans-serif',color:'var(--t1)',cursor:adv.url?'pointer':'default'}}>{adv.country}{adv.url&&<span style={{color:'var(--t3)',fontSize:9,marginLeft:4}}>↗</span>}</div>
                 {adv.desc&&<div style={{font:'400 9px/1.3 Inter,sans-serif',color:'var(--t3)',marginTop:1}}>{adv.desc.slice(0,70)}</div>}
@@ -1975,7 +1983,7 @@ function App(){
           <div className="ph"><div className="pt">◆ SPGI — S&P Global</div><span className="pb" style={{background:livePrices.SPGI?(livePrices.SPGI.u?'var(--grnbg)':'var(--redbg)'):'var(--grnbg)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.c:'+1.24%'}</span></div>
           <div className="pbd">
             <div style={{display:'flex',alignItems:'baseline',gap:8}}>
-              <span style={{font:'700 22px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{'$'+(livePrices.SPGI?livePrices.SPGI.p:'512.38')}</span>
+              <span style={{font:'700 22px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{'$'+(livePrices.SPGI?livePrices.SPGI.p:'435.58')}</span>
               <span style={{font:'500 11px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.c:'+$6.28'}</span>
             </div>
             <div style={{font:'400 9px var(--mono)',color:'var(--t3)',marginTop:2}}>NYSE · {livePrices.SPGI?'● LIVE':'Intraday'} · Updated {time.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false})}</div>
