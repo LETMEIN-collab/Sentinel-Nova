@@ -12,6 +12,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
@@ -83,6 +86,10 @@ body{font-family:'Inter',sans-serif;background:#000;color:#d4d4d4;overflow-x:hid
 .mstat{position:absolute;top:8px;right:8px;display:flex;gap:6px}
 .ms{background:rgba(0,0,0,.8);border:1px solid var(--bdr);border-radius:3px;padding:4px 8px;text-align:center}
 .msv{font:700 14px var(--mono);display:block}.msl{font:400 8px var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+.map-search{position:absolute;top:8px;right:8px;z-index:1000;display:flex;align-items:center;gap:4px}
+.map-search input{background:rgba(0,0,0,0.7);border:1px solid var(--bdr);color:var(--t1);font:400 10px var(--mono);padding:5px 10px;border-radius:3px;width:160px;outline:none;backdrop-filter:blur(8px)}
+.map-search input::placeholder{color:var(--t3)}
+.map-search input:focus{border-color:rgba(10,132,255,0.5);box-shadow:0 0 6px rgba(10,132,255,0.2)}
 .mleg{position:absolute;bottom:8px;left:8px;display:flex;gap:8px;font:400 8px var(--mono);color:var(--t3);flex-wrap:wrap;max-width:60%}
 .ml{display:flex;align-items:center;gap:3px;white-space:nowrap}.mld{width:6px;height:6px;border-radius:50%}
 .mpulse{animation:mp 2s infinite}@keyframes mp{0%{r:5;opacity:.9}50%{r:14;opacity:0}100%{r:5;opacity:0}}
@@ -191,6 +198,14 @@ body{font-family:'Inter',sans-serif;background:#000;color:#d4d4d4;overflow-x:hid
 .adv-tog.off::after{background:var(--t3);opacity:0.15}
 .adv-tooltip{background:rgba(0,0,0,0.85)!important;color:#fff!important;border:1px solid rgba(255,255,255,0.2)!important;border-radius:3px!important;font:500 10px 'JetBrains Mono',monospace!important;padding:4px 8px!important;box-shadow:0 2px 8px rgba(0,0,0,0.4)!important}
 .adv-tooltip::before{border-bottom-color:rgba(0,0,0,0.85)!important}
+.marker-cluster{background:rgba(0,0,0,0.5)!important;border:2px solid rgba(255,255,255,0.3)!important}
+.marker-cluster div{background:rgba(0,0,0,0.7)!important;color:#fff!important;font:600 11px var(--mono)!important}
+.marker-cluster-small{background:rgba(255,149,0,0.3)!important;border-color:rgba(255,149,0,0.5)!important}
+.marker-cluster-small div{background:rgba(255,149,0,0.6)!important}
+.marker-cluster-medium{background:rgba(255,59,48,0.3)!important;border-color:rgba(255,59,48,0.5)!important}
+.marker-cluster-medium div{background:rgba(255,59,48,0.6)!important}
+.marker-cluster-large{background:rgba(255,59,48,0.4)!important;border-color:rgba(255,59,48,0.7)!important}
+.marker-cluster-large div{background:rgba(255,59,48,0.8)!important}
 .brief-btn{background:rgba(10,132,255,.12);border:1px solid rgba(10,132,255,.4);color:#0a84ff;padding:3px 8px;border-radius:3px;cursor:pointer;font:600 9px var(--mono);letter-spacing:.5px;transition:all .2s;white-space:nowrap;flex-shrink:0}
 .brief-btn:hover{background:rgba(10,132,255,.25);color:#4da6ff}
 .brief-btn:disabled{opacity:.5;cursor:wait}
@@ -1321,6 +1336,66 @@ function App(){
       'Palestine':'Gaza','West Bank and Gaza':'Gaza',
       'Türkiye':'Turkey','Turkiye':'Turkey'
     };
+    // State Dept travel advisory URLs
+    var ADV_URLS={
+      'Afghanistan':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/afghanistan-travel-advisory.html',
+      'Ukraine':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/ukraine-travel-advisory.html',
+      'Russia':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/russia-travel-advisory.html',
+      'Syria':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/syria-travel-advisory.html',
+      'Iran':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/iran-travel-advisory.html',
+      'Iraq':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/iraq-travel-advisory.html',
+      'Yemen':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/yemen-travel-advisory.html',
+      'Somalia':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/somalia-travel-advisory.html',
+      'Sudan':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/sudan-travel-advisory.html',
+      'South Sudan':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/south-sudan-travel-advisory.html',
+      'Libya':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/libya-travel-advisory.html',
+      'Mali':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/mali-travel-advisory.html',
+      'Haiti':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/haiti-travel-advisory.html',
+      'North Korea':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/north-korea-travel-advisory.html',
+      'Venezuela':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/venezuela-travel-advisory.html',
+      'Myanmar':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/burma-travel-advisory.html',
+      'Burkina Faso':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/burkina-faso-travel-advisory.html',
+      'Niger':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/niger-travel-advisory.html',
+      'Central African Republic':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/central-african-republic-travel-advisory.html',
+      'Belarus':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/belarus-travel-advisory.html',
+      'Lebanon':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/lebanon-travel-advisory.html',
+      'Pakistan':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/pakistan-travel-advisory.html',
+      'Nigeria':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/nigeria-travel-advisory.html',
+      'Honduras':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/honduras-travel-advisory.html',
+      'Israel':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/israel-the-west-bank-and-gaza-travel-advisory.html',
+      'Ethiopia':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/ethiopia-travel-advisory.html',
+      'Democratic Republic of the Congo':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/democratic-republic-of-the-congo-travel-advisory.html',
+      'Chad':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/chad-travel-advisory.html',
+      'Mauritania':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/mauritania-travel-advisory.html',
+      'Colombia':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/colombia-travel-advisory.html',
+      'Bangladesh':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/bangladesh-travel-advisory.html',
+      'Guatemala':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/guatemala-travel-advisory.html',
+      'Uganda':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/uganda-travel-advisory.html',
+      'Guinea-Bissau':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/guinea-bissau-travel-advisory.html',
+      'Cameroon':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/cameroon-travel-advisory.html',
+      'Nicaragua':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/nicaragua-travel-advisory.html',
+      'Kenya':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/kenya-travel-advisory.html',
+      'Mexico':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/mexico-travel-advisory.html',
+      'Brazil':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/brazil-travel-advisory.html',
+      'Egypt':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/egypt-travel-advisory.html',
+      'Turkey':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/turkey-travel-advisory.html',
+      'India':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/india-travel-advisory.html',
+      'Guinea':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/guinea-travel-advisory.html',
+      'Philippines':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/philippines-travel-advisory.html',
+      'South Africa':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/south-africa-travel-advisory.html',
+      'Jamaica':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/jamaica-travel-advisory.html',
+      'China':'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/china-travel-advisory.html'
+    };
+    function getAdvUrl(name){
+      if(ADV_URLS[name])return ADV_URLS[name];
+      var alias=ADV_ALIASES[name];
+      if(alias&&ADV_URLS[alias])return ADV_URLS[alias];
+      var keys=Object.keys(ADV_URLS);
+      for(var k=0;k<keys.length;k++){
+        if(name.indexOf(keys[k])!==-1||keys[k].indexOf(name)!==-1)return ADV_URLS[keys[k]];
+      }
+      return 'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html/';
+    }
     var advFillColors={4:'rgba(255,59,48,0.35)',3:'rgba(255,149,0,0.25)',2:'rgba(255,214,10,0.18)'};
     var advStrokeColors={4:'rgba(255,59,48,0.6)',3:'rgba(255,149,0,0.5)',2:'rgba(255,214,10,0.4)'};
     var lvlLabels={4:'LEVEL 4 — DO NOT TRAVEL',3:'LEVEL 3 — RECONSIDER TRAVEL',2:'LEVEL 2 — EXERCISE INCREASED CAUTION'};
@@ -1361,7 +1436,8 @@ function App(){
               });
               layer.on('mouseover',function(){
                 layer.setStyle({fillOpacity:1,weight:2.5});
-                layer.bindTooltip(name+' — '+lvlLabels[lv],{sticky:true,className:'adv-tooltip'}).openTooltip();
+                var url=getAdvUrl(name);
+                layer.bindTooltip('<span style="pointer-events:auto">'+name+' — '+lvlLabels[lv]+'<br><a href="'+url+'" target="_blank" rel="noopener" style="color:#0a84ff;font-size:9px">View State Dept Advisory ↗</a></span>',{sticky:true,className:'adv-tooltip',interactive:true}).openTooltip();
               });
               layer.on('mouseout',function(){
                 var currentLv=getAdvLevel(name);
@@ -1416,14 +1492,25 @@ function App(){
     });
   },[advFilter]);
 
-  // Update markers when filter changes
+  // Update markers when filter changes — use MarkerClusterGroup for clustering
   useEffect(()=>{
     if(!mapRef.current)return;
     const map=mapRef.current;
-    // Clear old markers
+    // Remove old cluster group
     markersRef.current.forEach(m=>map.removeLayer(m));
     markersRef.current=[];
-    // Add filtered markers
+    // Create cluster group
+    var clusterGroup=L.markerClusterGroup({
+      maxClusterRadius:40,
+      spiderfyOnMaxZoom:true,
+      showCoverageOnHover:false,
+      zoomToBoundsOnClick:true,
+      iconCreateFunction:function(cluster){
+        var count=cluster.getChildCount();
+        var size=count<5?'small':count<15?'medium':'large';
+        return L.divIcon({html:'<div><span>'+count+'</span></div>',className:'marker-cluster marker-cluster-'+size,iconSize:L.point(36,36)});
+      }
+    });
     const filtered=mf==='ALL'?INCIDENTS:INCIDENTS.filter(i=>i.cat===mf);
     filtered.forEach(inc=>{
       const col=SC[inc.sv];
@@ -1434,7 +1521,7 @@ function App(){
         html:`<div style="width:${size}px;height:${size}px;background:${col};border-radius:50%;border:2px solid rgba(0,0,0,0.6);box-shadow:0 0 ${inc.sv==='critical'?'12':'6'}px ${col}80;cursor:pointer" class="${pulseClass}"></div>`,
         iconSize:[size,size],iconAnchor:[size/2,size/2]
       });
-      const marker=L.marker([inc.lat,inc.lon],{icon}).addTo(map);
+      const marker=L.marker([inc.lat,inc.lon],{icon});
       const popup=`<div style="font-family:Inter,sans-serif">
         <div style="font:600 10px 'JetBrains Mono';color:${col};text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">${inc.cat} — ${inc.sv.toUpperCase()}</div>
         <div style="font:500 12px/1.4 Inter;color:#e5e5e5;margin-bottom:4px">${inc.t}</div>
@@ -1443,8 +1530,10 @@ function App(){
       </div>`;
       marker.bindPopup(popup,{maxWidth:280,closeButton:true});
       marker.on('mouseover',function(){this.openPopup()});
-      markersRef.current.push(marker);
+      clusterGroup.addLayer(marker);
     });
+    map.addLayer(clusterGroup);
+    markersRef.current=[clusterGroup];
   },[mf]);
 
   // Advisory shading is now painted directly via L.circle in map init (zero external deps)
@@ -1692,6 +1781,46 @@ function App(){
                 <div className="ms"><span className="msv" style={{color:'var(--red)'}}>{INCIDENTS.filter(i=>i.sv==='critical').length}</span><span className="msl">Critical</span></div>
                 <div className="ms"><span className="msv" style={{color:'var(--amber)'}}>{INCIDENTS.filter(i=>i.sv==='high').length}</span><span className="msl">High</span></div>
                 <div className="ms"><span className="msv" style={{color:'var(--t1)'}}>{INCIDENTS.length}</span><span className="msl">Total</span></div>
+              </div>
+              <div className="map-search">
+                <input type="text" placeholder="Search country..." onKeyDown={function(e){
+                  if(e.key==='Enter'){
+                    var query=e.target.value.trim().toLowerCase();
+                    if(!query)return;
+                    // Search in GeoJSON layer
+                    var found=false;
+                    if(geoLayerRef.current){
+                      geoLayerRef.current.eachLayer(function(layer){
+                        if(found)return;
+                        var name=(layer.feature&&layer.feature.properties&&layer.feature.properties.name)||'';
+                        if(name.toLowerCase().indexOf(query)!==-1){
+                          found=true;
+                          var bounds=layer.getBounds();
+                          mapRef.current.flyToBounds(bounds,{padding:[50,50],duration:1.2});
+                          var lv=0;
+                          var ADV_C2={'Afghanistan':4,'Ukraine':4,'Russia':4,'Syria':4,'Iran':4,'Iraq':4,'Yemen':4,'Somalia':4,'Sudan':4,'South Sudan':4,'Libya':4,'Mali':4,'Haiti':4,'North Korea':4,'Venezuela':4,'Myanmar':4,'Burkina Faso':4,'Niger':4,'Central African Republic':4,'Belarus':4,'Lebanon':4,'Pakistan':3,'Nigeria':3,'Honduras':3,'Israel':3,'Ethiopia':3,'Democratic Republic of the Congo':3,'Chad':3,'Mauritania':3,'Colombia':3,'Bangladesh':3,'Guatemala':3,'Uganda':3,'Guinea-Bissau':3,'Cameroon':3,'Nicaragua':3,'Kenya':3,'Mexico':2,'Brazil':2,'Egypt':2,'Turkey':2,'India':2,'Guinea':2,'Philippines':2,'South Africa':2,'Jamaica':2,'China':2};
+                          if(ADV_C2[name])lv=ADV_C2[name];
+                          var center=bounds.getCenter();
+                          setCountryBrief({name:name,level:lv,lat:center.lat,lon:center.lng});
+                        }
+                      });
+                    }
+                    // If not found in advisory countries, try geocoding via Nominatim
+                    if(!found&&mapRef.current){
+                      fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(e.target.value.trim())+'&limit=1')
+                        .then(function(r){return r.json();})
+                        .then(function(data){
+                          if(data&&data[0]){
+                            var lat=parseFloat(data[0].lat);
+                            var lon=parseFloat(data[0].lon);
+                            mapRef.current.flyTo([lat,lon],5,{duration:1.2});
+                            setCountryBrief({name:data[0].display_name.split(',')[0],level:0,lat:lat,lon:lon});
+                          }
+                        }).catch(function(){});
+                    }
+                    e.target.value='';
+                  }
+                }}/>
               </div>
               <div className="mleg" style={{zIndex:1000}}>
                 {Object.entries(CC).slice(0,6).map(([k,v])=><span key={k} className="ml"><span className="mld" style={{background:v}}></span>{k}</span>)}
