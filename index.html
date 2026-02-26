@@ -12,9 +12,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
@@ -80,16 +80,16 @@ body{font-family:'Inter',sans-serif;background:#000;color:#d4d4d4;overflow-x:hid
 .leaflet-popup-close-button:hover{color:var(--t1)!important}
 .conn-arc{stroke-dasharray:6,4;animation:arcflow 3s linear infinite}
 @keyframes arcflow{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-30}}
-.mfilt{position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap}
+.mfilt{position:absolute;top:50px;left:8px;display:flex;gap:4px;flex-wrap:wrap;z-index:1000}
 .mfb{font:500 9px var(--mono);padding:3px 8px;border-radius:2px;border:1px solid var(--bdr);background:var(--bg2);color:var(--t3);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.5px}
 .mfb:hover{border-color:var(--bdrh);color:var(--t2)}.mfb.a{background:var(--redbg);border-color:rgba(255,59,48,.4);color:var(--red)}
 .mstat{position:absolute;top:8px;right:8px;display:flex;gap:6px}
 .ms{background:rgba(0,0,0,.8);border:1px solid var(--bdr);border-radius:3px;padding:4px 8px;text-align:center}
 .msv{font:700 14px var(--mono);display:block}.msl{font:400 8px var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
-.map-search{position:absolute;top:8px;right:8px;z-index:1000;display:flex;align-items:center;gap:4px}
-.map-search input{background:rgba(0,0,0,0.7);border:1px solid var(--bdr);color:var(--t1);font:400 10px var(--mono);padding:5px 10px;border-radius:3px;width:160px;outline:none;backdrop-filter:blur(8px)}
+.map-search{position:absolute;top:8px;right:200px;z-index:10000;display:flex;align-items:center;gap:4px;pointer-events:auto}
+.map-search input{background:rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.25);color:var(--t1);font:400 10px var(--mono);padding:6px 12px;border-radius:4px;width:180px;outline:none;backdrop-filter:blur(10px);pointer-events:auto}
 .map-search input::placeholder{color:var(--t3)}
-.map-search input:focus{border-color:rgba(10,132,255,0.5);box-shadow:0 0 6px rgba(10,132,255,0.2)}
+.map-search input:focus{border-color:rgba(10,132,255,0.6);box-shadow:0 0 8px rgba(10,132,255,0.3);background:rgba(0,0,0,0.9)}
 .mleg{position:absolute;bottom:8px;left:8px;display:flex;gap:8px;font:400 8px var(--mono);color:var(--t3);flex-wrap:wrap;max-width:60%}
 .ml{display:flex;align-items:center;gap:3px;white-space:nowrap}.mld{width:6px;height:6px;border-radius:50%}
 .mpulse{animation:mp 2s infinite}@keyframes mp{0%{r:5;opacity:.9}50%{r:14;opacity:0}100%{r:5;opacity:0}}
@@ -196,8 +196,9 @@ body{font-family:'Inter',sans-serif;background:#000;color:#d4d4d4;overflow-x:hid
 .adv-tog::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;border-radius:1px;transition:all .2s}
 .adv-tog.on::after{background:currentColor;opacity:0.6}
 .adv-tog.off::after{background:var(--t3);opacity:0.15}
-.adv-tooltip{background:rgba(0,0,0,0.85)!important;color:#fff!important;border:1px solid rgba(255,255,255,0.2)!important;border-radius:3px!important;font:500 10px 'JetBrains Mono',monospace!important;padding:4px 8px!important;box-shadow:0 2px 8px rgba(0,0,0,0.4)!important}
-.adv-tooltip::before{border-bottom-color:rgba(0,0,0,0.85)!important}
+.adv-tooltip{background:rgba(0,0,0,0.9)!important;color:#fff!important;border:1px solid rgba(255,255,255,0.2)!important;border-radius:3px!important;font:500 10px 'JetBrains Mono',monospace!important;padding:6px 10px!important;box-shadow:0 2px 8px rgba(0,0,0,0.4)!important;pointer-events:auto!important;max-width:260px!important}
+.adv-tooltip::before{border-top-color:rgba(0,0,0,0.9)!important}
+.adv-tooltip a{pointer-events:auto!important;display:inline-block;margin-top:2px}
 .marker-cluster{background:rgba(0,0,0,0.5)!important;border:2px solid rgba(255,255,255,0.3)!important}
 .marker-cluster div{background:rgba(0,0,0,0.7)!important;color:#fff!important;font:600 11px var(--mono)!important}
 .marker-cluster-small{background:rgba(255,149,0,0.3)!important;border-color:rgba(255,149,0,0.5)!important}
@@ -1113,16 +1114,25 @@ function App(){
     'pandemic','outbreak','bird flu','H5N1','Ebola',
     'sanctions','NATO','UN Security Council','emergency summit','market crash','tariff'
   ];
-  // GDELT helper — route through corsproxy.io (GDELT has no CORS headers)
+  // GDELT helper — multi-proxy fallback (GDELT has no CORS headers)
+  var gdeltProxies=[
+    function(u){return 'https://corsproxy.io/?'+encodeURIComponent(u);},
+    function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u);},
+    function(u){return 'https://corsproxy.org/?'+encodeURIComponent(u);}
+  ];
   var gdeltFetch=async function(query,maxrecs,timespan){
     var gdeltUrl='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent(query)+'&mode=artlist&maxrecords='+maxrecs+'&format=json&sort=datedesc&timespan='+timespan;
-    var proxyUrl='https://corsproxy.io/?'+encodeURIComponent(gdeltUrl);
-    var controller=new AbortController();
-    var tm=setTimeout(function(){controller.abort();},12000);
-    var resp=await fetch(proxyUrl,{signal:controller.signal});
-    clearTimeout(tm);
-    if(!resp.ok)return null;
-    return await resp.json();
+    for(var pi=0;pi<gdeltProxies.length;pi++){
+      try{
+        var proxyUrl=gdeltProxies[pi](gdeltUrl);
+        var controller=new AbortController();
+        var tm=setTimeout(function(){controller.abort();},10000);
+        var resp=await fetch(proxyUrl,{signal:controller.signal});
+        clearTimeout(tm);
+        if(resp.ok){var data=await resp.json();if(data&&(data.articles||Array.isArray(data)))return data;}
+      }catch(e){continue;}
+    }
+    return null;
   };
 
   // ── TIER 1: Direct RSS scan of major outlets for stories they tag as "breaking" ──
@@ -1429,6 +1439,8 @@ function App(){
             var name=feature.properties.name||'';
             var lv=getAdvLevel(name);
             if(lv>0){
+              var url=getAdvUrl(name);
+              layer.bindTooltip('<div style="pointer-events:auto;cursor:default">'+name+' — '+lvlLabels[lv]+'<br><a href="'+url+'" target="_blank" rel="noopener" style="color:#0a84ff;font-size:9px;pointer-events:auto;cursor:pointer">View State Dept Advisory ↗</a></div>',{sticky:false,className:'adv-tooltip',interactive:true,direction:'top',offset:L.point(0,-10)});
               layer.on('click',function(){
                 var bounds=layer.getBounds();
                 var center=bounds.getCenter();
@@ -1436,13 +1448,9 @@ function App(){
               });
               layer.on('mouseover',function(){
                 layer.setStyle({fillOpacity:1,weight:2.5});
-                var url=getAdvUrl(name);
-                layer.bindTooltip('<span style="pointer-events:auto">'+name+' — '+lvlLabels[lv]+'<br><a href="'+url+'" target="_blank" rel="noopener" style="color:#0a84ff;font-size:9px">View State Dept Advisory ↗</a></span>',{sticky:true,className:'adv-tooltip',interactive:true}).openTooltip();
               });
               layer.on('mouseout',function(){
-                var currentLv=getAdvLevel(name);
                 layer.setStyle({fillOpacity:1,weight:1.5});
-                layer.closeTooltip();
               });
             }
           },
@@ -1492,26 +1500,26 @@ function App(){
     });
   },[advFilter]);
 
-  // Update markers when filter changes — use MarkerClusterGroup for clustering
+  // Update markers when filter changes — use MarkerClusterGroup if available, else plain markers
   useEffect(()=>{
     if(!mapRef.current)return;
     const map=mapRef.current;
-    // Remove old cluster group
+    // Remove old markers/cluster group
     markersRef.current.forEach(m=>map.removeLayer(m));
     markersRef.current=[];
-    // Create cluster group
-    var clusterGroup=L.markerClusterGroup({
+    const filtered=mf==='ALL'?INCIDENTS:INCIDENTS.filter(i=>i.cat===mf);
+    var useCluster=typeof L.markerClusterGroup==='function';
+    var group=useCluster?L.markerClusterGroup({
       maxClusterRadius:40,
       spiderfyOnMaxZoom:true,
       showCoverageOnHover:false,
       zoomToBoundsOnClick:true,
       iconCreateFunction:function(cluster){
         var count=cluster.getChildCount();
-        var size=count<5?'small':count<15?'medium':'large';
-        return L.divIcon({html:'<div><span>'+count+'</span></div>',className:'marker-cluster marker-cluster-'+size,iconSize:L.point(36,36)});
+        var sz=count<5?'small':count<15?'medium':'large';
+        return L.divIcon({html:'<div><span>'+count+'</span></div>',className:'marker-cluster marker-cluster-'+sz,iconSize:L.point(36,36)});
       }
-    });
-    const filtered=mf==='ALL'?INCIDENTS:INCIDENTS.filter(i=>i.cat===mf);
+    }):null;
     filtered.forEach(inc=>{
       const col=SC[inc.sv];
       const size=inc.sv==='critical'?10:8;
@@ -1530,10 +1538,9 @@ function App(){
       </div>`;
       marker.bindPopup(popup,{maxWidth:280,closeButton:true});
       marker.on('mouseover',function(){this.openPopup()});
-      clusterGroup.addLayer(marker);
+      if(group){group.addLayer(marker);}else{marker.addTo(map);markersRef.current.push(marker);}
     });
-    map.addLayer(clusterGroup);
-    markersRef.current=[clusterGroup];
+    if(group){map.addLayer(group);markersRef.current=[group];}
   },[mf]);
 
   // Advisory shading is now painted directly via L.circle in map init (zero external deps)
