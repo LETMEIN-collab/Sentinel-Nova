@@ -86,7 +86,7 @@ body{font-family:'Inter',sans-serif;background:#000;color:#d4d4d4;overflow-x:hid
 .mstat{position:absolute;top:8px;right:8px;display:flex;gap:6px}
 .ms{background:rgba(0,0,0,.8);border:1px solid var(--bdr);border-radius:3px;padding:4px 8px;text-align:center}
 .msv{font:700 14px var(--mono);display:block}.msl{font:400 8px var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
-.map-search{position:absolute;top:8px;right:200px;z-index:10000;display:flex;align-items:center;gap:4px;pointer-events:auto}
+.map-search{position:absolute;top:8px;right:8px;z-index:10000;display:flex;align-items:center;gap:4px;pointer-events:auto}
 .map-search input{background:rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.25);color:var(--t1);font:400 10px var(--mono);padding:6px 12px;border-radius:4px;width:180px;outline:none;backdrop-filter:blur(10px);pointer-events:auto}
 .map-search input::placeholder{color:var(--t3)}
 .map-search input:focus{border-color:rgba(10,132,255,0.6);box-shadow:0 0 8px rgba(10,132,255,0.3);background:rgba(0,0,0,0.9)}
@@ -1820,11 +1820,6 @@ function App(){
                 {['ALL','CONFLICT','CLIMATE','CYBER','ENERGY','ECONOMIC'].map(f=>(
                   <button key={f} className={`mfb ${mf===f?'a':''}`} onClick={()=>setMf(f)}>{f}</button>
                 ))}
-              </div>
-              <div className="mstat" style={{zIndex:1000}}>
-                <div className="ms"><span className="msv" style={{color:'var(--red)'}}>{INCIDENTS.filter(i=>i.sv==='critical').length}</span><span className="msl">Critical</span></div>
-                <div className="ms"><span className="msv" style={{color:'var(--amber)'}}>{INCIDENTS.filter(i=>i.sv==='high').length}</span><span className="msl">High</span></div>
-                <div className="ms"><span className="msv" style={{color:'var(--t1)'}}>{INCIDENTS.length}</span><span className="msl">Total</span></div>
               </div>
               <div className="map-search">
                 <input type="text" placeholder="Search country..." onKeyDown={function(e){
