@@ -68,18 +68,18 @@ body{font-family:'Inter',sans-serif;background:#000;color:#d4d4d4;overflow-x:hid
 .airspace-live{display:inline-flex;align-items:center;gap:4px;font:500 9px var(--mono);color:#30d158;padding:3px 6px;background:rgba(48,209,88,0.15);border-radius:2px;border:1px solid rgba(48,209,88,0.3);text-transform:uppercase;letter-spacing:.5px}
 .airspace-live::before{content:'●';animation:livepulse 1s infinite}
 @keyframes livepulse{0%,100%{opacity:1}50%{opacity:.5}}
-.airspace-grid{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px}
-.airspace-row{display:grid;grid-template-columns:100px 60px 80px 1fr;gap:8px;padding:8px;margin-bottom:4px;border-radius:3px;background:var(--bg2);border:1px solid var(--bdr);align-items:center;cursor:pointer;transition:all .2s;font-size:9px}
-.airspace-row:hover{background:var(--bg3);border-color:var(--bdrh)}
-.airspace-zone{font:600 10px var(--mono);color:var(--t1)}
-.airspace-fir{font:500 8px var(--mono);color:var(--t3)}
-.airspace-status{font:600 8px var(--mono);padding:3px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:.4px;text-align:center;background:rgba(0,0,0,0.3)}
-.airspace-status.closed{color:#ff3b30;border:1px solid rgba(255,59,48,0.4);background:rgba(255,59,48,0.1)}
-.airspace-status.restricted{color:#ff9500;border:1px solid rgba(255,149,0,0.4);background:rgba(255,149,0,0.1)}
-.airspace-status.caution{color:#ffd60a;border:1px solid rgba(255,214,10,0.4);background:rgba(255,214,10,0.1)}
-.airspace-status.monitoring{color:#64d2ff;border:1px solid rgba(100,210,255,0.4);background:rgba(100,210,255,0.1)}
-.airspace-status.open{color:#30d158;border:1px solid rgba(48,209,88,0.4);background:rgba(48,209,88,0.1)}
-.airspace-detail{font:400 8px var(--mono);color:var(--t3);grid-column:1/-1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.airspace-grid{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;align-content:start}
+.airspace-row{display:flex;flex-direction:column;padding:10px 12px;border-radius:4px;background:var(--bg2);border:1px solid var(--bdr);cursor:pointer;transition:all .2s}
+.airspace-row:hover{background:var(--bg3);border-color:var(--bdrh);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.airspace-zone{font:600 11px var(--mono);color:var(--t1)}
+.airspace-fir{font:500 8px var(--mono);color:var(--t3);margin-top:1px}
+.airspace-status{font:600 8px var(--mono);padding:3px 8px;border-radius:2px;text-transform:uppercase;letter-spacing:.5px;display:inline-block;white-space:nowrap}
+.airspace-status.closed{color:#ff3b30;border:1px solid rgba(255,59,48,0.4);background:rgba(255,59,48,0.12)}
+.airspace-status.restricted{color:#ff9500;border:1px solid rgba(255,149,0,0.4);background:rgba(255,149,0,0.12)}
+.airspace-status.caution{color:#ffd60a;border:1px solid rgba(255,214,10,0.4);background:rgba(255,214,10,0.12)}
+.airspace-status.monitoring{color:#64d2ff;border:1px solid rgba(100,210,255,0.4);background:rgba(100,210,255,0.12)}
+.airspace-status.open{color:#30d158;border:1px solid rgba(48,209,88,0.4);background:rgba(48,209,88,0.12)}
+.airspace-detail{font:400 8px/1.4 Inter,sans-serif;color:var(--t3);margin-top:6px}
 .conn-arc{stroke-dasharray:6,4;animation:arcflow 3s linear infinite}
 @keyframes arcflow{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-30}}
 .mfilt{position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap;z-index:1000}
@@ -622,7 +622,20 @@ function App(){
   const[bannerDismissed,setBannerDismissed]=useState(null);
   const[livePrices,setLivePrices]=useState({});
   const[menaEscHistory,setMenaEscHistory]=useState([]);
-  const[airspaceData,setAirspaceData]=useState([{zone:'Iran',fir:'OIIX FIR',status:'CLOSED',detail:'FAA SFAR 117 - US civil aviation prohibited',color:'#ff3b30'},{zone:'Iraq',fir:'ORBB FIR',status:'RESTRICTED',detail:'Restricted below FL320',color:'#ff9500'},{zone:'Syria',fir:'',status:'CLOSED',detail:'Active conflict zone',color:'#ff3b30'},{zone:'Lebanon',fir:'',status:'RESTRICTED',detail:'NOTAM active - limited operations',color:'#ff9500'},{zone:'Yemen',fir:'OYSC',status:'CLOSED',detail:'Houthi threat - no civil aviation',color:'#ff3b30'},{zone:'Red Sea',fir:'',status:'CAUTION',detail:'High risk corridor - active diversions',color:'#ffd60a'},{zone:'E. Mediterranean',fir:'',status:'CAUTION',detail:'Increased military activity',color:'#ffd60a'},{zone:'Persian Gulf',fir:'',status:'CAUTION',detail:'IRGC naval exercises - elevated risk',color:'#ffd60a'},{zone:'Israel',fir:'LLLL FIR',status:'CAUTION',detail:'Active military operations',color:'#ffd60a'},{zone:'Jordan',fir:'',status:'MONITORING',detail:'Overflight restrictions possible',color:'#64d2ff'},{zone:'S. Arabia',fir:'OEEC',status:'MONITORING',detail:'Eastern regions - elevated caution',color:'#64d2ff'},{zone:'Afghanistan',fir:'OAKX',status:'CLOSED',detail:'No ATC services available',color:'#ff3b30'}]);
+  const[airspaceData,setAirspaceData]=useState([
+    {zone:'Iran (OIIX)',fir:'Tehran FIR',status:'CLOSED',detail:'FAA SFAR 117 prohibits all U.S. civil aviation. Iranian airspace entirely restricted for Western carriers. No overflights permitted. Alternate routing via Turkmenistan/Pakistan corridors adds 45-90 min flight time.',color:'#ff3b30',authority:'FAA SFAR 117 · EASA SIB 2024-02'},
+    {zone:'Iraq (ORBB)',fir:'Baghdad FIR',status:'RESTRICTED',detail:'Flights restricted below FL320 due to ongoing militia drone and rocket threats targeting Coalition forces. GPS jamming and spoofing reported. C-RAM active at Al-Asad and Erbil.',color:'#ff9500',authority:'FAA NOTAM A0456/26 · Iraqi CAA'},
+    {zone:'Syria',fir:'Damascus FIR',status:'CLOSED',detail:'Active conflict zone — no ATC services. Israeli strikes on Iranian targets ongoing. Russian S-400 air defense active. Deconfliction channel via CENTCOM only for military traffic.',color:'#ff3b30',authority:'FAA SFAR 77 · ICAO State Letter'},
+    {zone:'Lebanon',fir:'Beirut FIR',status:'RESTRICTED',detail:'Rafic Hariri Intl operating under NOTAM restrictions. Southern Lebanon active conflict zone — Hezbollah rocket fire and IDF strikes. Northern approach routes affected.',color:'#ff9500',authority:'Lebanese CAA NOTAM · EASA Conflict Zone Info'},
+    {zone:'Yemen (OYSC)',fir:'Sanaa FIR',status:'CLOSED',detail:'No ATC services since 2015. Houthi forces operating anti-aircraft systems and ballistic missiles. All civil aviation prohibited. Saudi-led coalition military operations active.',color:'#ff3b30',authority:'FAA SFAR 115 · ICAO OYSC NOTAM'},
+    {zone:'Red Sea / Bab el-Mandeb',fir:'Multiple FIRs',status:'CAUTION',detail:'Houthi anti-ship missile and drone attacks on commercial shipping. Airlines rerouting away from overwater segments. Insurance war-risk premiums spiking. 60% drop in Suez transit volume.',color:'#ffd60a',authority:'UKMTO Advisory · IMO Circular'},
+    {zone:'Eastern Mediterranean',fir:'Nicosia / Cairo FIR',status:'CAUTION',detail:'Increased U.S. and NATO naval aviation activity. Carrier-based operations from USS Bataan ARG. Temporary restricted areas active for military exercises. ATC delays possible.',color:'#ffd60a',authority:'EUROCONTROL NM · Cypriot DCA'},
+    {zone:'Persian Gulf',fir:'Bahrain / Emirates FIR',status:'CAUTION',detail:'IRGC Navy conducting live-fire exercises near Strait of Hormuz. GPS interference reported. U.S. Fifth Fleet patrols active. Commercial routing through Gulf states remains operational with caution.',color:'#ffd60a',authority:'Bahrain CAA · UAE GCAA NOTAM'},
+    {zone:'Israel (LLLL)',fir:'Tel Aviv FIR',status:'CAUTION',detail:'Ben Gurion Intl operational but subject to sudden closures during rocket barrages. Iron Dome / Arrow-3 active. GPS spoofing widespread. Northern airspace near Lebanon border restricted.',color:'#ffd60a',authority:'IAA NOTAM · FAA Advisory'},
+    {zone:'Jordan',fir:'Amman FIR',status:'MONITORING',detail:'Overflight restrictions possible during regional escalation. Queen Alia Intl remains operational. Jordan serves as key diversion alternate for carriers avoiding Iraq/Iran airspace.',color:'#64d2ff',authority:'JCAA · Royal Jordanian Advisory'},
+    {zone:'Saudi Arabia (Eastern)',fir:'Jeddah / Riyadh FIR',status:'MONITORING',detail:'Eastern Province and Aramco facilities on heightened alert. Patriot PAC-3 batteries active. Commercial flights operating normally but contingency rerouting plans activated.',color:'#64d2ff',authority:'GACA NOTAM · Saudi ANSP'},
+    {zone:'Afghanistan (OAKX)',fir:'Kabul FIR',status:'CLOSED',detail:'No ATC services available since August 2021. Taliban-controlled airspace with no ICAO-compliant operations. Transit flights routed through adjacent FIRs with significant altitude restrictions.',color:'#ff3b30',authority:'FAA SFAR 79 · ICAO State Letter'}
+  ]);
   const[airspaceDetail,setAirspaceDetail]=useState(null);
   const[alertQueue,setAlertQueue]=useState([]);
   const[darkMode,setDarkMode]=useState(true);
@@ -1666,17 +1679,23 @@ function App(){
                   <div className="airspace-live">● LIVE</div>
                 </div>
                 <div className="airspace-grid">
-                  {airspaceData.map((zone,i)=>(
-                    <div key={i} className="airspace-row" onClick={()=>setAirspaceDetail(zone)} style={{cursor:'pointer'}}>
-                      <div>
-                        <div className="airspace-zone">{zone.zone}</div>
-                        <div className="airspace-fir">{zone.fir}</div>
+                  {airspaceData.map(function(zone,i){
+                    var threats=iranEvents.filter(function(ev){return (ev.title||'').toLowerCase().indexOf(zone.zone.split('(')[0].trim().split(' ')[0].toLowerCase())!==-1||(ev.detail||'').toLowerCase().indexOf(zone.zone.split('(')[0].trim().split(' ')[0].toLowerCase())!==-1}).length;
+                    return <div key={i} className="airspace-row" onClick={function(){setAirspaceDetail(zone);}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                        <div>
+                          <div className="airspace-zone">{zone.zone}</div>
+                          <div className="airspace-fir">{zone.fir}</div>
+                        </div>
+                        <div style={{display:'flex',alignItems:'center',gap:6}}>
+                          {threats>0&&<span style={{font:'600 8px var(--mono)',color:'#ff3b30',background:'rgba(255,59,48,.12)',padding:'2px 5px',borderRadius:2}}>{threats} alerts</span>}
+                          <div className={'airspace-status '+zone.status.toLowerCase()}>{zone.status}</div>
+                        </div>
                       </div>
-                      <div className={`airspace-status ${zone.status.toLowerCase()}`}>{zone.status}</div>
-                      <div style={{fontSize:'11px',color:zone.color,fontWeight:700}}>{zone.threatCount||0} 🔴</div>
                       <div className="airspace-detail">{zone.detail}</div>
-                    </div>
-                  ))}
+                      {zone.authority&&<div style={{font:'500 7px var(--mono)',color:zone.color||'var(--t3)',marginTop:3,letterSpacing:'.3px'}}>{zone.authority}</div>}
+                    </div>;
+                  })}
                 </div>
               </div>
               <div className="map-search" style={{display:'none'}}>
