@@ -275,7 +275,7 @@ const AreaChartSVG=({data,keys,colors,w=400,h=180,labels})=>{
 
 /* ═══ DATA ═══ */
 const TICKERS=[
-  {s:'SPGI',p:'404.78',c:'-3.04%',u:false},{s:'ES1',p:'5,954',c:'-0.07%',u:false},{s:'NQ1',p:'21,220',c:'-0.14%',u:false},
+  {s:'ES1',p:'5,954',c:'-0.07%',u:false},{s:'NQ1',p:'21,220',c:'-0.14%',u:false},{s:'GD',p:'289.15',c:'+0.88%',u:true},
   {s:'DXY',p:'97.69',c:'-0.22%',u:false},{s:'GC1',p:'5,228',c:'+2.90%',u:true},{s:'CL1',p:'65.97',c:'-0.80%',u:false},
   {s:'US10Y',p:'4.010',c:'-6bp',u:false},{s:'VIX',p:'21.11',c:'+10.58%',u:true},{s:'BTC',p:'64,762',c:'-3.92%',u:false},
   {s:'EUR',p:'1.1820',c:'+0.31%',u:true},{s:'GBP',p:'1.3519',c:'+0.26%',u:true},{s:'JPY',p:'148.50',c:'-0.45%',u:false},
@@ -411,32 +411,32 @@ const NEWS=[
   {t:'US Treasury sanctions 12 entities linked to ransomware-as-a-service operations',s:'WSJ',c:'#bf5af2'},
   {t:'Arctic shipping routes see 300% increase in commercial traffic year-over-year',s:'Reuters',c:'#64d2ff'},
   {t:'OPEC+ signals potential output cut extension as demand outlook weakens',s:'Bloomberg',c:'#ffd60a'},
-  {t:'S&P Global upgrades defense sector outlook to positive on sustained spending growth',s:'S&P Global',c:'#30d158'},
+  {t:'IRGC deploys fast-attack craft near Strait of Hormuz — U.S. Fifth Fleet responds',s:'CENTCOM',c:'#ff3b30'},
 ];
 
 const MKTS={
   'COMMODITIES':[{s:'GC1',n:'Gold',p:'5,228',c:'+2.90%',u:1},{s:'CL1',n:'WTI Crude',p:'65.97',c:'-0.80%',u:0},{s:'NG1',n:'Nat Gas',p:'3.088',c:'-2.03%',u:0},{s:'HG1',n:'Copper',p:'5.90',c:'-1.65%',u:0},{s:'W1',n:'Wheat',p:'572.00',c:'+2.27%',u:1}],
   'FX & RATES':[{s:'DXY',n:'Dollar Idx',p:'97.69',c:'-0.22%',u:0},{s:'EUR',n:'EUR/USD',p:'1.1820',c:'+0.31%',u:1},{s:'US10Y',n:'10Y Yield',p:'4.010%',c:'-6bp',u:0},{s:'US2Y',n:'2Y Yield',p:'3.570%',c:'-7bp',u:0}],
   'CRYPTO':[{s:'BTC',n:'Bitcoin',p:'64,762',c:'-3.92%',u:0},{s:'ETH',n:'Ethereum',p:'2,680',c:'-4.10%',u:0}],
-  'DEFENSE & INTEL':[{s:'SPGI',n:'S&P Global',p:'404.78',c:'-3.04%',u:0},{s:'LMT',n:'Lockheed',p:'661.49',c:'+0.42%',u:1},{s:'RTX',n:'RTX Corp',p:'204.81',c:'+0.64%',u:1},{s:'NOC',n:'Northrop',p:'724.83',c:'+3.38%',u:1},{s:'PLTR',n:'Palantir',p:'135.38',c:'+1.77%',u:1}],
+  'DEFENSE & INTEL':[{s:'LMT',n:'Lockheed',p:'661.49',c:'+0.42%',u:1},{s:'RTX',n:'RTX Corp',p:'204.81',c:'+0.64%',u:1},{s:'NOC',n:'Northrop',p:'724.83',c:'+3.38%',u:1},{s:'GD',n:'Gen Dynamics',p:'289.15',c:'+0.88%',u:1},{s:'PLTR',n:'Palantir',p:'135.38',c:'+1.77%',u:1}],
 };
 
-/* SPGI RSS feed queries */
-const SPGI_RSS_QUERIES=[
-  '%22S%26P+Global%22+SPGI+earnings+revenue',
-  '%22S%26P+Global%22+ratings+credit+Platts',
+/* MENA conflict RSS queries */
+const MENA_RSS_QUERIES=[
+  'Iran+Israel+military+strike+attack+MENA',
+  'Houthi+Red+Sea+Hezbollah+Gaza+war+ceasefire',
 ];
 
-/* Current SPGI news fallback (Feb 2026) */
-const SPGI_NEWS_FALLBACK=[
-  {t:'S&P Global Reports Q4 & Full-Year 2025 Results — Revenue Up 9% to $3.92B',src:'S&P Global IR',tm:'Feb 10',url:'https://investor.spglobal.com/news-releases/news-details/2026/SP-Global-Reports-Fourth-Quarter-and-Full-Year-2025-Results/default.aspx'},
-  {t:'SPGI Stock Drops 17% Premarket After 2026 Guidance Disappoints Analysts',src:'Seeking Alpha',tm:'Feb 10',url:'https://seekingalpha.com/news/4549419-sp-global-stock-drops-after-q4-earnings-2026-guidance-disappoint'},
-  {t:'SPGI Up 7.3% — Strong 2025 Results and New Climate-Risk Data Push',src:'Simply Wall St',tm:'Feb 14',url:'https://simplywall.st/stocks/us/diversified-financials/nyse-spgi/sp-global/news/why-sp-global-spgi-is-up-73-after-strong-2025-results-and-ne'},
-  {t:'S&P Global Ratings Wins Ratings Provider of the Year — PE Wire Europe Awards',src:'PE Wire',tm:'Feb 12',url:'https://www.stocktitan.net/news/SPGI/s-p-global-ratings-wins-ratings-provider-of-the-year-at-private-g48vy8gp0m8s.html'},
-  {t:'S&P Global to Present at Raymond James 47th Institutional Investors Conference',src:'Stock Titan',tm:'Feb 18',url:'https://www.stocktitan.net/news/SPGI/s-p-global-to-present-at-raymond-james-47th-annual-institutional-dsjn8x6nn5cs.html'},
-  {t:'S&P Global Energy & Verisk Launch Climate-Risk Data Collaboration for Banks & Insurers',src:'S&P Global',tm:'Feb 2026',url:'https://press.spglobal.com'},
-  {t:'Full-Year 2025: Revenue $15.3B (+8%), Adjusted EPS $17.83 (+14%), $12.85B Buyback Complete',src:'S&P Global IR',tm:'Feb 10',url:'https://press.spglobal.com/2026-02-10-S-P-Global-Reports-Fourth-Quarter-and-Full-Year-2025-Results'},
-  {t:'2026 Guidance: Reported Revenue Growth 6.6%-8.6%, New CERAWeek Energy Conference Role',src:'S&P Global',tm:'Feb 10',url:'https://investor.spglobal.com'},
+/* MENA conflict wire fallback (Feb 2026) */
+const MENA_WIRE_FALLBACK=[
+  {t:'IRGC Navy conducts live-fire exercises near Strait of Hormuz — U.S. Fifth Fleet on alert',src:'CENTCOM',tm:'Active',dom:'MILITARY'},
+  {t:'Iran enrichment at 60% threshold — IAEA inspectors report centrifuge cascade expansion at Fordow',src:'IAEA',tm:'Ongoing',dom:'NUCLEAR'},
+  {t:'Houthi forces launch anti-ship ballistic missile at commercial vessel in Red Sea',src:'UKMTO',tm:'Recent',dom:'PROXY'},
+  {t:'Hezbollah stockpile assessment — estimated 130,000+ rockets and precision-guided munitions',src:'IDF Intel',tm:'Standing',dom:'PROXY'},
+  {t:'U.S. deploys additional carrier strike group to Eastern Mediterranean amid tensions',src:'DoD',tm:'Recent',dom:'MILITARY'},
+  {t:'Iran-backed militia conducts drone attack on Al-Asad Airbase, Iraq',src:'CENTCOM',tm:'Recent',dom:'PROXY'},
+  {t:'JCPOA revival talks stall — Tehran demands sanctions relief before nuclear compliance',src:'State Dept',tm:'Ongoing',dom:'DIPLOMACY'},
+  {t:'Brent crude rises on Strait of Hormuz closure fears — conflict premium widens',src:'Reuters',tm:'Active',dom:'ENERGY'},
 ];
 
 const TREND={
@@ -445,7 +445,7 @@ const TREND={
   '1Y':[{d:'Mar',geo:60,clim:48,cyb:50,con:55},{d:'May',geo:62,clim:52,cyb:52,con:58},{d:'Jul',geo:65,clim:55,cyb:54,con:62},{d:'Sep',geo:68,clim:58,cyb:55,con:65},{d:'Nov',geo:72,clim:64,cyb:60,con:73},{d:'Feb',geo:78,clim:72,cyb:65,con:83}],
 };
 
-const SPGI=[{t:'09:30',p:417.5},{t:'10:00',p:414.2},{t:'10:30',p:411.8},{t:'11:00',p:409.6},{t:'11:30',p:407.3},{t:'12:00',p:406.1},{t:'12:30',p:405.4},{t:'13:00',p:404.2},{t:'13:30',p:403.8},{t:'14:00',p:402.9},{t:'14:30',p:403.5},{t:'15:00',p:404.1},{t:'15:30',p:404.5},{t:'16:00',p:404.78}];
+/* (Regional risk now computed from Iran tracker data) */
 
 /* (Regional risk now computed from live advisories) */
 
@@ -561,66 +561,23 @@ function timeAgo(dateStr){
   var hrs=Math.floor(mins/60);if(hrs<24)return hrs+'h ago';
   return Math.floor(hrs/24)+'d ago';
 }
-// Humanize raw NOTAM ICAO text into readable English
-function humanizeNotam(raw){
-  if(!raw||raw.length<5)return raw||'';
-  var t=raw;
-  // Common ICAO abbreviations → plain English
-  t=t.replace(/\bCLSD\b/gi,'CLOSED');t=t.replace(/\bDUE TO\b/gi,'due to');
-  t=t.replace(/\bOPS\b/gi,'operations');t=t.replace(/\bMIL\b/gi,'military');
-  t=t.replace(/\bACFT\b/gi,'aircraft');t=t.replace(/\bFLT\b/gi,'flight');
-  t=t.replace(/\bRWY\b/gi,'Runway');t=t.replace(/\bTWY\b/gi,'Taxiway');
-  t=t.replace(/\bSFC\b/gi,'surface');t=t.replace(/\bUNL\b/gi,'unlimited');
-  t=t.replace(/\bABV\b/gi,'above');t=t.replace(/\bBLW\b/gi,'below');
-  t=t.replace(/\bEFF\b/gi,'effective');t=t.replace(/\bTIL\b/gi,'until');
-  t=t.replace(/\bUFN\b/gi,'further notice');t=t.replace(/\bPJE\b/gi,'parachute jumping');
-  t=t.replace(/\bNAV\b/gi,'navigation');t=t.replace(/\bSVCE?\b/gi,'service');
-  t=t.replace(/\bUNSVCBL\b/gi,'unserviceable');t=t.replace(/\bINOP\b/gi,'inoperative');
-  t=t.replace(/\bU\/S\b/gi,'unserviceable');t=t.replace(/\bAP\b/gi,'airport');
-  t=t.replace(/\bAD\b/gi,'aerodrome');t=t.replace(/\bFIR\b/gi,'Flight Information Region');
-  t=t.replace(/\bUIR\b/gi,'Upper Information Region');
-  t=t.replace(/\bTFR\b/gi,'Temporary Flight Restriction');
-  t=t.replace(/\bGNSS\b/gi,'GPS/GNSS');t=t.replace(/\bIAMG\b/gi,'Iranian-aligned militia');
-  t=t.replace(/\bUAS\b/gi,'drone');t=t.replace(/\bRPAS\b/gi,'drone');
-  t=t.replace(/\bSEC\b/gi,'security');t=t.replace(/\bHAZ\b/gi,'hazard');
-  t=t.replace(/\bWIP\b/gi,'work in progress');t=t.replace(/\bCTN\b/gi,'caution');
-  t=t.replace(/\bEMERG\b/gi,'emergency');t=t.replace(/\bPROHIB\b/gi,'prohibited');
-  t=t.replace(/\bFL(\d+)/g,function(_,n){return n+'00ft (~'+Math.round(n*100*0.3048/1000)+'km alt)';});
-  // Clean up excessive whitespace/newlines
-  t=t.replace(/\s+/g,' ').trim();
-  // Sentence case — first letter upper, rest preserved
-  if(t.length>0)t=t.charAt(0).toUpperCase()+t.slice(1);
-  return t;
-}
-
-/* ═══ WEATHER ALERTS (current real events — Feb 23, 2026) ═══ */
-const WEATHER_FALLBACK=[
-  {sev:'extreme',type:'Flooding',title:'Indonesia — Severe Flooding Across Bali & Java',detail:'Heavy monsoon rainfall triggers flash floods and landslides. Thousands displaced across Bali, East Java. Infrastructure damage, road closures, evacuations underway.',time:'Recent',icon:'🌊',url:'https://reliefweb.int/country/idn'},
-  {sev:'extreme',type:'Blizzard',title:'Northeast US — Historic Blizzard, States of Emergency Declared',detail:'2ft+ snow across I-95 corridor. 8,000+ flights cancelled. Travel bans in NY, NJ, New England. National Guard activated.',time:'Feb 2026',icon:'❄️',url:'https://www.weather.gov'},
-  {sev:'severe',type:'Cyclone',title:'Tropical Cyclone Gezani — Madagascar, Mozambique Devastated',detail:'175 km/h winds. 25,000+ houses destroyed in Madagascar. Severe flooding across southern Mozambique and Malawi.',time:'Feb 2026',icon:'🌀',url:'https://reliefweb.int/country/mdg'},
-  {sev:'severe',type:'Flooding',title:'Colombia & Central America — Persistent Landslides, Flooding',detail:'La Niña-driven heavy rainfall. Landslides in western Colombia. Costa Rica mudslides. Thousands evacuated across region.',time:'Ongoing',icon:'🌊',url:'https://reliefweb.int/country/col'},
-  {sev:'severe',type:'Earthquake',title:'Turkey/Syria Border Region — Seismic Activity Continues',detail:'Ongoing aftershock sequences. Elevated seismic risk across Hatay, Kahramanmaras provinces. USGS monitoring.',time:'Ongoing',icon:'🫨',url:'https://earthquake.usgs.gov'},
-  {sev:'moderate',type:'Drought',title:'East Africa — Severe Drought, Food Insecurity Escalating',detail:'Horn of Africa drought worsening. Ethiopia, Kenya, Somalia affected. Crop failure and water shortages. UN humanitarian response ongoing.',time:'Ongoing',icon:'☀️',url:'https://fews.net/east-africa'},
-  {sev:'moderate',type:'Drought',title:'Central Asia — Drought Emergency, Water Shortages',detail:'Rainfall deficit since October. Kyrgyzstan, Tajikistan, Afghanistan, Turkmenistan facing severe water stress. Agricultural impact.',time:'Ongoing',icon:'☀️',url:'https://fews.net/central-asia'},
-  {sev:'severe',type:'Wildfire',title:'Australia — Bushfire Season Intensifying Across Eastern States',detail:'Extreme fire danger ratings in NSW and Queensland. Multiple uncontrolled fires. Evacuations in rural communities.',time:'Recent',icon:'🔥',url:'https://www.rfs.nsw.gov.au/fire-information/fires-near-me'},
-  {sev:'severe',type:'Typhoon',title:'Western Pacific — Enhanced Typhoon Activity Forecast',detail:'Warm sea surface temperatures driving above-average cyclone formation. Philippines, Japan, Taiwan on alert.',time:'Outlook',icon:'🌀',url:'https://www.metoc.navy.mil/jtwc/jtwc.html'},
-  {sev:'watch',type:'Outlook',title:'Southern Hemisphere Cyclone Season — Active Through April',detail:'Multiple tropical systems expected across Indian Ocean, Coral Sea. Australia, Fiji, Madagascar at elevated risk.',time:'Outlook',icon:'⚠️',url:'https://www.metoc.navy.mil/jtwc/jtwc.html'},
+/* ═══ IRAN-U.S. WAR TRACKER — MENA Escalation Monitor ═══ */
+const IRAN_TRACKER_FALLBACK=[
+  {sev:'critical',domain:'MILITARY',title:'IRGC Conducts Large-Scale Naval Exercises in Strait of Hormuz',detail:'Islamic Revolutionary Guard Corps deploying fast-attack craft, anti-ship missiles, and naval mines in exercises simulating closure of the Strait. U.S. Fifth Fleet on heightened alert. 21% of global oil transits this chokepoint.',time:'Active',icon:'\u{1F6A2}'},
+  {sev:'critical',domain:'NUCLEAR',title:'Iran Enriching Uranium to 60% — Near Weapons-Grade Threshold',detail:'IAEA confirms stockpile of 60%-enriched uranium now exceeds 120 kg. Breakout time estimated at under two weeks. Diplomatic window narrowing rapidly. P5+1 talks stalled since 2023.',time:'Ongoing',icon:'\u2622\uFE0F'},
+  {sev:'high',domain:'PROXY',title:'Houthi Anti-Ship Missile Strikes Continue in Red Sea',detail:'Ansar Allah forces launched multiple ballistic and cruise missiles at commercial vessels in the Bab el-Mandeb strait. U.S. and UK conducted retaliatory strikes on Houthi missile sites in Yemen. Shipping rerouting around Cape of Good Hope.',time:'Active',icon:'\u{1F3AF}'},
+  {sev:'high',domain:'PROXY',title:'Hezbollah-Israel Border Tensions Remain Elevated',detail:'Daily exchange of fire along the Blue Line. Hezbollah rocket and drone attacks on northern Israel. IDF conducting airstrikes in southern Lebanon. Risk of wider escalation assessed as moderate-to-high.',time:'Active',icon:'\u{1F4A5}'},
+  {sev:'high',domain:'MILITARY',title:'U.S. Carrier Strike Group Repositioned to Eastern Mediterranean',detail:'USS Eisenhower CSG redeployed from Central Command AOR. Additional F-35 squadrons forward-deployed to Al Udeid and Al Dhafra. Force posture consistent with contingency planning for Iran scenarios.',time:'Recent',icon:'\u2693'},
+  {sev:'high',domain:'CYBER',title:'Iranian APT Groups Targeting U.S. Critical Infrastructure',detail:'CISA advisory: APT42 (Charming Kitten) and MuddyWater conducting espionage campaigns against U.S. energy, defense, and financial sectors. Destructive wiper malware variants detected in staging environments.',time:'Active',icon:'\u{1F4BB}'},
+  {sev:'moderate',domain:'DIPLOMACY',title:'JCPOA Revival Talks — No Progress, Channels Narrowing',detail:'Back-channel diplomatic efforts through Oman yielding limited results. EU coordinator reporting impasse on sanctions relief sequencing. U.S. secondary sanctions on Iranian oil exports tightened. China and India continue importing Iranian crude via shadow fleet.',time:'Stalled',icon:'\u{1F91D}'},
+  {sev:'moderate',domain:'SANCTIONS',title:'U.S. Treasury Designates Additional IRGC-Linked Entities',detail:'New OFAC sanctions targeting IRGC-Quds Force financial networks, petrochemical exports, and drone component suppliers. Asset freezes on 14 individuals and 8 entities across UAE, Turkey, and China.',time:'Recent',icon:'\u{1F4B0}'},
+  {sev:'moderate',domain:'PROXY',title:'Iran-Backed Militias Strike U.S. Forces in Iraq and Syria',detail:'Islamic Resistance in Iraq launched drone and rocket attacks on Al-Asad and Al-Tanf bases. No U.S. casualties reported. Pentagon confirms proportional retaliatory strikes on militia weapons depots.',time:'Ongoing',icon:'\u{1F680}'},
+  {sev:'high',domain:'INTEL',title:'Mossad-IRGC Shadow War Intensifies Across Region',detail:'Reported assassination of senior IRGC officer in Damascus. Iranian-linked plots disrupted in Europe. Cyber operations targeting Iranian nuclear facilities. Covert conflict escalation pattern accelerating.',time:'Active',icon:'\u{1F575}\uFE0F'},
+  {sev:'moderate',domain:'ENERGY',title:'Oil Markets Pricing in Iran Conflict Premium',detail:'Brent crude trading above $85/bbl with $8-12 risk premium attributed to Strait of Hormuz closure scenarios. Lloyd\'s of London raising war-risk insurance premiums for Persian Gulf shipping. Energy analysts modeling $120-150/bbl spike in full blockade scenario.',time:'Active',icon:'\u{1F6E2}\uFE0F'},
+  {sev:'critical',domain:'WMD',title:'Iran Ballistic Missile Arsenal — Growing Range and Precision',detail:'Shahab-3, Emad, and Khorramshahr missiles capable of striking Israel and U.S. bases in the Gulf. Solid-fuel Kheibar Shekan reduces launch preparation time. Estimated 3,000+ missile inventory. No effective arms control framework in place.',time:'Standing',icon:'\u{1F3AF}'},
 ];
-
-const NOTAM_FALLBACK=[
-  {id:'A0095/25',zone:'Ukraine — All Airspace',status:'PROHIBITED',detail:'Complete airspace closure, all altitudes. Armed conflict since Feb 2022. No civilian flights permitted.',color:'#ff3b30',time:'Active'},
-  {id:'A0131/26',zone:'Iraq — Baghdad Region',status:'RESTRICTED',detail:'Flights below 32,000ft prohibited. Militia drone and missile threat. GPS spoofing reported. US and EU restrictions active.',color:'#ff9500',time:'Active'},
-  {id:'A0561/26',zone:'Sudan — Khartoum Region',status:'PROHIBITED',detail:'All altitudes closed. Khartoum airport destroyed. Armed conflict. No air traffic control available.',color:'#ff3b30',time:'Active'},
-  {id:'SFAR117',zone:'Iran — Tehran Region',status:'PROHIBITED',detail:'All US civil flights prohibited (FAA SFAR 117). European safety warning active. Full airspace ban.',color:'#ff3b30',time:'Active'},
-  {id:'A0001/21',zone:'Pakistan — Islamabad/Lahore',status:'WARNING',detail:'Heightened security alert. Islamabad mosque attack Feb 6. Pakistan airstrikes into Afghanistan Feb 22.',color:'#ff9500',time:'2d ago'},
-  {id:'W0120/21',zone:'Saudi Arabia — Yemen Border',status:'RESTRICTED',detail:'Active military operations. Houthi drone and missile threat. Asir, Jizan, Najran provinces affected.',color:'#ff9500',time:'Active'},
-  {id:'FZNA/25',zone:'DR Congo — Eastern/Goma',status:'RESTRICTED',detail:'200-mile eastern border restriction. Goma airport closed. Anti-aircraft weapon risk from armed groups.',color:'#ff9500',time:'Active'},
-  {id:'A0334/26',zone:'Sahel Region — West Africa',status:'WARNING',detail:'High-altitude flights only (above 32,000ft). Military shoot-down threat. Wagner Group air defense active.',color:'#ffd60a',time:'Active'},
-  {id:'KICZ/26',zone:'Eastern Pacific Ocean',status:'WARNING',detail:'FAA advisory: GPS interference and military activity. Active Jan 16 through Mar 17, 2026.',color:'#ffd60a',time:'Active'},
-];
-
-const WX_SEV_COLORS={extreme:'#ff3b30',severe:'#ff9500',moderate:'#ffd60a',watch:'#64d2ff'};
-const NOTAM_STATUS_COLORS={PROHIBITED:'#ff3b30',RESTRICTED:'#ff9500',WARNING:'#ffd60a'};
+const IRAN_SEV_COLORS={critical:'#ff3b30',high:'#ff9500',moderate:'#ffd60a',low:'#64d2ff'};
+const IRAN_DOMAIN_COLORS={MILITARY:'#ff3b30',NUCLEAR:'#ff3b30',PROXY:'#ff9500',CYBER:'#bf5af2',DIPLOMACY:'#30d158',SANCTIONS:'#ffd60a',INTEL:'#ff6482',ENERGY:'#ff9f0a',WMD:'#ff3b30'};
 
 /* ═══ APP ═══ */
 function App(){
@@ -630,23 +587,23 @@ function App(){
   const[tp,setTp]=useState('6M');
   const[liveNews,setLiveNews]=useState([]);
   const[feedStatus,setFeedStatus]=useState('loading');
-  const[wxAlerts,setWxAlerts]=useState(WEATHER_FALLBACK);
-  const[notams,setNotams]=useState(NOTAM_FALLBACK);
-  const[wxLive,setWxLive]=useState(false);
-  const[spgiNews,setSpgiNews]=useState([]);
-  const[spgiNewsLive,setSpgiNewsLive]=useState(false);
+  const[iranEvents,setIranEvents]=useState(IRAN_TRACKER_FALLBACK);
+  const[iranMilitary,setIranMilitary]=useState([]);
+  const[iranLive,setIranLive]=useState(false);
+  const[menaWire,setMenaWire]=useState([]);
+  const[menaWireLive,setMenaWireLive]=useState(false);
   const[advisories,setAdvisories]=useState(ADV_FALLBACK);
   const[advLive,setAdvLive]=useState(false);
   const[polyMarkets,setPolyMarkets]=useState([]);
   const[polyLive,setPolyLive]=useState(false);
-  const[notamLive,setNotamLive]=useState(false);
+  const[iranMilLive,setIranMilLive]=useState(false);
   const[searchQuery,setSearchQuery]=useState('');
   const[searchResults,setSearchResults]=useState([]);
   const[searching,setSearching]=useState(false);
   const[breakingNews,setBreakingNews]=useState(null);
   const[bannerDismissed,setBannerDismissed]=useState(null);
   const[livePrices,setLivePrices]=useState({});
-  const[spgiIntraday,setSpgiIntraday]=useState(SPGI);
+  const[menaEscHistory,setMenaEscHistory]=useState([]);
   const[geoData,setGeoData]=useState(null);
   const[countryBrief,setCountryBrief]=useState(null);
   const[alertQueue,setAlertQueue]=useState([]);
@@ -777,7 +734,7 @@ function App(){
   };
 
   const YAHOO_SYMBOLS={
-    'SPGI':'SPGI','LMT':'LMT','RTX':'RTX','NOC':'NOC','PLTR':'PLTR',
+    'LMT':'LMT','RTX':'RTX','NOC':'NOC','GD':'GD','PLTR':'PLTR',
     'ES1':'ES=F','NQ1':'NQ=F','DXY':'DX-Y.NYB','GC1':'GC=F','CL1':'CL=F',
     'US10Y':'^TNX','VIX':'^VIX','BTC':'BTC-USD','ETH':'ETH-USD',
     'EUR':'EURUSD=X','GBP':'GBPUSD=X','JPY':'JPY=X',
@@ -857,70 +814,31 @@ function App(){
     }catch(e){}
   };
 
-  // Fetch SPGI intraday chart data for sparkline + extract current price
-  var fetchSpgiChart=async function(){
-    try{
-      var yUrl='https://query1.finance.yahoo.com/v8/finance/chart/SPGI?interval=15m&range=1d&_t='+Date.now();
-      var data=await proxyFetch(yUrl,10000);
-      if(!data)return;
-      var result=data.chart&&data.chart.result&&data.chart.result[0];
-      if(!result)return;
-
-      // Extract intraday points for sparkline
-      if(result.indicators&&result.indicators.quote&&result.indicators.quote[0]){
-        var closes=result.indicators.quote[0].close;
-        var times=result.timestamp;
-        if(closes&&times){
-          var points=[];
-          for(var i=0;i<closes.length;i++){
-            if(closes[i]!==null&&closes[i]!==undefined){
-              var d=new Date(times[i]*1000);
-              points.push({t:d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes(),p:closes[i]});
-            }
-          }
-          if(points.length>=5)setSpgiIntraday(points);
-        }
-      }
-
-      // Also extract current SPGI price from chart meta (backup for quote endpoint)
-      if(result.meta&&result.meta.regularMarketPrice){
-        var pr=result.meta.regularMarketPrice;
-        var prev=result.meta.chartPreviousClose||result.meta.previousClose||pr;
-        var chg=((pr-prev)/prev)*100;
-        var fmtP=pr.toFixed(2);
-        var fmtC=chg>=0?'+'+chg.toFixed(2)+'%':chg.toFixed(2)+'%';
-        setLivePrices(function(old){
-          if(old.SPGI)return old;
-          return Object.assign({},old,{SPGI:{p:fmtP,c:fmtC,u:chg>=0,raw:pr}});
-        });
-      }
-    }catch(e){}
-  };
-
-  // Fetch SPGI news
-  const fetchSpgiNews=async()=>{
-    // Load fallback immediately so panel is never empty
-    if(spgiNews.length===0){setSpgiNews(SPGI_NEWS_FALLBACK);setSpgiNewsLive(true);}
-    // Try live RSS
+  // Fetch MENA conflict wire — live RSS for MENA war-specific headlines
+  const fetchMenaWire=async()=>{
+    if(menaWire.length===0){setMenaWire(MENA_WIRE_FALLBACK);setMenaWireLive(true);}
     try{
       const results=[];
-      for(const q of SPGI_RSS_QUERIES){
+      for(const q of MENA_RSS_QUERIES){
         try{
-          const data=await rssFetch(`https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`);
+          const data=await rssFetch('https://news.google.com/rss/search?q='+q+'&hl=en-US&gl=US&ceid=US:en');
           if(data.items){
-            data.items.slice(0,4).forEach(item=>{
+            data.items.slice(0,6).forEach(function(item){
               var _t=decEnt(item.title||'');
-              const src=_t.includes(' - ')?_t.split(' - ').pop().trim():'News';
-              const headline=_t.includes(' - ')?_t.split(' - ').slice(0,-1).join(' - ').trim():_t;
-              results.push({t:headline,src,tm:timeAgo(item.pubDate),url:item.link,pubDate:new Date(item.pubDate)});
+              var src=_t.includes(' - ')?_t.split(' - ').pop().trim():'News';
+              var headline=_t.includes(' - ')?_t.split(' - ').slice(0,-1).join(' - ').trim():_t;
+              if(iranMustMatch.test(headline)){
+                var cls=classifyIran(headline);
+                results.push({t:headline,src:src,tm:timeAgo(item.pubDate),dom:cls.domain,sev:cls.sev,pubDate:new Date(item.pubDate)});
+              }
             });
           }
         }catch(e){}
       }
-      const seen=new Set();
-      const unique=results.filter(r=>{const k=r.t.slice(0,40);if(seen.has(k))return false;seen.add(k);return true;});
-      unique.sort((a,b)=>b.pubDate-a.pubDate);
-      if(unique.length>0){setSpgiNews(unique.slice(0,10));setSpgiNewsLive(true);}
+      var seen=new Set();
+      var unique=results.filter(function(r){var k=r.t.slice(0,40);if(seen.has(k))return false;seen.add(k);return true;});
+      unique.sort(function(a,b){return b.pubDate-a.pubDate;});
+      if(unique.length>0){setMenaWire(unique.slice(0,15));setMenaWireLive(true);}
     }catch(e){}
   };
 
@@ -959,212 +877,105 @@ function App(){
     }catch(e){setFeedStatus('fallback');}
   };
 
-  // Fetch GLOBAL weather/disaster alerts — multi-source, multi-region
-  var wxMustMatch=/hurricane|typhoon|cyclone|earthquake|tsunami|blizzard|tornado|wildfire|flood|drought|volcanic|eruption|avalanche|landslide|heatwave|heat wave|storm|severe weather|tropical|seismic|tremor|magnitude|lava|mudslide|ice storm|polar vortex|wind damage|snow|fire.*acre|fire.*burn|lightning|thunderstorm|hail|monsoon|El Ni|rainfall|deluge|inundation|bushfire|sandstorm|dust storm|cold wave|freezing|famine|displacement|humanitarian|disaster|evacuati/i;
-  var wxIcons={'hurricane':'🌀','typhoon':'🌀','cyclone':'🌀','tropical':'🌀','earthquake':'🫨','seismic':'🫨','tremor':'🫨','magnitude':'🫨','tsunami':'🌊','blizzard':'❄️','winter storm':'❄️','ice storm':'❄️','snow':'❄️','tornado':'🌪️','wildfire':'🔥','bushfire':'🔥','fire':'🔥','volcanic':'🌋','eruption':'🌋','lava':'🌋','flood':'🌊','monsoon':'🌊','rainfall':'🌊','deluge':'🌊','inundation':'🌊','storm surge':'🌊','drought':'☀️','famine':'☀️','heatwave':'🔥','heat wave':'🔥','polar vortex':'🥶','cold wave':'🥶','freezing':'🥶','avalanche':'🏔️','landslide':'🏔️','mudslide':'🏔️','thunderstorm':'⛈️','hail':'⛈️','lightning':'⛈️','sandstorm':'🌫️','dust storm':'🌫️','disaster':'⚠️','humanitarian':'⚠️','evacuati':'⚠️'};
-  var wxTypes={'hurricane':'Hurricane','typhoon':'Typhoon','cyclone':'Cyclone','tropical':'Tropical Storm','earthquake':'Earthquake','seismic':'Earthquake','tremor':'Earthquake','magnitude':'Earthquake','tsunami':'Tsunami','blizzard':'Blizzard','winter storm':'Winter Storm','ice storm':'Ice Storm','snow':'Winter Storm','tornado':'Tornado','wildfire':'Wildfire','bushfire':'Bushfire','fire':'Wildfire','volcanic':'Eruption','eruption':'Eruption','lava':'Eruption','flood':'Flooding','monsoon':'Monsoon Flooding','rainfall':'Heavy Rainfall','deluge':'Flooding','inundation':'Flooding','storm surge':'Storm Surge','drought':'Drought','famine':'Drought/Famine','heatwave':'Heatwave','heat wave':'Heatwave','polar vortex':'Polar Vortex','cold wave':'Cold Wave','freezing':'Cold Wave','avalanche':'Avalanche','landslide':'Landslide','mudslide':'Landslide','thunderstorm':'Severe Storm','hail':'Severe Storm','lightning':'Severe Storm','sandstorm':'Sandstorm','dust storm':'Dust Storm','disaster':'Natural Disaster','humanitarian':'Humanitarian Crisis','evacuati':'Evacuation'};
+  // ═══ IRAN-U.S. WAR TRACKER FETCH — multi-source MENA escalation monitor (60s refresh) ═══
+  var iranMustMatch=/iran|tehran|irgc|revolutionary guard|quds force|hezbollah|houthi|ansar allah|strait of hormuz|persian gulf|bab.el.mandeb|red sea|yemen|iraq.*militia|syria.*strike|lebanon.*israel|israel.*iran|nuclear.*iran|iran.*nuclear|uranium|enrichment|jcpoa|ballistic missile|cruise missile|drone.*iran|iran.*drone|proxy|axis of resistance|al.asad|al.tanf|natanz|fordow|isfahan|parchin|arak|bushehr|kharg island|bandar abbas|chabahar|sanctions.*iran|iran.*sanctions|ofac|iaea|mossad|cia.*iran|centcom|fifth fleet|carrier.*gulf|f-35.*gulf|b-52.*iran|ayatollah|khamenei|raisi|zarif|oil.*iran|iran.*oil|petrochemical/i;
 
-  const fetchWeather=async()=>{
-    if(wxAlerts.length===0||wxAlerts===WEATHER_FALLBACK)setWxAlerts(WEATHER_FALLBACK);
-    var allArticles=[];
-    // Source 1: GDELT — broad global disaster query (no sourcelang filter for global reach)
-    var gdeltQueries=[
-      '(flood OR flooding OR rainfall OR deluge OR inundation OR monsoon OR landslide OR mudslide) disaster',
-      '(earthquake OR tsunami OR seismic OR volcanic OR eruption) disaster',
-      '(hurricane OR typhoon OR cyclone OR tropical storm OR tornado OR blizzard OR wildfire OR bushfire OR drought OR heatwave OR famine)',
-      '(disaster OR evacuation OR humanitarian crisis) (flood OR storm OR earthquake OR fire OR drought)'
+  // ═══ IRAN-U.S. WAR TRACKER + LIVE IMPACT FETCH (60s refresh) ═══
+  function classifyIran(headline){
+    var hl=headline.toLowerCase();
+    var domain='MILITARY',sev='moderate',icon='\u{1F6A8}';
+    if(/nuclear|uranium|enrichment|iaea|breakout|centrifuge|fordow|natanz|parchin|arak/.test(hl)){domain='NUCLEAR';sev='critical';icon='\u2622\uFE0F';}
+    else if(/houthi|hezbollah|militia|proxy|ansar allah|islamic resistance|axis of resistance/.test(hl)){domain='PROXY';sev='high';icon='\u{1F3AF}';}
+    else if(/cyber|hack|apt|malware|breach|espionage|wiper/.test(hl)){domain='CYBER';sev='high';icon='\u{1F4BB}';}
+    else if(/jcpoa|diplomat|negotiat|talks|deal|back.channel/.test(hl)){domain='DIPLOMACY';sev='moderate';icon='\u{1F91D}';}
+    else if(/sanction|ofac|treasury|designat|asset freeze/.test(hl)){domain='SANCTIONS';sev='moderate';icon='\u{1F4B0}';}
+    else if(/oil|energy|petrol|crude|brent|shipping|tanker|insurance|hormuz.*clos/.test(hl)){domain='ENERGY';sev='high';icon='\u{1F6E2}\uFE0F';}
+    else if(/missile|ballistic|cruise|launch|test|warhead|wmd/.test(hl)){domain='WMD';sev='critical';icon='\u{1F680}';}
+    else if(/mossad|cia|intelligence|covert|assassin|shadow war/.test(hl)){domain='INTEL';sev='high';icon='\u{1F575}\uFE0F';}
+    else if(/airspace|notam|flight restrict|no.fly|tfr|aviation|faa.*iran|iran.*faa/.test(hl)){domain='AIRSPACE';sev='high';icon='\u2708\uFE0F';}
+    else if(/travel.*advis|travel.*ban|evacuati|embassy|consular|do not travel/.test(hl)){domain='TRAVEL';sev='high';icon='\u{1F6C2}';}
+    else if(/ship|maritime|vessel|strait|chokepoint|reroute|cape of good hope|suez|bab/.test(hl)){domain='SHIPPING';sev='high';icon='\u{1F6A2}';}
+    else if(/strike|airstrike|bomb|attack|kill|casualt|carrier|deploy|fleet|troops|military/.test(hl)){domain='MILITARY';sev='critical';icon='\u{1F4A5}';}
+    return{domain:domain,sev:sev,icon:icon};
+  }
+  const fetchIranTracker=async()=>{
+    var allItems=[];
+    var iranQueries=[
+      '(Iran OR IRGC OR "Revolutionary Guard" OR Tehran) (missile OR strike OR military OR nuclear OR enrichment OR sanctions)',
+      '(Houthi OR "Ansar Allah" OR "Red Sea" OR "Bab el-Mandeb") (attack OR missile OR ship OR strike OR drone)',
+      '(Hezbollah OR Lebanon OR "Blue Line") (Israel OR rocket OR drone OR strike OR escalation)',
+      '(Iraq OR Syria) (militia OR "Islamic Resistance" OR "Al-Asad" OR "Al-Tanf" OR drone OR rocket) USA',
+      '("Strait of Hormuz" OR "Persian Gulf" OR "Fifth Fleet" OR CENTCOM) (Iran OR military OR exercise OR carrier)',
+      '(Iran OR IRGC) (cyber OR hack OR APT OR espionage OR infrastructure)',
+      '(JCPOA OR "nuclear deal" OR IAEA OR uranium OR enrichment) (Iran OR talks OR sanctions)',
+      '(Iran) (airspace OR NOTAM OR "flight restriction" OR "no-fly" OR aviation OR travel advisory OR embassy)',
+      '(Iran OR "Red Sea" OR Houthi) (shipping OR oil OR tanker OR crude OR Brent OR insurance OR reroute)'
     ];
-    for(var qi=0;qi<gdeltQueries.length;qi++){
+    for(var qi=0;qi<iranQueries.length;qi++){
       try{
-        var data=await gdeltFetch(gdeltQueries[qi],40,'4320min');
-        if(data&&data.articles)allArticles=allArticles.concat(data.articles);
+        var data=await gdeltFetch(iranQueries[qi],15,'1440min');
+        if(data&&data.articles){
+          data.articles.forEach(function(art){
+            var t=decEnt(art.title||'');
+            if(t.indexOf(' - ')>25)t=t.substring(0,t.lastIndexOf(' - '));
+            if(!iranMustMatch.test(t))return;
+            if(/opinion|editorial|recipe|horoscope|celebrity|review:|stock tip|crypto/i.test(t))return;
+            allItems.push({title:t.slice(0,140),source:(art.domain||'').replace('www.',''),time:timeAgo(art.seendate),seendate:art.seendate||'',url:art.url||'#'});
+          });
+        }
       }catch(e){}
     }
-    // Source 2: Global disaster RSS feeds (ReliefWeb, GDACS, Google News global)
-    var wxRssFeeds=[
-      'https://reliefweb.int/updates/rss.xml',
-      'https://news.google.com/rss/search?q=flooding+OR+earthquake+OR+cyclone+OR+typhoon+OR+wildfire+OR+drought+disaster&hl=en&gl=US&ceid=US:en',
-      'https://news.google.com/rss/search?q=flood+OR+landslide+OR+monsoon+Asia+OR+Africa+OR+Pacific&hl=en&gl=US&ceid=US:en'
+    var iranRssFeeds=[
+      'https://news.google.com/rss/search?q=Iran+military+OR+IRGC+OR+missile+OR+nuclear+OR+Houthi+OR+Hezbollah&hl=en-US&gl=US&ceid=US:en',
+      'https://news.google.com/rss/search?q=Iran+USA+OR+sanctions+OR+strike+OR+Red+Sea+OR+Strait+Hormuz&hl=en-US&gl=US&ceid=US:en',
+      'https://news.google.com/rss/search?q=Iran+airspace+OR+travel+advisory+OR+shipping+OR+oil+tanker+OR+NOTAM+Middle+East&hl=en-US&gl=US&ceid=US:en'
     ];
-    for(var ri=0;ri<wxRssFeeds.length;ri++){
+    for(var ri=0;ri<iranRssFeeds.length;ri++){
       try{
-        var rssData=await rssFetch(wxRssFeeds[ri]);
+        var rssData=await rssFetch(iranRssFeeds[ri]);
         if(rssData&&rssData.items){
-          rssData.items.slice(0,12).forEach(function(item){
-            allArticles.push({title:item.title||'',url:item.link||'#',domain:item.link?item.link.split('/')[2]:'',seendate:item.pubDate||''});
+          rssData.items.slice(0,10).forEach(function(item){
+            var t=decEnt(item.title||'');
+            if(!iranMustMatch.test(t))return;
+            allItems.push({title:t.slice(0,140),source:item.link?item.link.split('/')[2].replace('www.',''):'',time:timeAgo(item.pubDate),seendate:item.pubDate||'',url:item.link||'#'});
           });
         }
       }catch(e){}
     }
-    // Cluster and deduplicate
-    if(allArticles.length<3){setWxAlerts(WEATHER_FALLBACK);setWxLive(true);return;}
-    var clusters=[];
-    allArticles.forEach(function(art){
-      if(!art.title)return;
-      var t=decEnt(art.title);
-      var tl=t.toLowerCase();
-      if(!wxMustMatch.test(t))return;
-      if(/opinion|editorial|recipe|horoscope|celebrity|review:|top \d|stock|market|crypto|bitcoin|trump|biden|congress|senate|election|campaign|poll|vote|legislation|bill passes|insurance.*(rate|premium|reform)/i.test(t))return;
-      var matched=false;
-      for(var c=0;c<clusters.length;c++){
-        var words=tl.replace(/[^a-z\s]/g,'').split(/\s+/).filter(function(w){return w.length>4;});
-        var overlap=words.filter(function(w){return clusters[c].titleLower.indexOf(w)!==-1;}).length;
-        if(overlap>=3){clusters[c].count++;matched=true;break;}
-      }
-      if(!matched){
-        var icon='⚠️',type='Severe Weather';
-        for(var kw in wxIcons){if(tl.indexOf(kw)!==-1){icon=wxIcons[kw];type=wxTypes[kw];break;}}
-        var sev='severe';
-        if(/death|killed|fatal|catastroph|devastat|state of emergency|emergency declar/i.test(t))sev='extreme';
-        else if(/warning|watch|advisory|alert|outlook/i.test(t))sev='moderate';
-        var tm='Recent';
-        if(art.seendate){
-          try{
-            var d=typeof art.seendate==='string'&&/^\d{12,14}/.test(art.seendate)?art.seendate.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2}).*/,'$1-$2-$3'):art.seendate;
-            var diff=Math.floor((new Date()-new Date(d))/(1000*60*60));
-            if(diff<0)tm='Just now';else if(diff<1)tm='NOW';else if(diff<24)tm=diff+'h ago';else tm=Math.floor(diff/24)+'d ago';
-          }catch(e){}
-        }
-        clusters.push({title:t.split(' - ')[0].trim(),titleLower:tl,icon:icon,type:type,sev:sev,time:tm,count:1,url:art.url||'#',detail:art.domain?'Source: '+art.domain.replace('www.',''):''});
-      }
-    });
-    clusters.sort(function(a,b){return b.count-a.count;});
-    if(clusters.length>=2){
-      var wxItems=clusters.slice(0,12).map(function(c){
-        return{sev:c.sev,type:c.type,title:c.title,detail:c.detail+(c.count>1?' ('+c.count+' sources)':''),time:c.time,icon:c.icon,url:c.url};
+    var seen=new Set();
+    var unique=allItems.filter(function(d){var k=d.title.slice(0,40).toLowerCase().replace(/[^a-z0-9]/g,'');if(seen.has(k))return false;seen.add(k);return true;});
+    unique.sort(function(a,b){return(b.seendate||'').localeCompare(a.seendate||'');});
+    if(unique.length>=3){
+      var liveItems=unique.slice(0,16).map(function(d){
+        var cls=classifyIran(d.title);
+        return{sev:cls.sev,domain:cls.domain,title:d.title,detail:'Source: '+d.source,time:d.time,icon:cls.icon,url:d.url};
       });
-      setWxAlerts(wxItems);setWxLive(true);return;
-    }
-    setWxAlerts(WEATHER_FALLBACK);setWxLive(true);
-  };
-
-  // ═══ NOTAM FETCH — FAA direct API (primary) + news supplements ═══
-  // ICAO code → readable location name
-  var ICAO_NAMES={ORBB:'Baghdad FIR, Iraq',ORBI:'Baghdad Intl, Iraq',UKBV:'Kyiv FIR, Ukraine',UKBB:'Boryspil, Ukraine',
-    HSSS:'Khartoum FIR, Sudan',HSSK:'Khartoum, Sudan',OIIX:'Tehran FIR, Iran',OIIE:'Tehran Imam Khomeini, Iran',
-    OPKR:'Karachi FIR, Pakistan',OPLR:'Lahore FIR, Pakistan',FZZA:'Kinshasa FIR, DRC',FZNA:'Goma, DRC',
-    OEJD:'Jeddah FIR, Saudi Arabia',KZDC:'Washington DC ARTCC',LTBB:'Istanbul FIR, Turkey',
-    VHHH:'Hong Kong Intl',RCTP:'Taipei Taoyuan',EGLL:'London Heathrow',LFPG:'Paris CDG'};
-  var NOTAM_LOCATIONS='ORBB,UKBV,HSSS,OIIX,OPKR,FZZA,OEJD,KZDC,ORBI,UKBB,HSSK,OIIE,FZNA,LTBB,VHHH,RCTP,EGLL,LFPG';
-  const fetchNotams=async()=>{
-    const allNotams=[];
-    // Source 1 (PRIMARY): FAA NOTAM Search API — real NOTAM data
-    try{
-      var faaUrl='https://notams.aim.faa.gov/notamSearch/search';
-      var body='searchType=0&designatorsForLocation='+NOTAM_LOCATIONS;
-      var proxies=['https://corsproxy.io/?','https://api.allorigins.win/raw?url=','https://corsproxy.org/?'];
-      var resp=null;
-      for(var pi=0;pi<proxies.length;pi++){
-        try{
-          var pUrl=proxies[pi]+encodeURIComponent(faaUrl);
-          var controller=new AbortController();
-          var tmr=setTimeout(function(){controller.abort();},10000);
-          resp=await fetch(pUrl,{
-            method:'POST',signal:controller.signal,
-            headers:{'Content-Type':'application/x-www-form-urlencoded'},
-            body:body
-          });
-          clearTimeout(tmr);
-          if(resp.ok)break;
-          resp=null;
-        }catch(pe){resp=null;}
-      }
-      if(resp&&resp.ok){
-        var faaData=await resp.json();
-        var items=faaData.notamList||faaData.endpointResponse||faaData;
-        if(Array.isArray(items)){
-          items.forEach(function(n){
-            var msg=(n.icaoMessage||n.traditionalMessage||n.text||'');
-            var loc=n.facilityDesignator||n.icaoLocation||'';
-            var id=n.notamNumber||n.id||'FAA';
-            var msgUp=msg.toUpperCase();
-            // Filter: only significant NOTAMs
-            var isSig=msgUp.match(/CLSD|CLOSED|PROHIBIT|RESTRICT|TFR|NO.FLY|HAZARD|MILITARY|ARMED CONFLICT|LASER|UAS|DRONE|GPS|GNSS|JAMM|SPOOF|MISSILE|VOLCANIC|ASH|NUCLEAR|SECURITY/);
-            if(!isSig)return;
-            var status='WARNING',color='#ffd60a';
-            if(msgUp.match(/CLSD|CLOSED|PROHIBIT|NO.FLY/)){status='PROHIBITED';color='#ff3b30';}
-            else if(msgUp.match(/RESTRICT|TFR|MILITARY|ARMED|MISSILE|HAZARD|SECURITY/)){status='RESTRICTED';color='#ff9500';}
-            // Readable location name
-            var locName=ICAO_NAMES[loc]||(loc+' region');
-            // Humanize the raw NOTAM text
-            var readable=humanizeNotam(msg);
-            var zone=locName;
-            var detail=readable.slice(0,140);
-            var t='Active';
-            if(n.issueDate)t=timeAgo(n.issueDate);
-            else if(n.startDate)t=timeAgo(n.startDate);
-            allNotams.push({id:id,zone:zone.slice(0,60),status:status,detail:detail,color:color,time:t,src:'FAA'});
-          });
-          if(allNotams.length>0)console.log('SENTINEL: FAA NOTAM API returned '+allNotams.length+' significant NOTAMs');
-        }
-      }
-    }catch(e){console.log('FAA NOTAM API error (falling back to news)',e);}
-
-    // Source 2: GDELT news for TFR/airspace restriction articles (supplements FAA data)
-    try{
-      var tfrData=await gdeltFetch('(NOTAM OR TFR OR "airspace closure" OR "flight restriction" OR "no-fly zone" OR "airspace closed" OR "flight ban" OR FIR) (FAA OR ICAO OR EASA OR aviation OR airspace) sourcelang:eng',25,'4320min');
-      if(tfrData&&tfrData.articles&&tfrData.articles.length>0){
-        tfrData.articles.slice(0,6).forEach(function(art){
-          var t=decEnt(art.title||'');
-          var tl=t.toLowerCase();
-          var status='WARNING',color='#ffd60a';
-          if(tl.match(/prohibit|no.fly|closed|shutdown|ban/)){status='PROHIBITED';color='#ff3b30';}
-          else if(tl.match(/restrict|tfr|limit|military|intercept/)){status='RESTRICTED';color='#ff9500';}
-          var src=art.domain||'GDELT';
-          allNotams.push({id:'TFR',zone:t.slice(0,55),status,detail:src+' — '+t.slice(0,100),color,time:timeAgo(art.seendate),src:src});
-        });
-      }
-    }catch(e){}
-
-    // Source 3: Aviation Herald (incidents/safety) via RSS
-    try{
-      const data=await rssFetch('https://avherald.com/h?rss=1');
-      if(data.items&&data.items.length>0){
-        data.items.slice(0,4).forEach(item=>{
-          const t=decEnt(item.title||'');
-          let status='WARNING',color='#ffd60a';
-          if(t.toLowerCase().match(/crash|fatal|emergency|mayday/)){status='PROHIBITED';color='#ff3b30';}
-          else if(t.toLowerCase().match(/divert|reject|engine|fire|smoke/)){status='RESTRICTED';color='#ff9500';}
-          allNotams.push({id:'AVH',zone:t.slice(0,55),status,detail:t,color,time:timeAgo(item.pubDate),src:'AvHerald'});
-        });
-      }
-    }catch(e){}
-
-    // Source 4: Google News RSS for NOTAMs / airspace closures
-    try{
-      const queries=['NOTAM+airspace+closure+flight+restriction','TFR+temporary+flight+restriction+FAA'];
-      for(const q of queries){
-        const data=await rssFetch('https://news.google.com/rss/search?q='+q+'&hl=en-US&gl=US&ceid=US:en');
-        if(data.items){
-          data.items.slice(0,3).forEach(item=>{
-            var _ti=decEnt(item.title||'');
-            const t=_ti.toLowerCase();
-            const src=_ti.includes(' - ')?_ti.split(' - ').pop().trim():'News';
-            const headline=_ti.includes(' - ')?_ti.split(' - ').slice(0,-1).join(' - ').trim():_ti;
-            let status='WARNING',color='#ffd60a';
-            if(t.match(/prohibit|clos|ban|shut/)){status='PROHIBITED';color='#ff3b30';}
-            else if(t.match(/restrict|tfr|limit|military/)){status='RESTRICTED';color='#ff9500';}
-            allNotams.push({id:'NEWS',zone:headline.slice(0,55),status,detail:src+' — '+headline.slice(55,120),color,time:timeAgo(item.pubDate),src:src});
-          });
-        }
-      }
-    }catch(e){}
-
-    if(allNotams.length>0){
-      // Deduplicate by first 35 chars of zone
-      const seen=new Set();
-      const unique=allNotams.filter(n=>{const k=n.zone.slice(0,35).toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
-      // Merge: live results first, then fill with fallback entries not already covered
-      const liveZones=new Set(unique.map(n=>n.zone.slice(0,25).toLowerCase()));
-      const fallbackFill=NOTAM_FALLBACK.filter(fb=>!liveZones.has(fb.zone.slice(0,25).toLowerCase()));
-      const merged=[...unique,...fallbackFill].slice(0,14);
-      setNotams(merged);setNotamLive(true);
+      var liveDomains=new Set(liveItems.map(function(d){return d.domain;}));
+      var fallbackFill=IRAN_TRACKER_FALLBACK.filter(function(fb){return !liveDomains.has(fb.domain);});
+      var merged=liveItems.concat(fallbackFill).slice(0,16);
+      setIranEvents(merged);setIranLive(true);
+      var impactItems=merged.filter(function(d){return d.domain==='AIRSPACE'||d.domain==='TRAVEL'||d.domain==='SHIPPING'||d.domain==='ENERGY';});
+      var IMPACT_STANDING=[
+        {sev:'critical',domain:'AIRSPACE',title:'Iran Airspace (OIIX) — All U.S. Civil Flights Prohibited',detail:'FAA SFAR 117 in effect. European EASA warning active. Full Tehran FIR ban for U.S. carriers.',time:'Standing',icon:'\u2708\uFE0F'},
+        {sev:'high',domain:'AIRSPACE',title:'Iraq (ORBB) — Flights Below FL320 Restricted',detail:'Militia drone and missile threat. GPS spoofing reported across Baghdad FIR.',time:'Standing',icon:'\u2708\uFE0F'},
+        {sev:'critical',domain:'SHIPPING',title:'Red Sea / Bab el-Mandeb — Houthi Anti-Ship Attacks Active',detail:'Multiple commercial vessels struck. Major carriers rerouting via Cape of Good Hope. +$2M per voyage cost.',time:'Active',icon:'\u{1F6A2}'},
+        {sev:'high',domain:'SHIPPING',title:'Strait of Hormuz — Elevated Maritime Risk',detail:'IRGC naval exercises and fast-boat harassment. War-risk insurance at record levels. 21% of global oil transits.',time:'Active',icon:'\u{1F6A2}'},
+        {sev:'high',domain:'ENERGY',title:'Oil Markets — Iran Conflict Premium Priced In',detail:'Brent crude carrying $8-12 risk premium. Full Hormuz blockade modeled at $120-150/bbl.',time:'Active',icon:'\u{1F6E2}\uFE0F'},
+        {sev:'moderate',domain:'TRAVEL',title:'U.S. State Dept — Level 4: Do Not Travel to Iran',detail:'No consular services available. Risk of arbitrary arrest of dual nationals.',time:'Standing',icon:'\u{1F6C2}'},
+        {sev:'moderate',domain:'TRAVEL',title:'Lebanon, Iraq, Yemen — Level 4: Do Not Travel',detail:'Active conflict zones. U.S. Embassy Baghdad operations limited.',time:'Standing',icon:'\u{1F6C2}'},
+      ];
+      var impactTitles=new Set(impactItems.map(function(d){return d.title.slice(0,30);}));
+      IMPACT_STANDING.forEach(function(s){if(!impactTitles.has(s.title.slice(0,30)))impactItems.push(s);});
+      setIranMilitary(impactItems.slice(0,10));
+      setIranMilLive(true);
+      console.log('SENTINEL: Iran tracker loaded '+liveItems.length+' live + '+impactItems.length+' impact items');
     }else{
-      // All sources failed — use curated fallback
-      setNotams(NOTAM_FALLBACK);setNotamLive(true);
-      console.log('SENTINEL: All NOTAM sources failed, using verified fallback');
+      setIranEvents(IRAN_TRACKER_FALLBACK);setIranLive(true);
+      setIranMilitary(IRAN_TRACKER_FALLBACK.filter(function(d){return d.domain==='ENERGY'||d.domain==='MILITARY'||d.domain==='WMD';}));
+      setIranMilLive(true);
     }
   };
+
 
   // Simple search — opens Google News in new tab
   const searchIntel=function(query){
@@ -1355,10 +1166,12 @@ function App(){
   // ═══ TIERED REFRESH RATES ═══
   // Breaking news: 30s (near-immediate)
   useEffect(()=>{fetchBreakingNews();const i=setInterval(fetchBreakingNews,30*1000);return()=>clearInterval(i)},[]);
-  // Prices + sparkline: 60s
-  useEffect(()=>{fetchLivePrices();fetchSpgiChart();const i=setInterval(()=>{fetchLivePrices();fetchSpgiChart()},60*1000);return()=>clearInterval(i)},[]);
-  // Intel feed, weather, NOTAMs, SPGI news: 2 min
-  useEffect(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews();const i=setInterval(()=>{fetchFeeds();fetchWeather();fetchNotams();fetchSpgiNews()},2*60*1000);return()=>clearInterval(i)},[]);
+  // Prices: 60s
+  useEffect(()=>{fetchLivePrices();const i=setInterval(fetchLivePrices,60*1000);return()=>clearInterval(i)},[]);
+  // Intel feed + MENA wire: 2 min
+  useEffect(()=>{fetchFeeds();fetchMenaWire();const i=setInterval(()=>{fetchFeeds();fetchMenaWire()},2*60*1000);return()=>clearInterval(i)},[]);
+  // Iran-U.S. War Tracker + Live Impact: 60s real-time
+  useEffect(()=>{fetchIranTracker();const i=setInterval(fetchIranTracker,60*1000);return()=>clearInterval(i)},[]);
   // Advisories + ratings: 10 min (rarely change)
   useEffect(()=>{fetchAdvisories();fetchPolymarkets();const i=setInterval(()=>{fetchAdvisories();fetchPolymarkets()},10*60*1000);return()=>clearInterval(i)},[]);
 
@@ -1922,12 +1735,7 @@ function App(){
       <div className="hdr">
         <div className="hdr-l"><div className="logo">SENTINEL NOVA<span>GLOBAL SECURITY TERMINAL</span></div><span style={{font:'600 8px var(--mono)',color:'#30d158',padding:'2px 8px',borderRadius:2,border:'1px solid rgba(48,209,88,.4)',background:'rgba(48,209,88,.1)',letterSpacing:'1.5px',marginLeft:12}}>v2.1</span></div>
         <div className="hdr-r">
-          <div className="hdr-spgi">
-            <span style={{font:'600 10px var(--mono)',color:'var(--t2)'}}>SPGI</span>
-            <span style={{font:'700 11px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.p:'435.58'}</span>
-            <svg width="48" height="16" viewBox="0 0 48 16"><polyline points={spgiIntraday.map((d,i)=>{const x=i/(spgiIntraday.length-1)*48;const mn=Math.min(...spgiIntraday.map(s=>s.p));const mx=Math.max(...spgiIntraday.map(s=>s.p));const range=mx-mn||1;return `${x},${2+((mx-d.p)/range)*12}`}).join(' ')} fill="none" stroke={livePrices.SPGI?(livePrices.SPGI.u?'#30d158':'#ff3b30'):'#30d158'} strokeWidth="1.2"/></svg>
-            <span style={{font:'500 9px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.c:'+1.24%'}</span>
-          </div>
+          {(function(){var crit=iranEvents.filter(function(e){return e.sev==='critical'}).length;var hi=iranEvents.filter(function(e){return e.sev==='high'}).length;var sc=Math.min(100,crit*15+hi*8+iranEvents.length*2);var cl=sc>=75?'#ff3b30':sc>=50?'#ff9500':sc>=25?'#ffd60a':'#30d158';var lb=sc>=75?'CRITICAL':sc>=50?'HIGH':sc>=25?'ELEVATED':'LOW';return <div className="hdr-spgi"><span style={{font:'600 9px var(--mono)',color:'var(--t2)'}}>MENA</span><span style={{font:'700 11px var(--mono)',color:cl}}>{lb}</span><div style={{width:40,height:6,background:'rgba(255,255,255,.12)',borderRadius:3,overflow:'hidden'}}><div style={{width:sc+'%',height:'100%',background:cl,borderRadius:3}}></div></div><span style={{font:'500 9px var(--mono)',color:cl}}>{sc}/100</span></div>})()}
           <span className="threat">⚠ {advStats.l4>0?'L4 ADVISORIES: '+advStats.l4:'THREAT LEVEL: ELEVATED'}</span>
           <span className="live" style={{flexShrink:0}}><span className="ldot"></span>LIVE</span>
           <span style={{whiteSpace:'nowrap',flexShrink:0,fontSize:10}}>{time.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</span>
@@ -2101,50 +1909,50 @@ function App(){
               </div>
             </div>
 
-            {/* Weather + NOTAMs Split Panel */}
+            {/* Iran-U.S. War Tracker + Live Impact Split Panel */}
             <div style={{overflow:'hidden',display:'flex',flexDirection:'column'}}>
-              {/* SEVERE WEATHER */}
-              <div style={{flex:'1 1 50%',overflow:'auto',borderBottom:'1px solid var(--bdr)'}}>
+              {/* IRAN-U.S. ESCALATION TRACKER */}
+              <div style={{flex:'1 1 55%',overflow:'auto',borderBottom:'1px solid var(--bdr)'}}>
                 <div className="ph">
-                  <div className="pt">◆ Severe Weather</div>
-                  <span className="pb" style={{background:'var(--redbg)',color:'var(--red)'}}>{wxAlerts.filter(w=>w.sev==='extreme').length} EXTREME</span>
+                  <div className="pt" style={{color:'#ff3b30'}}>◆ Iran-U.S. War Tracker</div>
+                  <span className="pb" style={{background:iranLive?'var(--grnbg)':'var(--redbg)',color:iranLive?'var(--grn)':'var(--red)'}}>{iranLive?'● LIVE 60s':iranEvents.filter(e=>e.sev==='critical').length+' CRITICAL'}</span>
                 </div>
                 <div className="pbd" style={{padding:'6px 12px'}}>
-                  {wxAlerts.map((wx,i)=>{
-                    const inner=<div key={i} style={{padding:'6px 0',borderBottom:i<wxAlerts.length-1?'1px solid var(--bdr)':'none'}}>
+                  {iranEvents.map((ev,i)=>{
+                    const inner=<div key={i} style={{padding:'6px 0',borderBottom:i<iranEvents.length-1?'1px solid var(--bdr)':'none'}}>
                       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
-                        <span style={{fontSize:12}}>{wx.icon}</span>
-                        <span style={{font:'600 9px var(--mono)',color:WX_SEV_COLORS[wx.sev],textTransform:'uppercase',letterSpacing:'.5px',padding:'1px 5px',borderRadius:2,background:WX_SEV_COLORS[wx.sev]+'18',border:'1px solid '+WX_SEV_COLORS[wx.sev]+'35'}}>{wx.sev}</span>
-                        <span style={{font:'500 9px var(--mono)',color:'var(--t3)'}}>{wx.type}</span>
-                        <span style={{font:'400 9px var(--mono)',color:'var(--t3)',marginLeft:'auto'}}>{wx.time}</span>
+                        <span style={{fontSize:12}}>{ev.icon}</span>
+                        <span style={{font:'600 8px var(--mono)',color:IRAN_SEV_COLORS[ev.sev],textTransform:'uppercase',letterSpacing:'.5px',padding:'1px 5px',borderRadius:2,background:IRAN_SEV_COLORS[ev.sev]+'18',border:'1px solid '+IRAN_SEV_COLORS[ev.sev]+'35'}}>{ev.sev}</span>
+                        <span style={{font:'600 8px var(--mono)',color:IRAN_DOMAIN_COLORS[ev.domain]||'var(--t3)',letterSpacing:'.5px',padding:'1px 5px',borderRadius:2,background:(IRAN_DOMAIN_COLORS[ev.domain]||'#666')+'18',border:'1px solid '+(IRAN_DOMAIN_COLORS[ev.domain]||'#666')+'35'}}>{ev.domain}</span>
+                        <span style={{font:'400 9px var(--mono)',color:'var(--t3)',marginLeft:'auto'}}>{ev.time}</span>
                       </div>
-                      <div style={{font:'500 11px/1.3 Inter,sans-serif',color:'var(--t1)'}}>{wx.title}</div>
-                      <div style={{font:'400 10px Inter,sans-serif',color:'var(--t3)',marginTop:2}}>{wx.detail}</div>
+                      <div style={{font:'500 11px/1.3 Inter,sans-serif',color:'var(--t1)'}}>{ev.title}</div>
+                      <div style={{font:'400 10px Inter,sans-serif',color:'var(--t3)',marginTop:2}}>{ev.detail}</div>
                     </div>;
-                    return wx.url?<a key={i} href={wx.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>{inner}</a>:inner;
+                    return ev.url?<a key={i} href={ev.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>{inner}</a>:inner;
                   })}
                 </div>
               </div>
 
-              {/* NOTAMs */}
-              <div style={{flex:'1 1 50%',overflow:'auto'}}>
+              {/* LIVE IMPACT — Travel, Airspace, Shipping, Energy */}
+              <div style={{flex:'1 1 45%',overflow:'auto'}}>
                 <div className="ph">
-                  <div className="pt">◆ Active NOTAMs</div>
-                  <span className="pb" style={{background:notamLive?'var(--grnbg)':'var(--redbg)',color:notamLive?'var(--grn)':'var(--red)'}}>{notamLive?'● LIVE':notams.filter(n=>n.status==='PROHIBITED').length+' PROHIBITED'}</span>
+                  <div className="pt" style={{color:'#ff9500'}}>◆ Live Impact — Travel / Airspace / Shipping</div>
+                  <span className="pb" style={{background:iranMilLive?'var(--grnbg)':'var(--redbg)',color:iranMilLive?'var(--grn)':'var(--red)'}}>{iranMilLive?'● LIVE 60s':'LOADING'}</span>
                 </div>
                 <div className="pbd" style={{padding:'6px 12px'}}>
-                  {notams.map((n,i)=>{
-                    const inner=<div key={i} style={{padding:'6px 0',borderBottom:i<notams.length-1?'1px solid var(--bdr)':'none'}}>
+                  {iranMilitary.map((imp,i)=>{
+                    const inner=<div key={i} style={{padding:'6px 0',borderBottom:i<iranMilitary.length-1?'1px solid var(--bdr)':'none'}}>
                       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
-                        <span style={{font:'600 9px var(--mono)',color:'var(--t2)'}}>{n.id}</span>
-                        <span style={{font:'600 8px var(--mono)',color:NOTAM_STATUS_COLORS[n.status]||n.color,textTransform:'uppercase',letterSpacing:'.5px',padding:'1px 5px',borderRadius:2,background:(NOTAM_STATUS_COLORS[n.status]||n.color)+'18',border:'1px solid '+(NOTAM_STATUS_COLORS[n.status]||n.color)+'35'}}>{n.status}</span>
-                        {n.src&&<span style={{font:'400 8px var(--mono)',color:'var(--t3)',padding:'1px 4px',border:'1px solid var(--bdr)',borderRadius:2}}>{n.src}</span>}
-                        <span style={{font:'400 9px var(--mono)',color:'var(--t3)',marginLeft:'auto'}}>{n.time}</span>
+                        <span style={{fontSize:12}}>{imp.icon}</span>
+                        <span style={{font:'600 8px var(--mono)',color:IRAN_DOMAIN_COLORS[imp.domain]||'#ff9500',textTransform:'uppercase',letterSpacing:'.5px',padding:'1px 5px',borderRadius:2,background:(IRAN_DOMAIN_COLORS[imp.domain]||'#ff9500')+'18',border:'1px solid '+(IRAN_DOMAIN_COLORS[imp.domain]||'#ff9500')+'35'}}>{imp.domain}</span>
+                        <span style={{font:'600 8px var(--mono)',color:IRAN_SEV_COLORS[imp.sev],letterSpacing:'.3px'}}>{imp.sev.toUpperCase()}</span>
+                        <span style={{font:'400 9px var(--mono)',color:'var(--t3)',marginLeft:'auto'}}>{imp.time}</span>
                       </div>
-                      <div style={{font:'500 10px/1.3 var(--mono)',color:'var(--t1)',cursor:n.url?'pointer':'default'}}>{n.zone}{n.url&&<span style={{color:'var(--t3)',fontSize:9,marginLeft:4}}>↗</span>}</div>
-                      <div style={{font:'400 9px var(--mono)',color:'var(--t3)',marginTop:2}}>{n.detail}</div>
+                      <div style={{font:'500 10px/1.3 var(--mono)',color:'var(--t1)'}}>{imp.title}</div>
+                      <div style={{font:'400 9px var(--mono)',color:'var(--t3)',marginTop:2}}>{imp.detail}</div>
                     </div>;
-                    return n.url?<a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>{inner}</a>:inner;
+                    return imp.url?<a key={i} href={imp.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>{inner}</a>:inner;
                   })}
                 </div>
               </div>
@@ -2154,39 +1962,66 @@ function App(){
 
         {/* RIGHT PANEL */}
         <div className="rpanel">
-          {/* SPGI */}
-          <div className="ph"><div className="pt">◆ SPGI — S&P Global</div><span className="pb" style={{background:livePrices.SPGI?(livePrices.SPGI.u?'var(--grnbg)':'var(--redbg)'):'var(--grnbg)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.c:'+1.24%'}</span></div>
-          <div className="pbd">
-            <div style={{display:'flex',alignItems:'baseline',gap:8}}>
-              <span style={{font:'700 22px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{'$'+(livePrices.SPGI?livePrices.SPGI.p:'435.58')}</span>
-              <span style={{font:'500 11px var(--mono)',color:livePrices.SPGI?(livePrices.SPGI.u?'var(--grn)':'var(--red)'):'var(--grn)'}}>{livePrices.SPGI?livePrices.SPGI.c:'+$6.28'}</span>
+          {/* MENA WAR ANALYSIS */}
+          <div className="ph"><div className="pt">◆ MENA WAR ANALYSIS</div><span className="pb" style={{background:iranLive?'var(--redbg)':'rgba(102,102,102,.15)',color:iranLive?'var(--red)':'var(--t3)'}}>{iranLive?'● LIVE 60s':'LOADING'}</span></div>
+          <div className="pbd" style={{padding:'8px 12px'}}>
+            {/* Escalation Gauge */}
+            {(function(){
+              var crit=iranEvents.filter(function(e){return e.sev==='critical'}).length;
+              var hi=iranEvents.filter(function(e){return e.sev==='high'}).length;
+              var score=Math.min(100,crit*15+hi*8+iranEvents.length*2);
+              var color=score>=75?'#ff3b30':score>=50?'#ff9500':score>=25?'#ffd60a':'#30d158';
+              var label=score>=75?'CRITICAL':score>=50?'HIGH':score>=25?'ELEVATED':'LOW';
+              return <div style={{marginBottom:10}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                  <span style={{font:'600 10px var(--mono)',color:'var(--t2)'}}>ESCALATION INDEX</span>
+                  <span style={{font:'700 13px var(--mono)',color:color}}>{score}/100 — {label}</span>
+                </div>
+                <div style={{height:6,background:'rgba(255,255,255,.08)',borderRadius:3,overflow:'hidden'}}>
+                  <div style={{width:score+'%',height:'100%',background:'linear-gradient(90deg,'+color+','+color+'aa)',borderRadius:3,transition:'width 1s ease'}}></div>
+                </div>
+              </div>;
+            })()}
+            {/* Domain breakdown */}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:10}}>
+              {['MILITARY','NUCLEAR','PROXY','CYBER','DIPLOMACY','ENERGY'].map(function(dom){
+                var ct=iranEvents.filter(function(e){return e.domain===dom}).length;
+                return <div key={dom} style={{background:'rgba(255,255,255,.04)',border:'1px solid var(--bdr)',borderRadius:4,padding:'4px 6px',textAlign:'center'}}>
+                  <div style={{font:'700 12px var(--mono)',color:IRAN_DOMAIN_COLORS[dom]||'#aaa'}}>{ct}</div>
+                  <div style={{font:'500 7px var(--mono)',color:'var(--t3)',letterSpacing:'.5px'}}>{dom}</div>
+                </div>;
+              })}
             </div>
-            <div style={{font:'400 9px var(--mono)',color:'var(--t3)',marginTop:2}}>NYSE · {livePrices.SPGI?'● LIVE':'Intraday'} · Updated {time.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false})}</div>
-            <div style={{marginTop:8}}><Sparkline data={spgiIntraday} dataKey="p" w={260} h={55} color={livePrices.SPGI?(livePrices.SPGI.u?'#30d158':'#ff3b30'):'#30d158'}/></div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginTop:8,font:'400 9px var(--mono)'}}>
-              <div><span style={{color:'var(--t3)'}}>Open</span><br/><span style={{color:'var(--t1)'}}>{spgiIntraday.length>0?spgiIntraday[0].p.toFixed(2):'508.20'}</span></div>
-              <div><span style={{color:'var(--t3)'}}>High</span><br/><span style={{color:'var(--t1)'}}>{Math.max(...spgiIntraday.map(function(d){return d.p})).toFixed(2)}</span></div>
-              <div><span style={{color:'var(--t3)'}}>Low</span><br/><span style={{color:'var(--t1)'}}>{Math.min(...spgiIntraday.map(function(d){return d.p})).toFixed(2)}</span></div>
-              <div><span style={{color:'var(--t3)'}}>Mkt Cap</span><br/><span style={{color:'var(--t1)'}}>{livePrices.SPGI?'$'+(livePrices.SPGI.raw*314.8/1e9).toFixed(1)+'B':'$161.2B'}</span></div>
-              <div><span style={{color:'var(--t3)'}}>Prev</span><br/><span style={{color:'var(--t1)'}}>{spgiIntraday.length>0?spgiIntraday[0].p.toFixed(2):'508.20'}</span></div>
-              <div><span style={{color:'var(--t3)'}}>Points</span><br/><span style={{color:'var(--t1)'}}>{spgiIntraday.length} pts</span></div>
-            </div>
+            {/* Key Flashpoints */}
+            <div style={{font:'600 9px var(--mono)',color:'var(--t2)',letterSpacing:'.5px',marginBottom:4}}>KEY FLASHPOINTS</div>
+            {iranEvents.filter(function(e){return e.sev==='critical'||e.sev==='high'}).slice(0,5).map(function(ev,i){
+              return <div key={i} style={{padding:'4px 0',borderBottom:'1px solid var(--bdr)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{font:'400 11px',flexShrink:0}}>{ev.icon}</span>
+                  <span style={{font:'600 8px var(--mono)',color:IRAN_SEV_COLORS[ev.sev],padding:'1px 5px',borderRadius:2,background:IRAN_SEV_COLORS[ev.sev]+'18',flexShrink:0}}>{ev.domain}</span>
+                  <span style={{font:'500 9px/1.3 Inter,sans-serif',color:'var(--t1)',flex:1}}>{ev.title.length>65?ev.title.slice(0,65)+'…':ev.title}</span>
+                </div>
+                {ev.detail&&<div style={{font:'400 8px/1.3 Inter,sans-serif',color:'var(--t3)',marginTop:2,paddingLeft:20}}>{ev.detail.slice(0,100)}</div>}
+              </div>;
+            })}
           </div>
 
-          {/* SPGI News */}
-          <div className="ph"><div className="pt">◆ SPGI News & Updates</div><span className="pb" style={{background:spgiNewsLive?'var(--grnbg)':'rgba(102,102,102,.15)',color:spgiNewsLive?'var(--grn)':'var(--t3)'}}>{spgiNewsLive?'● LIVE':'LOADING'}</span></div>
-          <div className="pbd" style={{padding:'6px 12px'}}>
-            {spgiNews.length>0?spgiNews.map((item,i)=>(
-              <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',color:'inherit',display:'block'}}>
-                <div style={{padding:'5px 0',borderBottom:i<spgiNews.length-1?'1px solid var(--bdr)':'none'}}>
-                  <div style={{font:'500 10px/1.4 Inter,sans-serif',color:'var(--t1)',cursor:'pointer'}}>{item.t} <span style={{color:'var(--t3)',fontSize:9}}>↗</span></div>
-                  <div style={{display:'flex',justifyContent:'space-between',marginTop:2}}>
-                    <span style={{font:'400 9px var(--mono)',color:'var(--t3)'}}>{item.src}</span>
-                    <span style={{font:'400 9px var(--mono)',color:'var(--t3)'}}>{item.tm}</span>
-                  </div>
+          {/* MENA CONFLICT WIRE */}
+          <div className="ph" style={{marginTop:6}}><div className="pt">◆ MENA Conflict Wire</div><span className="pb" style={{background:iranLive?'var(--redbg)':'rgba(102,102,102,.15)',color:iranLive?'var(--red)':'var(--t3)'}}>{iranLive?'● LIVE':'FEED'}</span></div>
+          <div className="pbd" style={{padding:'6px 12px',maxHeight:220,overflowY:'auto'}}>
+            {iranEvents.slice(0,12).map(function(ev,i){
+              return <div key={i} style={{padding:'4px 0',borderBottom:i<Math.min(iranEvents.length,12)-1?'1px solid var(--bdr)':'none'}}>
+                <div style={{display:'flex',alignItems:'center',gap:5}}>
+                  <span style={{font:'400 10px',flexShrink:0}}>{ev.icon}</span>
+                  <span style={{font:'600 7px var(--mono)',color:IRAN_SEV_COLORS[ev.sev],padding:'1px 4px',borderRadius:2,background:IRAN_SEV_COLORS[ev.sev]+'15',flexShrink:0}}>{ev.sev.toUpperCase()}</span>
+                  <span style={{font:'500 9px/1.3 Inter,sans-serif',color:'var(--t1)',flex:1}}>{ev.title}</span>
                 </div>
-              </a>
-            )):<div style={{font:'400 10px var(--mono)',color:'var(--t3)',padding:'8px 0'}}>Loading SPGI news...</div>}
+                <div style={{display:'flex',justifyContent:'space-between',marginTop:2,paddingLeft:18}}>
+                  <span style={{font:'400 8px var(--mono)',color:IRAN_DOMAIN_COLORS[ev.domain]||'var(--t3)'}}>{ev.domain}</span>
+                  <span style={{font:'400 8px var(--mono)',color:'var(--t3)'}}>{ev.time||'Recent'}</span>
+                </div>
+              </div>;
+            })}
           </div>
 
           {/* France 24 Live Stream */}
@@ -2204,22 +2039,24 @@ function App(){
         </div>
       </div>
 
-      {/* News Ticker — live or fallback */}
+      {/* MENA War Ticker — Iran/MENA focused scrolling wire */}
       <div className="newstick">
-        <span className="label">◆ WIRE</span>
+        <span className="label">◆ MENA WIRE</span>
         <div className="nscroll">
-          {liveNews.length>0?
-            [...liveNews,...liveNews].map((n,i)=><span key={i} className="nitem">
-              <span className="ndot" style={{background:CC[n.cat]||'#999'}}></span>
-              {n.url?<a href={n.url} target="_blank" rel="noopener noreferrer">{n.t}</a>:n.t}
-              <span className="nsrc">{n.src}</span>
-            </span>)
+          {iranEvents.length>0?
+            [...iranEvents,...iranEvents].map(function(ev,i){return <span key={i} className="nitem">
+              <span className="ndot" style={{background:IRAN_SEV_COLORS[ev.sev]||'#999'}}></span>
+              <span style={{color:IRAN_DOMAIN_COLORS[ev.domain]||'#aaa',font:'600 8px var(--mono)',marginRight:4}}>{ev.domain}</span>
+              {ev.title}
+              <span className="nsrc">{ev.time||'Recent'}</span>
+            </span>})
           :
-            [...NEWS,...NEWS].map((n,i)=><span key={i} className="nitem">
-              <span className="ndot" style={{background:n.c}}></span>
-              {n.t}
-              <span className="nsrc">{n.s}</span>
-            </span>)
+            [...MENA_WIRE_FALLBACK,...MENA_WIRE_FALLBACK].map(function(ev,i){return <span key={i} className="nitem">
+              <span className="ndot" style={{background:'#ff3b30'}}></span>
+              <span style={{color:'#ff9500',font:'600 8px var(--mono)',marginRight:4}}>{ev.dom}</span>
+              {ev.t}
+              <span className="nsrc">{ev.src}</span>
+            </span>})
           }
         </div>
       </div>
@@ -2250,10 +2087,10 @@ function App(){
             {countryBrief.level>0&&<a href={getAdvUrl(countryBrief.name)} target="_blank" rel="noopener" style={{display:'inline-block',marginTop:8,font:'500 9px var(--mono)',color:'#0a84ff',textDecoration:'none',padding:'3px 8px',border:'1px solid rgba(10,132,255,0.3)',borderRadius:3,background:'rgba(10,132,255,0.08)',letterSpacing:'.3px'}}>View State Dept Advisory ↗</a>}
           </div>
 
-          {/* Matching NOTAMs */}
-          {notams.filter(n=>n.zone.toLowerCase().includes(countryBrief.name.toLowerCase())).length>0&&<div className="cb-section">
-            <div className="cb-section-title">NOTAMs</div>
-            {notams.filter(n=>n.zone.toLowerCase().includes(countryBrief.name.toLowerCase())).slice(0,3).map((n,i)=><div key={i} className="cb-item"><strong>{n.status}</strong>: {n.zone} — {n.detail.slice(0,50)}</div>)}
+          {/* Iran / MENA Threat Items */}
+          {iranEvents.filter(n=>(n.title||'').toLowerCase().includes(countryBrief.name.toLowerCase())||(n.detail||'').toLowerCase().includes(countryBrief.name.toLowerCase())).length>0&&<div className="cb-section">
+            <div className="cb-section-title">Iran / MENA Threats</div>
+            {iranEvents.filter(n=>(n.title||'').toLowerCase().includes(countryBrief.name.toLowerCase())||(n.detail||'').toLowerCase().includes(countryBrief.name.toLowerCase())).slice(0,4).map((n,i)=><div key={i} className="cb-item"><span style={{color:IRAN_SEV_COLORS[n.sev]||'#ccc',fontWeight:700}}>{n.icon} {n.domain}</span>: {n.title.slice(0,60)}</div>)}
           </div>}
 
           {/* Matching Headlines */}
