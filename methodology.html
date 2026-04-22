@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SENTINEL NOVA — Analytical Methodology</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --panel:#111; --bdr:#222;
+    --t1:#f5f5f5; --t2:#c8c8c8; --t3:#888;
+    --red:#cc0000; --redbg:rgba(204,0,0,.08);
+    --amber:#ff9500; --yellow:#ffd60a; --green:#30d158;
+    --blue:#0a84ff; --purple:#bf5af2;
+    --mono:'JetBrains Mono','SF Mono',Menlo,Monaco,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--t1);font-family:'Inter','Helvetica Neue',Arial,sans-serif;line-height:1.55;font-size:14px;-webkit-font-smoothing:antialiased}
+  body{max-width:940px;margin:0 auto;padding:48px 40px 96px}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .15s}
+  a:hover{border-bottom-color:var(--blue)}
+  header{border-bottom:2px solid var(--red);padding-bottom:18px;margin-bottom:32px;display:flex;flex-direction:column;gap:10px}
+  .brand{font-weight:800;font-size:18px;letter-spacing:.5px;color:var(--red)}
+  .brand span{color:var(--t2);font-weight:500;margin-left:10px;letter-spacing:.2px}
+  h1{font-size:28px;font-weight:700;letter-spacing:-.3px;color:var(--t1);margin-top:4px}
+  .meta{font-family:var(--mono);font-size:11px;color:var(--t3);letter-spacing:.3px;display:flex;gap:18px;flex-wrap:wrap;margin-top:8px}
+  .meta span{display:inline-flex;gap:4px}
+  .meta b{color:var(--t2);font-weight:600}
+  nav.toc{background:var(--panel);border:1px solid var(--bdr);border-left:3px solid var(--red);border-radius:3px;padding:18px 22px;margin:24px 0 36px}
+  nav.toc .h{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--red);font-weight:700;margin-bottom:10px}
+  nav.toc ol{list-style:none;counter-reset:toc;columns:2;column-gap:36px}
+  nav.toc li{counter-increment:toc;padding:4px 0;font-size:13px;break-inside:avoid}
+  nav.toc li::before{content:counter(toc,decimal-leading-zero)".";font-family:var(--mono);color:var(--t3);margin-right:8px;font-size:11px}
+  nav.toc a{color:var(--t1)}
+  section{margin-bottom:44px;scroll-margin-top:24px}
+  h2{font-size:20px;font-weight:700;letter-spacing:-.1px;color:var(--t1);margin-bottom:6px;padding-bottom:8px;border-bottom:1px solid var(--bdr);display:flex;align-items:baseline;gap:12px}
+  h2 .num{font-family:var(--mono);font-size:11px;color:var(--red);font-weight:700;letter-spacing:1px}
+  h3{font-size:15px;font-weight:700;color:var(--t1);margin:18px 0 8px;letter-spacing:-.05px}
+  h4{font-size:12px;font-weight:700;color:var(--amber);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.8px;font-family:var(--mono)}
+  p{color:var(--t2);margin-bottom:11px}
+  ul,ol{margin:0 0 12px 22px;color:var(--t2)}
+  li{margin-bottom:5px}
+  strong{color:var(--t1);font-weight:600}
+  code{font-family:var(--mono);font-size:12px;background:rgba(255,255,255,.05);color:var(--amber);padding:1px 6px;border-radius:2px}
+  table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:12.5px}
+  th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--bdr);vertical-align:top}
+  th{background:rgba(255,255,255,.03);font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--t2);text-transform:uppercase;border-bottom:2px solid var(--bdr)}
+  td code{font-size:11.5px}
+  .note{background:var(--panel);border:1px solid var(--bdr);border-left:3px solid var(--amber);padding:14px 18px;margin:14px 0;border-radius:3px;font-size:13px;color:var(--t2)}
+  .note.warn{border-left-color:var(--red)}
+  .note.info{border-left-color:var(--blue)}
+  .note b{color:var(--t1)}
+  .kj{background:rgba(204,0,0,.04);border:1px solid rgba(204,0,0,.25);border-radius:3px;padding:14px 18px;margin:14px 0}
+  .kj .lbl{font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:1px;font-weight:700;margin-bottom:6px}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:2px;margin-right:4px}
+  .pill.red{background:rgba(204,0,0,.15);color:var(--red);border:1px solid rgba(204,0,0,.35)}
+  .pill.amber{background:rgba(255,149,0,.12);color:var(--amber);border:1px solid rgba(255,149,0,.3)}
+  .pill.yellow{background:rgba(255,214,10,.12);color:var(--yellow);border:1px solid rgba(255,214,10,.3)}
+  .pill.green{background:rgba(48,209,88,.12);color:var(--green);border:1px solid rgba(48,209,88,.3)}
+  .pill.blue{background:rgba(10,132,255,.12);color:var(--blue);border:1px solid rgba(10,132,255,.3)}
+  .trip{font-family:var(--mono);font-size:11px;color:var(--t2);display:grid;grid-template-columns:60px 1fr;gap:10px;padding:5px 0;border-bottom:1px dashed var(--bdr)}
+  .trip:last-child{border-bottom:none}
+  .trip .c{color:var(--red);font-weight:700}
+  footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--bdr);font-family:var(--mono);font-size:11px;color:var(--t3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  @media print{body{max-width:none;padding:24px 32px;color:#000;background:#fff}h1,h2,h3,strong,th{color:#000}p,li,td{color:#222}nav.toc{break-after:page}section{break-inside:avoid}a{color:#000}}
+  @media (max-width:680px){body{padding:24px 18px}nav.toc ol{columns:1}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">SENTINEL NOVA<span>Global Security &amp; Geopolitical Risk Terminal</span></div>
+  <h1>Analytical Methodology &amp; Tradecraft Standards</h1>
+  <div class="meta">
+    <span><b>Version</b> 2.1</span>
+    <span><b>Classification</b> UNCLASSIFIED // FOUO</span>
+    <span><b>Issued</b> 22 April 2026</span>
+    <span><b>Next review</b> Quarterly</span>
+    <span><b>Owner</b> Analyst — Scott Blake</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="h">CONTENTS</div>
+  <ol>
+    <li><a href="#purpose">Purpose &amp; scope</a></li>
+    <li><a href="#frameworks">Analytic frameworks</a></li>
+    <li><a href="#icd203">ICD 203 confidence language</a></li>
+    <li><a href="#admiralty">Admiralty source grading</a></li>
+    <li><a href="#iw">Indicators &amp; Warnings methodology</a></li>
+    <li><a href="#scenarios">Watch scenarios &amp; tripwires</a></li>
+    <li><a href="#collection">Collection &amp; sources</a></li>
+    <li><a href="#processing">Processing &amp; classification</a></li>
+    <li><a href="#severity">Severity &amp; escalation scoring</a></li>
+    <li><a href="#judgments">Key Judgment derivation</a></li>
+    <li><a href="#sats">Structured Analytic Techniques</a></li>
+    <li><a href="#biases">Cognitive biases &amp; countermeasures</a></li>
+    <li><a href="#limitations">Limitations &amp; caveats</a></li>
+    <li><a href="#update">Update cadence &amp; versioning</a></li>
+    <li><a href="#governance">Governance &amp; review</a></li>
+    <li><a href="#references">References &amp; standards</a></li>
+  </ol>
+</nav>
+
+<section id="purpose">
+  <h2><span class="num">01</span>Purpose &amp; scope</h2>
+  <p>SENTINEL NOVA is an open-source intelligence (OSINT) aggregation and structured-analysis platform for tracking global security and geopolitical risk across ten operational domains: armed conflict, cyber &amp; infrastructure, terrorism, political risk, climate &amp; disasters, health security, geoeconomics, energy &amp; maritime, WMD / nuclear, and air &amp; travel.</p>
+  <p>The platform is designed to produce <strong>leading-indicator warning</strong> rather than lagging situational awareness — it is explicitly built to avoid target fixation on any single theater and to detect weak signals in the analytical margins that conventional region-focused products often miss.</p>
+  <p>This document establishes the analytical standards, methodology, and tradecraft the platform adheres to. It is written to be understood by non-intelligence-community audiences while remaining rigorous enough to withstand peer review by professional analysts.</p>
+  <div class="note info"><b>Intended audience.</b> Corporate security leaders, geopolitical risk professionals, crisis managers, policy researchers, and informed generalists. Not a substitute for classified intelligence products.</div>
+</section>
+
+<section id="frameworks">
+  <h2><span class="num">02</span>Analytic frameworks</h2>
+  <p>SENTINEL NOVA combines four established analytic frameworks:</p>
+  <ol>
+    <li><strong>ICD 203 — Analytic Standards</strong> (Office of the Director of National Intelligence). Governs probabilistic language, sourcing, alternative analysis, and distinction between facts and judgments.</li>
+    <li><strong>Admiralty Code (NATO STANAG 2022)</strong>. Governs source reliability (A–F) and information credibility (1–6) grading.</li>
+    <li><strong>Indicators &amp; Warnings (I&amp;W)</strong>. A classical intelligence tradecraft for defining falsifiable hypotheses with specific, observable tripwires.</li>
+    <li><strong>Structured Analytic Techniques (SATs)</strong> as documented by Heuer &amp; Pherson — particularly Analysis of Competing Hypotheses, Key Assumptions Check, Premortem, and Indicator Generation.</li>
+  </ol>
+  <p>Together these frameworks impose three discipline requirements on every assessment: (1) judgments must be expressed in defined probabilistic language, (2) sources must be graded, and (3) claims must be tied back to specific observable indicators.</p>
+</section>
+
+<section id="icd203">
+  <h2><span class="num">03</span>ICD 203 confidence language</h2>
+  <p>All forward-looking judgments use the ODNI's standard probabilistic terms. The ranges are taken from the ODNI&nbsp;ICD 203 standard and match the language used in National Intelligence Estimates (NIEs).</p>
+  <table>
+    <thead><tr><th>Term</th><th>Probability</th><th>When used</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill red">ALMOST CERTAIN</span></td><td>95–99%</td><td>Overwhelming evidence across multiple independent, reliable sources; alternative hypotheses effectively eliminated.</td></tr>
+      <tr><td><span class="pill red">HIGHLY LIKELY</span></td><td>80–95%</td><td>Strong convergent evidence; minor uncertainties remain but dominant hypothesis is clearly preferred.</td></tr>
+      <tr><td><span class="pill amber">LIKELY</span></td><td>55–80%</td><td>Balance of evidence favors the hypothesis; viable alternatives exist but are less well-supported.</td></tr>
+      <tr><td><span class="pill yellow">EVEN CHANCE</span></td><td>45–55%</td><td>Evidence is genuinely mixed; the analyst cannot express meaningful preference.</td></tr>
+      <tr><td><span class="pill blue">UNLIKELY</span></td><td>20–45%</td><td>Evidence weighs against the hypothesis, but it cannot be ruled out.</td></tr>
+      <tr><td><span class="pill blue">VERY UNLIKELY</span></td><td>5–20%</td><td>Strong contrary evidence; hypothesis requires unusual assumptions to hold.</td></tr>
+      <tr><td><span class="pill green">REMOTE</span></td><td>1–5%</td><td>Near-elimination based on all available evidence; retained only for completeness.</td></tr>
+    </tbody>
+  </table>
+  <div class="note warn"><b>Forbidden language.</b> Terms such as "could", "may", "possibly", or "cannot be ruled out" are prohibited as standalone confidence claims. Every probabilistic statement must map to one of the seven bands above.</div>
+</section>
+
+<section id="admiralty">
+  <h2><span class="num">04</span>Admiralty source grading</h2>
+  <p>Each source feeding into an assessment is graded on two independent axes — reliability of the source itself, and credibility of the specific information being reported.</p>
+  <h4>Reliability (A–F)</h4>
+  <table>
+    <thead><tr><th>Code</th><th>Label</th><th>Definition</th></tr></thead>
+    <tbody>
+      <tr><td><code>A</code></td><td>Completely reliable</td><td>No doubt about authenticity, trustworthiness, or competence; historically correct.</td></tr>
+      <tr><td><code>B</code></td><td>Usually reliable</td><td>Minor doubt, mostly valid track record.</td></tr>
+      <tr><td><code>C</code></td><td>Fairly reliable</td><td>Doubt; has provided valid information in the past.</td></tr>
+      <tr><td><code>D</code></td><td>Not usually reliable</td><td>Significant doubt; has occasionally provided valid information.</td></tr>
+      <tr><td><code>E</code></td><td>Unreliable</td><td>Lacks authenticity or trustworthiness; history of invalid information.</td></tr>
+      <tr><td><code>F</code></td><td>Reliability unknown</td><td>No basis to evaluate source.</td></tr>
+    </tbody>
+  </table>
+  <h4>Information credibility (1–6)</h4>
+  <table>
+    <thead><tr><th>Code</th><th>Label</th><th>Definition</th></tr></thead>
+    <tbody>
+      <tr><td><code>1</code></td><td>Confirmed</td><td>Logical, consistent with other information, and corroborated by independent sources.</td></tr>
+      <tr><td><code>2</code></td><td>Probably true</td><td>Logical, consistent with other information, not yet independently corroborated.</td></tr>
+      <tr><td><code>3</code></td><td>Possibly true</td><td>Reasonably logical, agrees with some other information.</td></tr>
+      <tr><td><code>4</code></td><td>Doubtfully true</td><td>Not logical but possible; no other information available.</td></tr>
+      <tr><td><code>5</code></td><td>Improbable</td><td>Not logical; contradicted by other information.</td></tr>
+      <tr><td><code>6</code></td><td>Cannot be judged</td><td>Insufficient basis to assess.</td></tr>
+    </tbody>
+  </table>
+  <h4>Default grading for platform sources</h4>
+  <table>
+    <thead><tr><th>Source class</th><th>Default grade</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Reuters, AP, BBC, FT, NYT, Bloomberg wires</td><td><code>A-2</code> / <code>B-2</code></td><td>Mainline, editorially reviewed; individual reports may score higher or lower.</td></tr>
+      <tr><td>Al Jazeera English, DW, France 24</td><td><code>B-2</code></td><td>State-affiliated public broadcasters; generally reliable, occasional editorial slant.</td></tr>
+      <tr><td>GDELT event records</td><td><code>C-3</code></td><td>Machine-extracted from thousands of underlying sources; useful for volume/trend, weaker for any single event.</td></tr>
+      <tr><td>FAA, EASA, FCDO, DoS Travel Advisories</td><td><code>A-1</code> / <code>A-2</code></td><td>Official government products; authoritative for the advisory itself but lagging.</td></tr>
+      <tr><td>Regional outlets &amp; specialist blogs</td><td><code>C-3</code> to <code>D-4</code></td><td>Case-by-case; flagged when used.</td></tr>
+      <tr><td>Social media &amp; anonymous posts</td><td><code>F-6</code></td><td>Not used as primary source. Referenced only for lead generation.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="iw">
+  <h2><span class="num">05</span>Indicators &amp; Warnings methodology</h2>
+  <p>I&amp;W is the structured approach of defining falsifiable hypotheses up-front — before evidence accumulates — then specifying the observable indicators that would, if detected, shift the probability of each hypothesis. Every active watch scenario on the dashboard follows this template.</p>
+  <h3>Design principles</h3>
+  <ol>
+    <li><strong>Hypothesis first.</strong> The scenario hypothesis is declared before any evidence is considered; this prevents confirmation bias.</li>
+    <li><strong>Observable tripwires.</strong> Each indicator must be an observable event an outside analyst could independently verify from open sources, not an interpretive judgment.</li>
+    <li><strong>Falsifiability.</strong> Tripwires must be written such that their absence over time is itself informative (i.e. green tripwires matter as much as red ones).</li>
+    <li><strong>Leading, not lagging.</strong> Tripwires should fire before the underlying escalation is consummated — the goal is to warn, not to record.</li>
+    <li><strong>Independence.</strong> Tripwires within a scenario should correlate with the hypothesis but be operationally independent of each other, so their joint firing is informative.</li>
+  </ol>
+  <h3>Escalation bands per scenario</h3>
+  <table>
+    <thead><tr><th>Tripwires lit</th><th>Status</th><th>Analytic posture</th></tr></thead>
+    <tbody>
+      <tr><td>0 of 5</td><td><span class="pill green">GREEN</span></td><td>Scenario at baseline; continue passive monitoring.</td></tr>
+      <tr><td>1 of 5</td><td><span class="pill yellow">WATCH</span></td><td>Active monitoring; review collection for corroborating signals.</td></tr>
+      <tr><td>2–3 of 5</td><td><span class="pill amber">ELEVATED</span></td><td>Raise scenario to Key Judgment; brief stakeholders.</td></tr>
+      <tr><td>4+ of 5</td><td><span class="pill red">CRITICAL</span></td><td>Scenario treated as operationally probable; escalate reporting cadence.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="scenarios">
+  <h2><span class="num">06</span>Watch scenarios &amp; tripwires</h2>
+  <p>SENTINEL NOVA currently tracks five primary watch scenarios with five tripwires each (25 indicators total). The scenario set is reviewed quarterly and updated as the global threat picture evolves.</p>
+
+  <h3>S1 — NATO–Russia escalation (Europe)</h3>
+  <p><strong>Hypothesis.</strong> Near-term (0–90 day) escalation of the Russia–NATO posture escalates beyond current Ukraine-centric kinetic activity, with direct Russia–NATO friction at the operational level.</p>
+  <p><strong>Key assumptions.</strong> Russia retains coherent escalation-management control; NATO alliance cohesion holds on Article-level matters; Ukraine remains the primary theater.</p>
+  <div class="trip"><span class="c">T1.1</span><span>Russian air or naval incursion into NATO territory — deliberate or repeated unintentional crossings trigger Article 4 consultations.</span></div>
+  <div class="trip"><span class="c">T1.2</span><span>Undersea cable or pipeline sabotage — attributed or plausibly attributed to Russian state or proxy action (Baltic Sea data cables, Nord Stream-class events, subsea telecom links).</span></div>
+  <div class="trip"><span class="c">T1.3</span><span>Russian nuclear or tactical-weapons rhetoric — explicit threats from Moscow referencing tactical-nuclear use, Belarus deployment, or exercise announcements.</span></div>
+  <div class="trip"><span class="c">T1.4</span><span>NATO Article 4 or Article 5 consultation — any formal invocation by a member state.</span></div>
+  <div class="trip"><span class="c">T1.5</span><span>Kaliningrad / Suwałki Gap forward posture — forward troop, missile, or naval deployment indicative of land-corridor operations.</span></div>
+
+  <h3>S2 — PRC coercion of Taiwan (Indo-Pacific)</h3>
+  <p><strong>Hypothesis.</strong> PRC adopts coercive posture short of invasion — quarantine, blockade drill, customs inspection regime, or cyber-kinetic infrastructure targeting.</p>
+  <p><strong>Key assumptions.</strong> PRC retains preference for grey-zone coercion; US maintains deterrent posture; Taiwan political leadership does not preemptively escalate.</p>
+  <div class="trip"><span class="c">T2.1</span><span>PLA exercise or blockade drill around Taiwan — multi-day, multi-service operations with live-fire components.</span></div>
+  <div class="trip"><span class="c">T2.2</span><span>Median-line / ADIZ incursions at pattern-change scale — sustained multi-sortie-per-day cadence over a week.</span></div>
+  <div class="trip"><span class="c">T2.3</span><span>PRC customs / quarantine inspection regime on Taiwan shipping — formalised interdiction, not one-off incidents.</span></div>
+  <div class="trip"><span class="c">T2.4</span><span>Cyber attack on Taiwan critical infrastructure — grid, telecom, financial, or port systems, attributable to PRC state actors (Volt Typhoon, Salt Typhoon patterns).</span></div>
+  <div class="trip"><span class="c">T2.5</span><span>US carrier strike group Western Pacific surge — surge deployment or dual-CSG presence indicative of deterrent signalling.</span></div>
+
+  <h3>S3 — Iran nuclear breakout (MENA)</h3>
+  <p><strong>Hypothesis.</strong> Iran crosses operationally significant nuclear thresholds indicating intent to weaponise rather than hedge.</p>
+  <p><strong>Key assumptions.</strong> IAEA retains some degree of access until active breakout; Israeli strike posture is latent but responsive; sanctions regime continues.</p>
+  <div class="trip"><span class="c">T3.1</span><span>IAEA loss of access or monitoring — camera removal, inspector expulsion, or suspension of safeguards reporting.</span></div>
+  <div class="trip"><span class="c">T3.2</span><span>Enrichment approaching weapons-grade — confirmed enrichment above 60% U-235, particularly movement toward 84–90%.</span></div>
+  <div class="trip"><span class="c">T3.3</span><span>Weaponisation or warhead-design activity — test signatures at Parchin-class facilities, implosion-lens research.</span></div>
+  <div class="trip"><span class="c">T3.4</span><span>Iranian NPT withdrawal signals — formal diplomatic signalling of Non-Proliferation Treaty exit.</span></div>
+  <div class="trip"><span class="c">T3.5</span><span>Fordow or Natanz strike-preparation indicators — defensive hardening, dispersal, or Israeli/US strike-posture build-up.</span></div>
+
+  <h3>S4 — Critical infrastructure attack (Western)</h3>
+  <p><strong>Hypothesis.</strong> State or state-tolerated actors execute a cyber, physical, or cyber-kinetic attack on Western critical infrastructure at a scale that materially degrades services.</p>
+  <p><strong>Key assumptions.</strong> Below-threshold cyber activity continues routinely; threshold crossing is the analytical focus; attribution is imperfect but improvable.</p>
+  <div class="trip"><span class="c">T4.1</span><span>Ransomware on utility, hospital, or logistics target — confirmed event with service-degradation impact, not just data theft.</span></div>
+  <div class="trip"><span class="c">T4.2</span><span>GPS / PNT jamming or spoofing in civil airspace — sustained, geographically-bounded interference affecting airlines or shipping.</span></div>
+  <div class="trip"><span class="c">T4.3</span><span>Power grid SCADA / ICS intrusion — intrusion with demonstrated manipulation capability, not reconnaissance only.</span></div>
+  <div class="trip"><span class="c">T4.4</span><span>Financial system cyber incident — bank, SWIFT, clearing, or exchange outage with attribution indicators.</span></div>
+  <div class="trip"><span class="c">T4.5</span><span>Port or maritime-logistics disruption — cyber, kinetic, or chokepoint (Panama, Suez) event degrading throughput materially.</span></div>
+
+  <h3>S5 — DPRK provocation (Korean Peninsula)</h3>
+  <p><strong>Hypothesis.</strong> DPRK conducts a provocation at strategic rather than tactical level, shifting the deterrent balance on the peninsula.</p>
+  <p><strong>Key assumptions.</strong> DPRK retains coherent central control; PRC tolerates rather than encourages escalation; Russia–DPRK cooperation continues.</p>
+  <div class="trip"><span class="c">T5.1</span><span>ICBM test with successful re-entry — demonstrated re-entry vehicle survival, not just launch.</span></div>
+  <div class="trip"><span class="c">T5.2</span><span>7th nuclear test — activity at Punggye-ri or equivalent site.</span></div>
+  <div class="trip"><span class="c">T5.3</span><span>SLBM or solid-fuel launch — second-strike or mobility indicators.</span></div>
+  <div class="trip"><span class="c">T5.4</span><span>Russia–DPRK munitions or technology transfer — large-scale artillery, missile, or fissile-technology movement.</span></div>
+  <div class="trip"><span class="c">T5.5</span><span>Cross-DMZ kinetic exchange — artillery, direct fire, or casualty incidents.</span></div>
+</section>
+
+<section id="collection">
+  <h2><span class="num">07</span>Collection &amp; sources</h2>
+  <h4>Primary collection streams</h4>
+  <table>
+    <thead><tr><th>Stream</th><th>Provider</th><th>Cadence</th><th>Grade</th></tr></thead>
+    <tbody>
+      <tr><td>Global wire RSS</td><td>BBC, CNN, Al Jazeera, Reuters, AP, NYT, FT (World desks)</td><td>2 min</td><td>A-2 / B-2</td></tr>
+      <tr><td>GDELT event stream</td><td>The GDELT Project — 15-minute global event records</td><td>Pulled on 60–300 s cycles</td><td>C-3</td></tr>
+      <tr><td>Regional / specialist RSS</td><td>Defence-, cyber-, health-, climate-specialist outlets</td><td>2 min</td><td>B-2 to C-3</td></tr>
+      <tr><td>Official advisories</td><td>FAA, EASA, FCDO, US DoS, WHO, CDC</td><td>Hourly</td><td>A-1</td></tr>
+      <tr><td>Market telemetry</td><td>Yahoo Finance v8 chart endpoint — WTI, Brent, DXY, VIX, equity indices</td><td>60 s</td><td>A-2</td></tr>
+    </tbody>
+  </table>
+  <h4>Collection architecture</h4>
+  <p>RSS is fetched via a multi-proxy CORS chain (<code>rss2json</code>, <code>allorigins</code>, <code>corsproxy.io</code>, <code>corsproxy.org</code>, <code>codetabs</code>, <code>thingproxy</code>) with automatic fall-through. If every proxy fails, the platform degrades to cached fallback data rather than producing an empty feed, and flags the degraded state in the UI status chip.</p>
+  <p>GDELT queries use the public <code>doc/doc</code> endpoint with structured query strings composed of theme tokens, geographic filters, and temporal windows.</p>
+</section>
+
+<section id="processing">
+  <h2><span class="num">08</span>Processing &amp; classification</h2>
+  <p>Each event is normalised into a common record: <code>{region, type, sev, text, ts, source}</code>.</p>
+  <h4>Regional taxonomy</h4>
+  <p>Events are tagged with one of six regions: Europe, M.East, Asia-Pacific, Americas, Africa, Global. Regional assignment is regex-based against headline text and falls back to "Global" when no specific region dominates.</p>
+  <h4>Domain taxonomy</h4>
+  <p>Events are classified across ten operational domains: <strong>MILITARY</strong>, <strong>NUCLEAR</strong>, <strong>CYBER</strong>, <strong>TERROR</strong>, <strong>POLITICAL</strong>, <strong>CLIMATE</strong>, <strong>HEALTH</strong>, <strong>ECONOMY</strong> (sanctions, tariffs, supply-chain), <strong>ENERGY</strong>, and <strong>AIRSPACE / TRAVEL / SHIPPING</strong>. Classification is performed by the <code>classifyIran()</code> function (name retained for code-stability reasons; behaviour is global).</p>
+  <h4>Severity assignment</h4>
+  <p>Severity is assigned at the classification step from a four-tier ladder: <span class="pill green">LOW</span> <span class="pill yellow">MEDIUM</span> <span class="pill amber">HIGH</span> <span class="pill red">CRITICAL</span>. Assignment uses keyword-weighted heuristics; high-severity keywords include "strike", "breach", "outage", "escalation", "withdrawal", "test"; critical keywords include "nuclear test", "attack", "war", "invasion", "breakout".</p>
+  <h4>Deduplication</h4>
+  <p>Events with near-identical headlines (Levenshtein-style overlap) within a 24-item rolling window are coalesced to their highest-severity instance.</p>
+</section>
+
+<section id="severity">
+  <h2><span class="num">09</span>Severity &amp; escalation scoring</h2>
+  <p>The dashboard publishes a composite Escalation Index capped at 100. The formula is transparent and uses only data visible on the dashboard:</p>
+  <p style="font-family:var(--mono);font-size:13px;color:var(--amber);background:rgba(255,255,255,.03);padding:12px 16px;border-radius:3px;border-left:2px solid var(--amber);">ESCALATION_INDEX = min(100, crit_events × 15 + high_events × 8 + tracked_events × 2)</p>
+  <h4>Interpretation bands</h4>
+  <table>
+    <thead><tr><th>Score</th><th>Band</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>0–19</td><td><span class="pill green">BASELINE</span></td><td>Routine global tempo; no unusual concentration of high-severity events.</td></tr>
+      <tr><td>20–39</td><td><span class="pill yellow">ELEVATED</span></td><td>Meaningful clustering of high-severity events; raise scan frequency.</td></tr>
+      <tr><td>40–69</td><td><span class="pill amber">HIGH</span></td><td>Multiple critical events or one dominant crisis; brief stakeholders.</td></tr>
+      <tr><td>70–100</td><td><span class="pill red">CRITICAL</span></td><td>Strategic-level event tempo; major decision support required.</td></tr>
+    </tbody>
+  </table>
+  <div class="note warn"><b>Caveat.</b> The Escalation Index is a communications device, not a forecasting model. It aggregates what has already happened; it is not probability of future escalation. Tripwire activation (Section 05) is the forward-looking instrument.</div>
+</section>
+
+<section id="judgments">
+  <h2><span class="num">10</span>Key Judgment derivation</h2>
+  <p>Key Judgments (KJs) displayed on the dashboard are auto-derived from watch-scenario tripwire states, then expressed in ICD 203 language. The derivation rules are:</p>
+  <ol>
+    <li>For each scenario, count lit tripwires <code>n</code> out of total <code>t</code>.</li>
+    <li>Scenarios with <code>n ≥ 1</code> qualify for KJ generation.</li>
+    <li>Qualified scenarios are ranked by <code>n</code> descending; the top four become KJs.</li>
+    <li>Confidence is mapped: <code>n=1</code>→UNLIKELY, <code>n=2</code>→EVEN CHANCE, <code>n=3</code>→LIKELY, <code>n=4+</code>→HIGHLY LIKELY.</li>
+    <li>KJ text links the confidence band to the scenario name and the specific tripwire count; no judgment is made without a tripwire tie-back.</li>
+  </ol>
+  <div class="note info"><b>Transparency principle.</b> Every Key Judgment on the dashboard is traceable to specific, named tripwires. If a KJ cannot be traced to observable indicators, it does not appear.</div>
+</section>
+
+<section id="sats">
+  <h2><span class="num">11</span>Structured Analytic Techniques</h2>
+  <p>Analytical products produced from SENTINEL NOVA should apply the following SATs as appropriate to the question. These are the techniques codified in Heuer &amp; Pherson and adopted across the US IC since the 2005 WMD Commission.</p>
+  <table>
+    <thead><tr><th>Technique</th><th>Use case</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Key Assumptions Check</strong></td><td>Make explicit the assumptions underpinning a judgment; test each against disconfirming evidence.</td></tr>
+      <tr><td><strong>Analysis of Competing Hypotheses (ACH)</strong></td><td>Weigh evidence against multiple hypotheses rather than seeking confirmation of one. Required for any high-confidence judgment on an actor's intent.</td></tr>
+      <tr><td><strong>Indicator Generation</strong></td><td>The process by which tripwires in Section 06 are defined — ex-ante declaration of observable signals.</td></tr>
+      <tr><td><strong>Premortem Analysis</strong></td><td>Imagine the forecast has already failed; identify why. Required before publishing any CRITICAL-band judgment.</td></tr>
+      <tr><td><strong>Red Team / Devil's Advocacy</strong></td><td>Deliberately construct the strongest contrary case. Applied quarterly to each watch scenario.</td></tr>
+      <tr><td><strong>What-If Analysis</strong></td><td>Relax a key assumption and trace implications. Used when scenario tripwires cluster unexpectedly.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="biases">
+  <h2><span class="num">12</span>Cognitive biases &amp; countermeasures</h2>
+  <p>Intelligence analysis is defeated more often by cognitive bias than by missing information. The platform and its operator actively guard against:</p>
+  <table>
+    <thead><tr><th>Bias</th><th>Risk in this context</th><th>Countermeasure</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Target fixation</strong></td><td>Over-weighting the current dominant crisis (e.g. Ukraine or Iran) while missing margin signals.</td><td>Ten-domain taxonomy; regional balance in watch scenarios; explicit "Africa" and "Americas" trip categories.</td></tr>
+      <tr><td><strong>Confirmation bias</strong></td><td>Tripwires are interpreted to confirm prior beliefs.</td><td>Tripwires are defined ex-ante with regex matchers; analyst cannot retroactively re-specify.</td></tr>
+      <tr><td><strong>Recency bias</strong></td><td>The most recent event dominates analysis.</td><td>24-item rolling window with severity weighting; single event cannot trip more than one tripwire.</td></tr>
+      <tr><td><strong>Anchoring</strong></td><td>Initial severity assessment sticks despite new evidence.</td><td>Severity reassigned on every classification run; no persistent severity state.</td></tr>
+      <tr><td><strong>Availability heuristic</strong></td><td>Loud news drowns out quiet-but-significant signals.</td><td>GDELT volume normalisation; tracked-event counter independent of news ticker.</td></tr>
+      <tr><td><strong>Mirror imaging</strong></td><td>Assuming adversary actors reason as Western actors do.</td><td>Scenario key-assumptions sections are adversary-specific; tripwires are behavioural, not motive-based.</td></tr>
+      <tr><td><strong>Groupthink</strong></td><td>Single-analyst product lacks challenge.</td><td>Mandatory quarterly Red-Team pass; peer review of any CRITICAL-band judgment before publication.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="limitations">
+  <h2><span class="num">13</span>Limitations &amp; caveats</h2>
+  <div class="note warn">
+    <b>OSINT only.</b> SENTINEL NOVA consumes exclusively open sources. It has no access to classified, proprietary, or paywalled-premium intelligence streams. Judgments can be improved materially by classified products and should not be taken as a substitute for them.
+  </div>
+  <div class="note warn">
+    <b>Regex-based tripwires.</b> Current tripwire detection is pattern-matching against event text. This is fast and transparent but will produce false negatives (a real event described in unexpected language) and false positives (headlines that use watch terms in unrelated ways). A human review step is required before acting on any CRITICAL-band judgment.
+  </div>
+  <div class="note warn">
+    <b>Source latency.</b> Public RSS and GDELT feeds are behind the underlying event by minutes to hours. For real-time operational decisions, classified feeds or commercial tactical sources are required.
+  </div>
+  <div class="note warn">
+    <b>Rolling-window truncation.</b> The platform retains roughly the latest 24 tracked events per stream. Historical pattern analysis is not supported by this version.
+  </div>
+  <div class="note warn">
+    <b>No attribution layer.</b> Events are classified by domain and severity but not by responsible actor. Attribution remains analyst judgment.
+  </div>
+  <div class="note warn">
+    <b>Proxy dependency.</b> Collection depends on public CORS proxies that can rate-limit, degrade, or disappear. A production deployment with authenticated API access would be materially more robust.
+  </div>
+</section>
+
+<section id="update">
+  <h2><span class="num">14</span>Update cadence &amp; versioning</h2>
+  <table>
+    <thead><tr><th>Component</th><th>Refresh cadence</th></tr></thead>
+    <tbody>
+      <tr><td>RSS wire streams</td><td>120 s</td></tr>
+      <tr><td>GDELT event queries</td><td>60–300 s depending on query class</td></tr>
+      <tr><td>Market telemetry</td><td>60 s</td></tr>
+      <tr><td>Watch-scenario tripwire evaluation</td><td>On every iranEvents refresh (~60 s)</td></tr>
+      <tr><td>Key Judgment re-derivation</td><td>On every React render (reactive)</td></tr>
+      <tr><td>Scenario set review</td><td>Quarterly (or on trigger event)</td></tr>
+      <tr><td>This methodology document</td><td>Quarterly or on material change</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="governance">
+  <h2><span class="num">15</span>Governance &amp; review</h2>
+  <ul>
+    <li><strong>Analytical owner.</strong> Single-analyst product; all judgments attributable to the named analyst in the header metadata.</li>
+    <li><strong>Peer review.</strong> Any CRITICAL-band Key Judgment should receive at least one peer review before external distribution.</li>
+    <li><strong>Change log.</strong> Scenario additions, deletions, or substantive modifications are logged in the repository commit history with rationale.</li>
+    <li><strong>Dissenting views.</strong> Where the analyst holds a meaningfully different view from the auto-derived Key Judgment, that view is recorded as a footnote in the exported Word product.</li>
+    <li><strong>Retrospective analysis.</strong> Quarterly review of Key Judgments against subsequent ground truth; calibration drift is corrected in the confidence mapping.</li>
+  </ul>
+</section>
+
+<section id="references">
+  <h2><span class="num">16</span>References &amp; standards</h2>
+  <ul>
+    <li>Office of the Director of National Intelligence. <em>Intelligence Community Directive 203: Analytic Standards.</em> ICD 203.</li>
+    <li>Office of the Director of National Intelligence. <em>Intelligence Community Directive 206: Sourcing Requirements for Disseminated Analytic Products.</em> ICD 206.</li>
+    <li>NATO. <em>STANAG 2022 — Intelligence Reports (Admiralty Code).</em></li>
+    <li>Heuer, Richards J. Jr. <em>Psychology of Intelligence Analysis.</em> Center for the Study of Intelligence, 1999.</li>
+    <li>Heuer, Richards J. Jr. &amp; Pherson, Randolph H. <em>Structured Analytic Techniques for Intelligence Analysis.</em> CQ Press, current edition.</li>
+    <li>Grabo, Cynthia M. <em>Anticipating Surprise: Analysis for Strategic Warning.</em> Joint Military Intelligence College, 2002.</li>
+    <li>The GDELT Project. <em>Global Database of Events, Language, and Tone.</em> Documentation at <a href="https://www.gdeltproject.org/" target="_blank" rel="noopener noreferrer">gdeltproject.org</a>.</li>
+    <li>FAA — Flight Restrictions and NOTAM authority. <a href="https://www.faa.gov/air_traffic/publications/us_restrictions" target="_blank" rel="noopener noreferrer">faa.gov</a>.</li>
+    <li>EASA — Conflict Zone Information Bulletins. <a href="https://www.easa.europa.eu/en/domains/air-operations/czibs" target="_blank" rel="noopener noreferrer">easa.europa.eu</a>.</li>
+    <li>FCDO — Foreign Travel Advice. <a href="https://www.gov.uk/foreign-travel-advice" target="_blank" rel="noopener noreferrer">gov.uk/foreign-travel-advice</a>.</li>
+    <li>US Department of State — Travel Advisories. <a href="https://travel.state.gov/" target="_blank" rel="noopener noreferrer">travel.state.gov</a>.</li>
+  </ul>
+</section>
+
+<footer>
+  <div>SENTINEL NOVA · Global Security &amp; Geopolitical Risk Terminal · v2.1</div>
+  <div>Methodology document · UNCLASSIFIED // FOUO · Human Verified</div>
+  <div><a href="index.html">← Back to dashboard</a></div>
+</footer>
+
+</body>
+</html>

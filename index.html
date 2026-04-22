@@ -10,7 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-<!-- Leaflet removed — using Sicuro Airspace Tracker embed -->
+<!-- Leaflet removed — using Global Situational Awareness Matrix (data-driven) -->
 <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
@@ -1390,7 +1390,7 @@ function App(){
     // Airspace zones are displayed independently via the tracker grid
   },[mf]);
 
-  // Map replaced with Sicuro Airspace Tracker embed — no Leaflet init needed
+  // Map replaced with Global Situational Awareness Matrix — data-driven, no Leaflet/iframe needed
 
   const fi=mf==='ALL'?INCIDENTS:INCIDENTS.filter(i=>i.cat===mf);
 
@@ -1728,7 +1728,7 @@ function App(){
 
       {/* Header */}
       <div className="hdr">
-        <div className="hdr-l"><div className="logo">SENTINEL NOVA<span>GLOBAL SECURITY &amp; GEOPOLITICAL RISK TERMINAL</span></div><span style={{font:'600 8px var(--mono)',color:'#ff9500',padding:'2px 8px',borderRadius:2,border:'1px solid rgba(255,149,0,.4)',background:'rgba(255,149,0,.1)',letterSpacing:'1.5px',marginLeft:12}}>v2.1</span></div>
+        <div className="hdr-l"><div className="logo">SENTINEL NOVA<span>GLOBAL SECURITY &amp; GEOPOLITICAL RISK TERMINAL</span></div><span style={{font:'600 8px var(--mono)',color:'#ff9500',padding:'2px 8px',borderRadius:2,border:'1px solid rgba(255,149,0,.4)',background:'rgba(255,149,0,.1)',letterSpacing:'1.5px',marginLeft:12}}>v2.1</span><a href="methodology.html" target="_blank" rel="noopener noreferrer" style={{font:'600 8px var(--mono)',color:'var(--t3)',padding:'2px 8px',borderRadius:2,border:'1px solid var(--bdr)',background:'transparent',letterSpacing:'1px',marginLeft:6,textDecoration:'none'}} title="View analytical methodology & tradecraft standards">METHODOLOGY \u2197</a></div>
         <div className="hdr-r">
           {(function(){var crit=iranEvents.filter(function(e){return e.sev==='critical'}).length;var hi=iranEvents.filter(function(e){return e.sev==='high'}).length;var sc=Math.min(100,crit*15+hi*8+iranEvents.length*2);var cl=sc>=75?'#ff3b30':sc>=50?'#ff9500':sc>=25?'#ffd60a':'#30d158';var lb=sc>=75?'CRITICAL':sc>=50?'HIGH':sc>=25?'ELEVATED':'LOW';return <div className="hdr-spgi"><span style={{font:'600 9px var(--mono)',color:'var(--t2)'}}>GLOBAL THREAT</span><span style={{font:'700 11px var(--mono)',color:cl}}>{lb}</span><div style={{width:40,height:6,background:'rgba(255,255,255,.12)',borderRadius:3,overflow:'hidden'}}><div style={{width:sc+'%',height:'100%',background:cl,borderRadius:3}}></div></div><span style={{font:'500 9px var(--mono)',color:cl}}>{sc}/100</span></div>})()}
           <span className="threat">⚠ {advStats.l4>0?'L4 ADVISORIES: '+advStats.l4:'THREAT LEVEL: ELEVATED'}</span>
@@ -1806,15 +1806,137 @@ function App(){
 
         {/* CENTER */}
         <div className="center">
-          {/* MENA AIRSPACE TRACKER — Sicuro embed */}
-          <div style={{flex:'1 1 55%',minHeight:0,borderBottom:'1px solid var(--bdr)',display:'flex',flexDirection:'column'}}>
-            <div style={{flex:1,minHeight:0,position:'relative'}}>
-              <iframe
-                src="https://sicuro-airspace-tracker.replit.app/"
-                style={{width:'100%',height:'100%',border:'none'}}
-                title="Global Airspace Tracker"
-                allow="accelerometer; autoplay; encrypted-media; gyroscope"
-              ></iframe>
+          {/* ANALYTICAL TRADECRAFT — Indicators & Warnings */}
+          <div style={{flex:'1 1 55%',minHeight:0,borderBottom:'1px solid var(--bdr)',display:'flex',flexDirection:'column',overflow:'hidden'}}>
+            <div className="ph">
+              <div className="pt">◆ Analytical Tradecraft — I&amp;W Watch Board</div>
+              <span className="pb" style={{background:'var(--redbg)',color:'var(--red)'}}>ICD 203</span>
+            </div>
+            <div style={{flex:1,overflow:'auto',padding:'12px 14px'}}>
+              {(function(){
+                // Watch scenarios — each has tripwires (specific observable indicators)
+                var scenarios=[
+                  {id:'S1',name:'NATO\u2013Russia escalation (Europe)',tripwires:[
+                    {c:'T1.1',l:'Russian air/naval incursion into NATO territory',rx:/(russia|russian).{0,40}(nato|airspace|border incursion|violation)|(nato).{0,40}(airspace).{0,40}(russia)/i},
+                    {c:'T1.2',l:'Undersea cable or pipeline sabotage',rx:/(cable|pipeline).{0,40}(sabotage|sever|damage|cut|rupture)|baltic.{0,30}cable/i},
+                    {c:'T1.3',l:'Russian nuclear/tactical-weapons rhetoric',rx:/(tactical nuclear|nuclear.{0,20}(threat|warning|deploy|exercise)|belarus.{0,20}nuclear)/i},
+                    {c:'T1.4',l:'NATO Article 4 or Article 5 consultation',rx:/article[\s-]?(4|5|iv|v)|nato.{0,20}consultation|mutual defense/i},
+                    {c:'T1.5',l:'Kaliningrad / Suwa\u0142ki Gap forward posture',rx:/kaliningrad|suwa\u0142ki|suwalki|poland.{0,20}border.{0,20}russ|belarus.{0,20}troop/i},
+                  ]},
+                  {id:'S2',name:'PRC coercion of Taiwan (Indo-Pacific)',tripwires:[
+                    {c:'T2.1',l:'PLA exercise or blockade drill around Taiwan',rx:/(pla|china|chinese).{0,40}(exercise|drill|blockade|encirclement).{0,40}taiwan|taiwan.{0,30}(exercise|drill)/i},
+                    {c:'T2.2',l:'Median-line / ADIZ incursions (scale or pattern)',rx:/(median line|adiz|taiwan strait).{0,40}(cross|breach|incur|violation)/i},
+                    {c:'T2.3',l:'PRC customs/quarantine on Taiwan shipping',rx:/(taiwan).{0,40}(customs|quarantine|inspect|board|interdict)|(taiwan strait).{0,40}(shut|close)/i},
+                    {c:'T2.4',l:'Cyber-attack on Taiwan critical infrastructure',rx:/taiwan.{0,40}(cyber|ransomware|grid|power|telecom|outage)|(volt typhoon|salt typhoon)/i},
+                    {c:'T2.5',l:'US carrier strike group Western-Pacific surge',rx:/(carrier|csg|strike group).{0,40}(taiwan|pacific|west pac|south china)/i},
+                  ]},
+                  {id:'S3',name:'Iran nuclear breakout (MENA)',tripwires:[
+                    {c:'T3.1',l:'IAEA loss of access or monitoring',rx:/(iaea).{0,40}(access|monitor|inspect|camera|safeguard).{0,40}(lost|denied|remov|suspend)|iran.{0,20}iaea/i},
+                    {c:'T3.2',l:'Enrichment approaching weapons-grade (>60%)',rx:/(90|84|83|60).{0,10}percent.{0,20}enrich|weapons.{0,10}grade|uranium.{0,20}(60|90)%/i},
+                    {c:'T3.3',l:'Weaponization / warhead-design activity',rx:/(warhead|weaponiz|implosion|detonat).{0,30}(iran|design|test)/i},
+                    {c:'T3.4',l:'Iranian NPT withdrawal signals',rx:/(iran|tehran).{0,30}(withdraw|leave|exit).{0,20}(npt|non-proliferation)/i},
+                    {c:'T3.5',l:'Fordow or Natanz strike-preparation indicators',rx:/(fordow|natanz|parchin).{0,40}(strike|target|preparation|mobiliz)/i},
+                  ]},
+                  {id:'S4',name:'Critical infrastructure attack (Western)',tripwires:[
+                    {c:'T4.1',l:'Ransomware on utility, hospital or logistics',rx:/ransomware.{0,40}(utility|hospital|water|grid|pipeline|port|healthcare)/i},
+                    {c:'T4.2',l:'GPS/PNT jamming or spoofing in civil airspace',rx:/(gps|pnt|satnav).{0,30}(jam|spoof|interfer).{0,30}(civil|airline|aviation)|baltic.{0,20}gps/i},
+                    {c:'T4.3',l:'Power grid SCADA/ICS intrusion',rx:/(scada|ics|grid).{0,30}(intru|breach|compromis|attack)|(power grid).{0,30}(cyber|attack)/i},
+                    {c:'T4.4',l:'Financial system cyber incident',rx:/(bank|swift|clearing|exchange).{0,30}(cyber|breach|outage|ransom|hack)/i},
+                    {c:'T4.5',l:'Port or maritime-logistics disruption',rx:/(port|container|terminal).{0,30}(outage|shut|cyber|strike|closure)|panama.{0,20}canal|suez.{0,20}canal/i},
+                  ]},
+                  {id:'S5',name:'DPRK provocation (Korean Peninsula)',tripwires:[
+                    {c:'T5.1',l:'ICBM test with successful re-entry',rx:/(north korea|dprk|pyongyang).{0,30}(icbm|ballistic|hwasong).{0,30}(re-entry|reentry|mach)/i},
+                    {c:'T5.2',l:'7th nuclear test signals',rx:/(north korea|dprk|pyongyang).{0,30}(nuclear test|punggye|7th test|seventh)/i},
+                    {c:'T5.3',l:'SLBM or solid-fuel launch',rx:/(north korea|dprk|pyongyang).{0,30}(slbm|submarine.{0,10}ballistic|solid.{0,10}fuel)/i},
+                    {c:'T5.4',l:'Russia\u2013DPRK munitions / tech transfer',rx:/(russia|russian).{0,30}(north korea|dprk).{0,30}(munition|artillery|missile|transfer)|kim.{0,20}putin/i},
+                    {c:'T5.5',l:'Cross-DMZ kinetic exchange',rx:/(dmz|demilitarized zone|inter.korean border).{0,30}(artillery|fire|incident|exchange)/i},
+                  ]},
+                ];
+                var hayfield=iranEvents.map(function(e){return ((e.region||'')+' '+(e.text||'')+' '+(e.event||'')+' '+(e.type||''));}).join(' || ');
+                var fireCount=function(tw){return tw.rx.test(hayfield)?1:0;};
+                var sevFor=function(n){return n>=4?'#ff3b30':n>=2?'#ff9500':n>=1?'#ffd60a':'#30d158';};
+                var lblFor=function(n){return n>=4?'CRITICAL':n>=2?'ELEVATED':n>=1?'WATCH':'GREEN';};
+                var confFor=function(n){return n>=4?'HIGHLY LIKELY':n>=3?'LIKELY':n>=2?'EVEN CHANCE':n>=1?'UNLIKELY':'VERY UNLIKELY';};
+                // Auto-derived Key Judgments
+                var firedByScenario=scenarios.map(function(s){return{id:s.id,name:s.name,n:s.tripwires.reduce(function(a,t){return a+fireCount(t);},0),total:s.tripwires.length};});
+                var totalFired=firedByScenario.reduce(function(a,f){return a+f.n;},0);
+                var keyJudgments=firedByScenario.filter(function(f){return f.n>=1;}).sort(function(a,b){return b.n-a.n;}).slice(0,4).map(function(f){
+                  var conf=confFor(f.n);
+                  return{conf:conf,text:'In the near term, near-term escalation in "'+f.name+'" is '+conf.toLowerCase()+' ('+f.n+' of '+f.total+' indicators tripped).',sev:sevFor(f.n)};
+                });
+                if(keyJudgments.length===0){keyJudgments=[{conf:'VERY UNLIKELY',text:'No tripwires currently active across the five primary watch scenarios. Baseline tempo operations assessed.',sev:'#30d158'}];}
+                return <div>
+                  {/* Scenario cards */}
+                  {scenarios.map(function(s){
+                    var n=s.tripwires.reduce(function(a,t){return a+fireCount(t);},0);
+                    var c=sevFor(n),lbl=lblFor(n);
+                    return <div key={s.id} style={{marginBottom:10,padding:'10px 12px',border:'1px solid var(--bdr)',borderLeft:'3px solid '+c,borderRadius:3,background:'rgba(255,255,255,.02)'}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:7,gap:8}}>
+                        <div style={{flex:1,minWidth:0}}>
+                          <span style={{font:'700 8px var(--mono)',color:'var(--t3)',letterSpacing:'.5px',marginRight:8}}>{s.id}</span>
+                          <span style={{font:'600 11px Inter,sans-serif',color:'var(--t1)'}}>{s.name}</span>
+                        </div>
+                        <div style={{display:'flex',gap:6,alignItems:'center',flexShrink:0}}>
+                          <span style={{font:'500 8px var(--mono)',color:'var(--t3)'}}>{n}/{s.tripwires.length}</span>
+                          <span style={{font:'700 7px var(--mono)',color:c,letterSpacing:'.5px',padding:'3px 7px',background:c+'20',borderRadius:2,border:'1px solid '+c+'55'}}>{lbl}</span>
+                        </div>
+                      </div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:3}}>
+                        {s.tripwires.map(function(tw){
+                          var hit=fireCount(tw)===1;
+                          return <div key={tw.c} style={{display:'flex',alignItems:'center',gap:6,padding:'4px 6px',background:hit?'rgba(255,59,48,.08)':'transparent',borderRadius:2}}>
+                            <span style={{width:6,height:6,borderRadius:'50%',background:hit?'#ff3b30':'var(--t3)',flexShrink:0,boxShadow:hit?'0 0 4px #ff3b30':'none'}}></span>
+                            <span style={{font:'600 8px var(--mono)',color:hit?'#ff3b30':'var(--t3)',flexShrink:0}}>{tw.c}</span>
+                            <span style={{font:'500 9.5px Inter,sans-serif',color:hit?'var(--t1)':'var(--t2)',lineHeight:1.3}}>{tw.l}</span>
+                          </div>;
+                        })}
+                      </div>
+                    </div>;
+                  })}
+                  {/* KEY JUDGMENTS */}
+                  <div style={{marginTop:14,padding:'12px 14px',background:'rgba(204,0,0,.04)',border:'1px solid rgba(204,0,0,.25)',borderRadius:3}}>
+                    <div style={{font:'700 9px var(--mono)',color:'var(--red)',letterSpacing:'.8px',marginBottom:8}}>◆ KEY JUDGMENTS \u2014 ICD 203 CONFIDENCE LANGUAGE</div>
+                    {keyJudgments.map(function(kj,i){
+                      return <div key={i} style={{display:'flex',gap:10,marginBottom:6,alignItems:'flex-start'}}>
+                        <span style={{font:'700 7.5px var(--mono)',color:kj.sev,letterSpacing:'.5px',padding:'3px 7px',background:kj.sev+'18',borderRadius:2,border:'1px solid '+kj.sev+'55',flexShrink:0,minWidth:92,textAlign:'center'}}>{kj.conf}</span>
+                        <span style={{font:'500 10.5px Inter,sans-serif',color:'var(--t1)',lineHeight:1.45}}>KJ-{i+1}. {kj.text}</span>
+                      </div>;
+                    })}
+                  </div>
+                  {/* METHODOLOGY FOOTER */}
+                  <div style={{marginTop:12,paddingTop:10,borderTop:'1px solid var(--bdr)',display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+                    <div>
+                      <div style={{font:'700 7.5px var(--mono)',color:'var(--t2)',letterSpacing:'.6px',marginBottom:5}}>ICD 203 CONFIDENCE SCALE</div>
+                      <div style={{font:'500 8px var(--mono)',color:'var(--t3)',lineHeight:1.6}}>
+                        <div>ALMOST CERTAIN \u2014 95\u201399%</div>
+                        <div>HIGHLY LIKELY \u2014 80\u201395%</div>
+                        <div>LIKELY \u2014 55\u201380%</div>
+                        <div>EVEN CHANCE \u2014 45\u201355%</div>
+                        <div>UNLIKELY \u2014 20\u201345%</div>
+                        <div>VERY UNLIKELY \u2014 5\u201320%</div>
+                        <div>REMOTE \u2014 1\u20135%</div>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{font:'700 7.5px var(--mono)',color:'var(--t2)',letterSpacing:'.6px',marginBottom:5}}>ADMIRALTY SOURCE GRADING</div>
+                      <div style={{font:'500 8px var(--mono)',color:'var(--t3)',lineHeight:1.6}}>
+                        <div>A \u2014 Completely reliable</div>
+                        <div>B \u2014 Usually reliable</div>
+                        <div>C \u2014 Fairly reliable</div>
+                        <div>D \u2014 Not usually reliable</div>
+                        <div>E \u2014 Unreliable</div>
+                        <div>F \u2014 Reliability unknown</div>
+                        <div style={{marginTop:4,paddingTop:4,borderTop:'1px dashed var(--bdr)'}}>Info credibility: 1\u20136 (corroborated \u2192 cannot be judged)</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{marginTop:10,paddingTop:8,borderTop:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center',font:'500 8px var(--mono)',color:'var(--t3)'}}>
+                    <span>TRACKED: <span style={{color:'var(--t1)',fontWeight:700}}>{iranEvents.length}</span> events</span>
+                    <span>TRIPPED: <span style={{color:'var(--red)',fontWeight:700}}>{totalFired}</span> of {scenarios.reduce(function(a,s){return a+s.tripwires.length;},0)} indicators</span>
+                    <span>METHOD: ICD 203 \u00b7 Admiralty \u00b7 I&amp;W <a href="methodology.html" target="_blank" rel="noopener noreferrer" style={{color:'var(--red)',textDecoration:'none',marginLeft:5,borderBottom:'1px dotted var(--red)',paddingBottom:1}}>view \u2197</a></span>
+                  </div>
+                </div>;
+              })()}
             </div>
           </div>
 
